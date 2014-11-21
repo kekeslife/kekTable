@@ -1,0 +1,440 @@
+ /**
+ * @fileOverview kekTable
+ * @author keke
+ */
+ /**
+ * @description 表格插件 
+ * @namespace kekTable
+ */
+var $testDM;
+(function($,window,document,undefined){
+	'use strict';
+	/**
+	 * @var {string} kekTable~_pluginName
+	 * @default 'kekTable'
+	 * @desc 插件名称
+	 */
+	var _pluginName='kekTable',
+		/**
+		 * @namespace kekTable~_options
+		 * @desc 默认配置参数
+		 */
+		_options={
+			/**
+			 * @desc 表格标题
+			 * @default null
+			 * @var {?string} kekTable~_options#title
+			 */
+			title:null,
+			/**
+			 * @desc 是否显示标题
+			 * @default true
+			 * @var {?bool} kekTable~_options#showTitle
+			 */
+			showTitle:true,
+			/**
+			 * @desc 是否显示脚注
+			 * @default true
+			 * @var {?bool} kekTable~_options#showFooter
+			 */
+			showFooter:true,
+			/**
+			 * @desc 是否显示分页
+			 * @default true
+			 * @var {?bool} kekTable~_options#showPaging
+			 */
+			showPaging:true,
+			/**
+			 * @summary 面板的颜色 - class - bootstrap的panel样式
+			 * @desc 'panel-primary'(深蓝)、'panel-success'(浅绿)、'panel-info'(浅蓝)、'panel-warning'(浅黄)、'panel-danger'(浅灰)、'panel-default'(浅灰)
+			 * @default 'panel-primary'
+			 * @var {?string} kekTable~_options#panelColor
+			 */
+			panelColor:'panel-primary',
+			/**
+			 * @summary 表格总宽度 - style的width属性。设置了colsWidth之后会自动计算表格的总宽度
+			 * @desc '100%'、'auto'
+			 * @default '100%'
+			 * @var {?string} kekTable~_options#tableWidth
+			 */
+			tableWidth:'100%',
+			/**
+			 * @desc 是否可以鼠标悬停背景
+			 * @default true
+			 * @var {?bool} kekTable~_options#canRowHover
+			 */
+			canRowHover:true,
+			/**
+			 * @desc 是否可以单击行
+			 * @default true
+			 * @var {?bool} kekTable~_options#canRowSelect
+			 */
+			canRowSelect:true,
+			/**
+			 * @desc 表格是否可以折叠 同 bootstrap的collapse
+			 * @default false
+			 * @var {?bool} kekTable~_options#isCollapse
+			 */
+			isCollapse:false,
+			/**
+			 * @desc collapse是否默认展开 同 bootstrap的collapse的aria-expanded属性
+			 * @default true
+			 * @var {?bool} kekTable~_options#collapseExpanded
+			 */
+			collapseExpanded:true,
+			/**
+			 * @namespace __toolbarItem
+			 * @desc 工具栏按钮
+			 */
+			/**
+			 * @name __toolbarItem#id
+			 * @desc id标识(必需)
+			 * @type {string}
+			 */
+			/**
+			 * @name __toolbarItem#icon
+			 * @desc 图标,bootstrap的glyphicon样式
+			 * @type {string}
+			 */
+			/**
+			 * @name __toolbarItem#label
+			 * @desc 按钮上的文字
+			 * @type {string}
+			 */
+			/**
+			 * @name __toolbarItem#title
+			 * @desc 按钮上的提示文字title
+			 * @type {string}
+			 */
+			/**
+			 * @function __toolbarItem#action
+			 * @desc 点击按钮执行的自定义操作
+			 * @param {Plugin~_tableValues} tableValues - 当前页的值
+			 * @example 判断是否有选中记录
+			 * action:function(v){
+			 *     if(v.curRecordNum===null)
+			 *         alert('请先选择一行');
+			 *     else if(v.curPageRecords[v.curRecordNum].weight<1000)
+			 *         alert('重量小于1000');
+			 * }
+			 */
+			/**
+			 * @summary 工具条(按顺序显示)
+			 * @desc 'refresh'(刷新)、'search'(查询)、'sort'(排序)、'add'(新增)、'edit'(修改)、'delete'(删除)、'mailAgent'(代理邮件)、'export'(导出)
+			 * @default [[{id:'refresh'}],[{id:'search'},{id:'sort'}],[{id:'add'},{id:'edit'},{id:'delete'}]]
+			 * @var {?Array.<__toolbarItem[]>} kekTable~_options#toolbar
+			 * @example 自定义按钮
+			 * toolbar=[[{id:'upload',icon:'glyphicon-upload',label:'上传',title:'上传图片',act:function(v){ }}]]
+			 */
+			toolbar:[[{id:'refresh'}],[{id:'search'},{id:'sort'}],[{id:'add'},{id:'edit'},{id:'delete'}]],
+			/**
+			 * @desc 是否是调试模式。调试模式会检查各个参数是否设置正确
+			 * @default true
+			 * @var {?bool} kekTable~_options#isDebug
+			 */
+			isDebug:true,
+			/**
+			 * @desc 查询的ajax地址(必需)
+			 * @default null
+			 * @var {!string} kekTable~_options#listURL
+			 */
+			listURL:null,
+			/**
+			 * @desc 新增的ajax地址(设为null将通过adjustOptions调整为listURL)
+			 * @default null
+			 * @var {?string} kekTable~_options#insertURL
+			 */
+			insertURL:null,
+			/**
+			 * @desc 字段配置(必需)
+			 * @default null
+			 * @var {!Object.<_column>} kekTable~_options#columns
+			 */
+			columns:null,
+		},
+		/**
+		 * @namespace _column
+		 * @desc 配置columns中的项
+		 */
+		_column={
+			/**
+			 * @var {?string} [_column#title=null] - 显示的表格栏位标题
+			 */
+			title:null,
+			/**
+			 * @var {?string} [_column#editTitle=__column#title] - 编辑框中栏位上面的标题
+			 */
+			editTitle:null,
+			/**
+			 * @var {?string} [_column#editLabel=null] - 编辑框中栏位后面的标签
+			 */
+			editLabel:null,
+			/**
+			 * @var {?bool} [_column#editClingPre=false] - 编辑框中inline栏位紧贴着前面一个栏位
+			 */
+			editClingPre:false,
+			/**
+			 * @var {?string} [_column#editDisplay='block'] - 'block'(换行)、'inline'(同一行)
+			 * @summary 编辑框中栏位和前一个栏位在同一行
+			 */
+			editDisplay:'block',
+			/**
+			 * @var {?int} [_column#editIndex=null] - 给值后此栏位将置于编辑框中，编辑框的栏位顺序按此
+			 */
+			editIndex:null,
+			/**
+			 * @var {?int} [_column#editWidth=100] - 编辑框栏位的宽度
+			 */
+			editWidth:100,
+			/**
+			 * @var {?string} [_column#editPlaceholder=null] - 编辑框栏位的placeholder属性
+			 */
+			editPlaceholder:null,
+			/**
+			 * @var {?int} [_column#colLength=null] - 栏位的长度，null则为无限制
+			 */
+			colLength:null,
+			/**
+			 * @var {?bool} [_column#colLengthByte=true] - 栏位的长度按byte计算,false将按char计算
+			 */
+			colLengthByte:true,
+		};
+			
+			
+			
+			
+		
+	/**
+	 * @constructor Plugin
+	 * @param {jQuery} element - jQUery对象
+	 * @param {kekTable~_options} options - 插件的配置参数
+	 */
+	function Plugin(element,options){
+		/**
+		 * @name Plugin~_element
+		 * @desc 插件的id
+		 * @type {jQUery} 
+		 */
+		this._element=element;
+		/**
+		 * @name Plugin~_options
+		 * @desc 插件的配置参数
+		 * @type {kekTable~_options}
+		 */
+		this._options=$.extend({}, _options,options);
+		/**
+		 * @name Plugin~_pluginName
+		 * @desc 插件名称
+		 * @type {kekTable~_pluginName}
+		 */
+		this._pluginName=_pluginName;
+		/**
+		 * @typedef Plugin~_tableValues
+		 * @desc 当年页面上的一系列值。供外部接口请用extend
+		 * @prop {object[]} [curPageRecords=[]] - 当前页面上的所有数据库值
+		 * @prop {int} [curRecordNum=null] - 当前选中的行号
+		 * @prop {string} [tableStatus=null] - 表格狀態，一般為__toolbarIte.id
+		 */
+		this._tableValues={
+			curPageRecords:[],
+			curRecordNum:null,
+			tableStatus:null
+		};
+		/**
+		 * 
+		 */
+		this._toolbar=null;
+		
+		this._init();
+	}
+	/**
+	 * @augments Plugin
+	 */
+	Plugin.prototype={
+		//插件初始化 this=Plugin
+		_init:function(){
+			this._adjustOptions();
+		},
+		//初始化时调整参数
+		_adjustOptions:function(){
+			
+		},
+		//显示loading遮罩
+		_showLoading:function(){
+			
+		},
+		
+		//外部接口
+		
+		/**
+		 * @function Plugin#showLoading
+		 * @desc 显示loading遮罩
+		 * @param {string} text - 显示的文字
+		 * @param {int} delay - 延时显示时间(毫秒)
+		 */
+		showLoading:function(text,delay){
+			
+		}
+	};
+	
+	//扩展jQuery插件
+	$.fn[_pluginName]=function(options){
+		var args=arguments;
+		return this.each(function(){
+			var $this=$(this),
+				data=$.data(this,'plugin_'+_pluginName);
+			//第一次调用。初始化
+			if(!data)
+				$.data(this,'plugin_'+_pluginName,new Plugin(this,options));
+			//_开头的方法是内部方法，不允许外部调用
+			else if(typeof options ==='string'){
+				if(typeof data[options]=== 'function'){
+					if(options.substr(0,1)==='_')
+						data[options].apply(data,Array.prototype.slice.call(args,1));
+					else
+						throw $[_pluginName].regional.errApiPrivate + options;
+				}
+				else
+					throw $[_pluginName].regional.errApiWithout + options;
+			}
+				
+		});
+	};
+	
+	$[_pluginName]={};
+	/**
+	 * @namespace Plugin#regional
+	 * @desc 语言
+	 * @example zh-TW.js
+	 * $.kekTable.regional={}
+	 */
+	$[_pluginName].regional={
+		/**
+		 * @var {string} Plugin#regional#toolbarAdd - 工具栏新增按钮的显示文字
+		 */
+		toolbarAdd:'新增',
+		/**
+		 * @var {string} Plugin#regional#toolbarRefresh - 工具栏刷新按钮的显示文字
+		 */
+		toolbarRefresh:'刷新',
+		/**
+		 * @var {string} Plugin#regional#toolbarSearch - 工具栏查询按钮的显示文字
+		 */
+		toolbarSearch:'查詢',
+		/**
+		 * @var {string} Plugin#regional#toolbarSort - 工具栏排序按钮的显示文字
+		 */
+		toolbarSort:'排序',
+		/**
+		 * @var {string} Plugin#regional#toolbarEdit - 工具栏修改按钮的显示文字
+		 */
+		toolbarEdit:'修改',
+		/**
+		 * @var {string} Plugin#regional#toolbarDelete - 工具栏删除按钮的显示文字
+		 */
+		toolbarDelete:'刪除',
+		/**
+		 * @var {string} Plugin#regional#toolbarExport - 工具栏汇出按钮的显示文字
+		 */
+		toolbarExport:'匯出',
+		/**
+		 * @var {string} Plugin#regional#errApiPrivate - 非法调用内部方法时的错误信息
+		 */
+		errApiPrivate:'此方法不公開使用:',
+		/**
+		 * @var {string} Plugin#regional#errApiWithout - 没有此API的错误信息
+		 */
+		errApiWithout:'沒有提供此方法:',
+		/**
+		 * @var {string} Plugin#regional#searchBoolAnd - 查询框[布尔条件的AND]文字说明
+		 */
+		searchBoolAnd:'且',
+		/**
+		 * @var {string} Plugin#regional#searchBoolOr - 查询框[布尔条件的OR]文字说明
+		 */
+		searchBoolOr:'或',
+		/**
+		 * @var {string} Plugin#regional#searchOptEq - 查询框[关系运算符的等于]文字说明
+		 */
+		searchOptEq:'=',
+		/**
+		 * @var {string} Plugin#regional#searchOptLt - 查询框[关系运算符的小于]文字说明
+		 */
+		searchOptLt:'<',
+		/**
+		 * @var {string} Plugin#regional#searchOptLe - 查询框[关系运算符的小于等于]文字说明
+		 */
+		searchOptLe:'<=',
+		/**
+		 * @var {string} Plugin#regional#searchOptGt - 查询框[关系运算符的大于]文字说明
+		 */
+		searchOptGt:'>',
+		/**
+		 * @var {string} Plugin#regional#searchOptGt - 查询框[关系运算符的大于等于]文字说明
+		 */
+		searchOptGe:'>=',
+		/**
+		 * @var {string} Plugin#regional#searchOptNe - 查询框[关系运算符的不等于]文字说明
+		 */
+		searchOptNe:'不等於',
+		/**
+		 * @var {string} Plugin#regional#searchOptBeg - 查询框[关系运算符的开始于]文字说明
+		 */
+		searchOptBeg:'開始於',
+		/**
+		 * @var {string} Plugin#regional#searchOptEnd - 查询框[关系运算符的结束于]文字说明
+		 */
+		searchOptEnd:'結束於',
+		/**
+		 * @var {string} Plugin#regional#searchOptLike - 查询框[关系运算符的包含]文字说明
+		 */
+		searchOptLike:'包含',
+		/**
+		 * @var {string} Plugin#regional#searchOptNull - 查询框[关系运算符的空]文字说明
+		 */
+		searchOptNull:'空',
+		/**
+		 * @var {string} Plugin#regional#searchOptNNull - 查询框[关系运算符的非空]文字说明
+		 */
+		searchOptNNull:'非空',
+		/**
+		 * @var {string} Plugin#regional#searchAddPreCond - 查询框[添加查询条件至前]文字说明
+		 */
+		searchAddPreCond:'添加條件至前',
+		/**
+		 * @var {string} Plugin#regional#searchAddNxtCond - 查询框[添加查询条件至后]文字说明
+		 */
+		searchAddNxtCond:'添加條件至後',
+		/**
+		 * @var {string} Plugin#regional#searchAddPreGrp - 查询框[添加查询组至前]文字说明
+		 */
+		searchAddPreGrp:'添加組至前',
+		/**
+		 * @var {string} Plugin#regional#searchAddNxtGrp - 查询框[添加查询组至后]文字说明
+		 */
+		searchAddNxtGrp:'添加組至後',
+		/**
+		 * @var {string} Plugin#regional#searchDelCond - 查询框[删除查询条件]文字说明
+		 */
+		searchDelCond:'刪除',
+		/**
+		 * @var {string} Plugin#regional#searchTitle - 查询框标题
+		 */
+		searchTitle:'查詢',
+		/**
+		 * @var {string} Plugin#regional#searchCommit - 查询框执行查询的按钮文字
+		 */
+		searchCommit:'查詢',
+		/**
+		 * @var {string} Plugin#regional#searchCommit - 查询框执行查询的按钮文字
+		 */
+		editCommit:'保存',
+		/**
+		 * @var {string} Plugin#regional#buttonCancel - 取消按钮文字
+		 */
+		buttonCancel:'取消'
+		
+	};
+	
+})(jQuery,window,document);
+

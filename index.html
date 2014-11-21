@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<script src="js/jquery.min.1.11.1.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/bootstrap-3.3.0/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/kekTable.js" type="text/javascript" charset="utf-8"></script>
+		<link rel="stylesheet" type="text/css" href="css/main.css"/>
+		<link rel="stylesheet" type="text/css" href="css/skin.css"/>
+		<link rel="stylesheet" type="text/css" href="js/bootstrap-3.3.0/css/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/kekTable.css"/>
+	</head>
+	<body>
+		<!--宽度=table宽度+3-->
+		<div id="tab" class="kekTable-listPanel panel-group" style="width: 653px;margin: auto;margin-top: 20px;">
+			<div class="panel panel-primary">
+		  		<div class="panel-heading" id="tabCollapseHead" data-toggle="collapse" data-target="#tabCollapseGroup" aria-expanded="true" aria-controls="tabCollapseGroup">
+		  			<h3 class="pull-left">表格标题</h3>
+		  			<h5 class="glyphicon glyphicon-chevron-down pull-right"></h5>
+		  		</div>
+		  		<div id="tabCollapseGroup" class="panel-collapse collapse in" aria-labelledby="kekCollapseHead" aria-expanded="true">
+			  		<div class="panel-body">
+			  			<div class="btn-toolbar" role="toolbar">
+			  				<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span>刷新</span>
+						  	</div>
+							<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-search"></span>查询</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-sort"></span>排序</span>
+						  	</div>
+						  	<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-plus"></span>新增</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-edit"></span>修改</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-minus"></span>删除</span>
+						  	</div>
+						  	<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-envelope"></span>代理邮件</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-export"></span>导出</span>
+						  	</div>
+						</div>
+			  		</div>
+			  		<div class="kekTable-table-group">
+						<table class="table table-hover table-bordered table-condensed" style="width: 648px;">
+							<colgroup>
+								<col style="width:50px;" />
+								<col style="width:100px;" />
+								<col style="width:200px;" />
+								<col style="width:300px;" />
+							</colgroup>
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>字段一</th>
+									<th>字段二</th>
+									<th>字段三</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>100</td>
+									<td>1</td>
+									<td>1</td>
+									<td>1</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="panel-footer">
+						<nav>
+		 					<ul class="pagination">
+								<li class="disabled"><span>&laquo;</span></li>
+								<li class="active"><span>1</span></li>
+		    					<li><a href="#">2</a></li>
+		    					<li><a href="#">3</a></li>
+		    					<li><a href="#">4</a></li>
+		    					<li><a href="#">5</a></li>
+		    					<li><a href="#">&raquo;</a></li>
+							</ul>
+						</nav>
+					</div>
+				</div>
+			</div>
+			<div class="loading" style="display: none;">
+				<div class="bk-opacity"></div>
+				<p><span class="alert alert-info">now loading...</span></p>
+			</div>
+		</div>
+		
+		<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#search">查询</button>
+		<!-- search -->
+		<div class="modal fade kekTable-search" id="search" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		  	<div class="modal-dialog" style="width: 600px;">
+		    	<div class="modal-content">
+		      		<div class="modal-header">
+		        		<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+		        		<h4 class="modal-title" id="myModalLabel">查询</h4>
+		      		</div>
+		      		<div class="modal-body">
+		      			<ul class="kekTable-search-block">
+			      			<li>
+						  		<button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button">栏位<span class="caret"></span></button>
+						  		<button class="btn btn-default dropdown-toggle" type="button">=<span class="caret"></span></button>
+						  		<input type="text" class="form-control kekTable-search-itemValue"/>
+						  		<button class="btn btn-default dropdown-toggle" type="button"><span class="glyphicon glyphicon-cog"></span></button>
+			        		</li>
+			        		<li>
+			        			<button class="btn btn-default dropdown-toggle kekTable-search-bool" type="button">且<span class="caret"></span></button>
+						  		<button class="btn btn-default dropdown-toggle" type="button">栏位<span class="caret"></span></button>
+						  		<button class="btn btn-default dropdown-toggle" type="button">=<span class="caret"></span></button>
+						  		<input type="text" class="form-control kekTable-search-itemValue"/>
+						  		<button class="btn btn-default dropdown-toggle" type="button"><span class="glyphicon glyphicon-cog"></span></button>
+			        		</li>
+			        		<li>
+			        			<button class="btn btn-default dropdown-toggle kekTable-search-bool" type="button">且<span class="caret"></span></button>
+			        			<ul class="kekTable-search-block-sub">
+			        				<li>
+			        					<button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button">栏位<span class="caret"></span></button>
+								  		<button class="btn btn-default dropdown-toggle" type="button">=<span class="caret"></span></button>
+								  		<input type="text" class="form-control kekTable-search-itemValue"/>
+								  		<button class="btn btn-default dropdown-toggle" type="button"><span class="glyphicon glyphicon-cog"></span></button>
+			        				</li>
+			        				<li>
+					        			<button class="btn btn-default dropdown-toggle kekTable-search-bool" type="button">且<span class="caret"></span></button>
+								  		<button class="btn btn-default dropdown-toggle" type="button">栏位<span class="caret"></span></button>
+								  		<button class="btn btn-default dropdown-toggle" type="button">=<span class="caret"></span></button>
+								  		<input type="text" class="form-control kekTable-search-itemValue"/>
+								  		<button class="btn btn-default dropdown-toggle" type="button"><span class="glyphicon glyphicon-cog"></span></button>
+					        		</li>
+					        		<li>
+					        			<button class="btn btn-default dropdown-toggle kekTable-search-bool" type="button">且<span class="caret"></span></button>
+					        			<ul class="kekTable-search-block-sub">
+					        				<li>
+					        					<button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button">栏位<span class="caret"></span></button>
+										  		<button class="btn btn-default dropdown-toggle" type="button">=<span class="caret"></span></button>
+										  		<input type="text" class="form-control kekTable-search-itemValue"/>
+										  		<button class="btn btn-default dropdown-toggle" type="button"><span class="glyphicon glyphicon-cog"></span></button>
+					        				</li>
+					        				<li>
+							        			<button class="btn btn-default dropdown-toggle kekTable-search-bool" type="button">且<span class="caret"></span></button>
+										  		<button class="btn btn-default dropdown-toggle" type="button">栏位<span class="caret"></span></button>
+										  		<button class="btn btn-default dropdown-toggle" type="button">=<span class="caret"></span></button>
+										  		<input type="text" class="form-control kekTable-search-itemValue"/>
+										  		<button class="btn btn-default dropdown-toggle" type="button"><span class="glyphicon glyphicon-cog"></span></button>
+							        		</li>
+					        			</ul>
+					        		</li>
+			        			</ul>
+			        		</li>
+		        		</ul>
+			        	<ul class="dropdown-menu kekTable-search-itemList" style="display: block;">
+						    <li><span>Action</span></li>
+						    <li><span>Another action</span></li>
+						    <li><span>Something else here</span></li>
+						    <li><span>Separated link</span></li>
+						</ul>
+						<ul class="dropdown-menu kekTable-search-itemList" style="display: block;">
+						    <li><span>=</span></li>
+						    <li><span>></span></li>
+						    <li><span><</span></li>
+						    <li><span>>=</span></li>
+						</ul>
+						<ul class="dropdown-menu kekTable-search-itemList" style="display: block;">
+						    <li><span>且</span></li>
+						    <li><span>或</span></li>
+						</ul>
+						<ul class="dropdown-menu kekTable-search-itemList" style="display: block;">
+						    <li><span>新增条件至前</span></li>
+						    <li><span>新增条件至后</span></li>
+						    <li class="divider"></li>
+						    <li><span>新增组至前</span></li>
+						    <li><span>新增组至后</span></li>
+						    <li class="divider"></li>
+						    <li><span>删除</span></li>
+						</ul>
+		      		</div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		        <button type="button" class="btn btn-primary">Save changes</button>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+		
+		<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#edit">编辑</button>
+		<!-- edit -->
+		<div class="modal fade kekTable-edit" id="edit" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="editLabel" aria-hidden="true">
+		  	<div class="modal-dialog" style="width: 600px;">
+		    	<div class="modal-content">
+		      		<div class="modal-header">
+		        		<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+		        		<h4 class="modal-title" id="editLabel">编辑</h4>
+		      		</div>
+		      		<div class="modal-body">
+		      			<ul class="kekTable-edit-block">
+		      				<li>
+		      					<div class="form-group">
+									<label>申请人员</label>
+								    <input type="text" class="form-control" placeholder="工号" style="width:70px;">
+								</div>
+								<div class="form-group kekTable-edit-cling">
+								    <label>&nbsp;</label>
+								    <input type="text" class="form-control" placeholder="姓名" disabled="" style="width:100px;">
+								</div>
+								<div class="form-group">
+									<label>申请部门</label>
+								    <input type="text" class="form-control" placeholder="部门代码" disabled="" style="width:70px;">
+								</div>
+								<div class="form-group kekTable-edit-cling">
+								    <label>&nbsp;</label>
+								    <input type="text" class="form-control" placeholder="部门名称" disabled="" style="width:100px;">
+								</div>
+		      				</li>
+		      				<li>
+		      					<div class="form-group">
+									<label>申请人员</label>
+								    <input type="text" class="form-control" placeholder="工号" style="width:70px;">
+								</div>
+								<div class="form-group kekTable-edit-cling">
+								    <label>&nbsp;</label>
+								    <input type="text" class="form-control" placeholder="姓名" disabled="" style="width:100px;">
+								</div>
+								<div class="form-group">
+									<label>申请部门</label>
+								    <input type="text" class="form-control" placeholder="部门代码" disabled="" style="width:70px;">
+								</div>
+								<div class="form-group kekTable-edit-cling">
+								    <label>&nbsp;</label>
+								    <input type="text" class="form-control" placeholder="部门名称" disabled="" style="width:100px;">
+								</div>
+		      				</li>
+		      			</ul>
+		      		</div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		        <button type="button" class="btn btn-primary">Save changes</button>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+		
+		<script type="text/javascript">
+			$('#tab').kekTable();
+		</script>
+	</body>
+</html>

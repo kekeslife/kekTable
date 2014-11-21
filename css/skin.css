@@ -1,0 +1,275 @@
+﻿/*網頁背景色*/
+body {
+    background-color: #e7f2fd;
+    margin: 0;
+    padding: 0;
+}
+/*全局字體*/
+input, body, a,select{
+    font: normal 12px 'arial','sans-serif';
+    color: #3e3e3e;
+}
+
+input {
+    outline: none;
+    height: 22px;
+    margin: 2px;
+    border: 1px solid #abadb3;
+}
+
+    input[type="radio"], input[type="checkbox"] {
+        border: 0;
+    }
+    /*輸入框*/
+    input[type="text"], input[type="password"], textarea {
+        border: 1px solid #abadb3;
+        padding: 2px;
+        line-height: 22px;
+        vertical-align:middle;
+    }
+
+        input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
+            border: 1px solid #3498db;
+        }
+    /*多選框單選框*/
+    input[type="checkbox"], input[type="radio"] {
+        vertical-align: middle;
+        height: 13px;
+        *margin-top: -4px;
+    }
+/*按鈕樣式*/
+.ypc_btn {
+    border: 0;
+    background-color: #1570a6;
+    color: #fff;
+    font-size: 14px;
+    font-family: 微軟正黑體;
+    text-shadow: 0 -1px 1px rgba(0,0,0,0.25);
+    padding: 2px 10px;
+    cursor: pointer;
+    zoom: 1;
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+    -webkit-transition: background-color .3s ease-out,color .3s ease-in;
+    -moz-transition: background-color .3s ease-out,color .3s ease-in;
+    -ms-transition: background-color .3s ease-out,color .3s ease-in;
+    -o-transition: background-color .3s ease-out,color .3s ease-in;
+    transition: background-color .3s ease-out,color .3s ease-in;
+}
+
+    .ypc_btn:focus {
+        border: 0;
+    }
+
+    .ypc_btn:hover {
+        background-color: #505050;
+        text-decoration: none;
+        color: #fff;
+    }
+/*灰色按鈕*/
+.ypc_btn_g {
+    background-color: #8d8d8d;
+}
+/*高亮按鈕*/
+.ypc_btn_l {
+    background-color: #f09609;
+}
+
+/*域*/
+fieldset {
+    border: 0;
+    border-top: 1px solid #8d8d8d;
+}
+
+legend {
+    background-color: #8d8d8d;
+    line-height: 28px;
+    height: 28px;
+    color: white;
+    padding: 0 10px;
+    margin-bottom:8px;
+}
+/*超鏈接*/
+a {
+    text-decoration: none;
+}
+
+    a:hover {
+        text-decoration: underline;
+        color: #3498db;
+    }
+/*DIV*/
+.div {
+    overflow: hidden;
+    box-sizing: border-box;
+}
+/*ul*/
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ypc_list li {
+    width: 100%;
+    line-height: 24px;
+    border-bottom: 1px solid #d6e9fc;
+    overflow:hidden;
+}
+
+    .ypc_list li:hover {
+        background-color: #d6e9fc;
+    }
+
+/*.ypc_line1 {
+    border-color: #2676bb;
+}
+
+.ypc_title1 {
+    background-color: #2676bb;
+    color: #fff;
+}
+
+    .ypc_title1 a {
+        color: #fff;
+        line-height: 24px;
+    }
+
+        .ypc_title1 a:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+.ypc_title2 {
+    background-color: #3498db;
+}
+
+.ypc_line2 {
+    border-color: #3498db;
+}*/
+
+/*異常信息*/
+.ypc_err {
+    color: #e51400;
+    padding-left: 20px;
+}
+
+    .ypc_err:before {
+        background-image: url(/Themes/MetroBlue/Images/ui-icons_E51400_256x240.png);
+        background-position: -16px -144px;
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        content: "";
+        margin-left: -16px;
+    }
+
+.ypc_table {
+    width: 100%;
+    line-height: 24px;
+    padding: 10px;
+    border-spacing: 1px;
+}
+
+    .ypc_table td {
+        border-bottom: 1px solid #bfbfbf;
+    }
+
+    .ypc_table thead {
+        background-color: #d9d9d9;
+        text-align: center;
+    }
+
+    .ypc_table tfoot {
+        background-color: #d9d9d9;
+    }
+
+
+    .ypc_table tbody tr:hover {
+        background-color: #d6e9fc;
+    }
+
+    .ypc_table td {
+        padding: 0 20px;
+    }
+.ypc_bg1 {
+    background-color: #3498db;
+    color:#fff;
+}
+.ypc_bg2 {
+    background-color:#f09609;
+    color:#fff;
+}
+.ypc_bg3 {
+    background-color: #00aba9;
+    color:#fff;
+}
+.ypc_bg4 {
+    background-color: #ff0097;
+    color:#fff;
+}
+.ypc_bg5 {
+    background-color: #333;
+    color:#fff;
+}
+.ypc_bg6 {
+    background-color: #dedfde;
+}
+.ypc_bg7{
+    background-color:#e51400;
+    color:#fff;
+}
+.ypc_bg8{
+    background-color:#d6e9fc;
+}
+
+.ypc_ln1 {
+    border-color: #3498db;
+}
+.ypc_ln2 {
+    border-color: #f09609;
+}
+.ypc_ln3 {
+    border-color: #00aba9;
+}
+.ypc_ln4 {
+    border-color: #ff0097;
+}
+.ypc_ln5 {
+    border-color: #333;
+}
+.ypc_ln6 {
+    border-color: #dedfde;
+}
+.ypc_ln7 {
+    border-color: #e51400;
+}
+.ypc_ln8 {
+    border-color: #d6e9fc;
+}
+
+.ypc_c1 {
+    color: #3498db;
+}
+.ypc_c2 {
+    color: #f09609;
+}
+.ypc_c3 {
+    color: #00aba9;
+}
+.ypc_c4 {
+    color: #ff0097;
+}
+.ypc_c5 {
+    color: #333;
+}
+.ypc_c6 {
+    color: #dedfde;
+}
+.ypc_c7 {
+    color: #e51400;
+}
+.ypc_c8 {
+    color: #d6e9fc;
+}
