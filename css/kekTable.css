@@ -1,44 +1,61 @@
-.kekTable-listPanel{position: relative;}
+/*抵消全局css*/
+input[type="text"], input[type="password"], textarea {border-color: #ccc;}
+.form-control{padding: 6px 12px !important;}
 
+/*表格*/
+.kekTable-listPanel{position: relative;}
+/*表格-標題*/
 .kekTable-listPanel .panel-heading{overflow: hidden;padding: 0 12px 0 4px;}
 .kekTable-listPanel .panel-heading[data-toggle="collapse"]{cursor: pointer;}
 .kekTable-listPanel .panel-heading h3,.kekTable-listPanel .panel-heading h5{margin: 0;line-height: 40px;}
-
+/*表格-工具欄*/
 .kekTable-listPanel .panel-body{padding: 6px 4px;background-color: #F5F5F5;border-bottom: 1px solid #ddd;}
 .kekTable-listPanel .panel-body .btn-toolbar .glyphicon{margin-right: 4px;}
-
-.kekTable-listPanel .kekTable-table-group{overflow: auto;}
-.kekTable-listPanel .kekTable-table-group .table{margin: 0;border: 0;table-layout: fixed;}
-.kekTable-listPanel .kekTable-table-group .table thead{background-color: #f9f9f9;}
-.kekTable-listPanel .kekTable-table-group .table-bordered>thead>tr>th,.kekTable-listPanel .table-bordered>thead>tr>td {border-bottom-width:0}
-.kekTable-listPanel .kekTable-table-group .table th,.kekTable-listPanel .kekTable-table-group .table td{white-space: nowrap;overflow: hidden;}
-
+/*表格-數據*/
+.kekTable-table-group{overflow: auto;}
+.kekTable-table-group .table{margin: 0;border: 0;table-layout: fixed;}
+.kekTable-table-group .table thead{background-color: #f9f9f9;}
+.kekTable-table-group .table-bordered>thead>tr>th,.kekTable-listPanel .table-bordered>thead>tr>td {border-bottom-width:0}
+.kekTable-table-group .table th,.kekTable-listPanel .kekTable-table-group .table td{white-space: nowrap;overflow: hidden;}
+.kekTable-table-group .table tfoot{border-bottom: 1px solid #ddd;}
+.kekTable-table-group .table tfoot td{border: 0;padding: 2px 6px;}
+/*表格-分頁*/
 .kekTable-listPanel .panel-footer{padding:6px 4px;}
 .kekTable-listPanel .panel-footer .pagination{margin: 0;vertical-align: bottom;}
 .kekTable-listPanel .panel-footer .pagination>li>a,.kekTable-listPanel .panel-footer .pagination>li>span {font-size: 14px;}
-
+/*表格-加載*/
 .kekTable-listPanel .loading{position: absolute;left: 0;top: 0;z-index: 3;height: 100%;width: 100%;}
 .kekTable-listPanel .loading p{display: block;position: relative;top: 49%;text-align: center;}
 .kekTable-listPanel .loading .bk-opacity{opacity: 0.8;filter: alpha(Opacity=80);background-color: #000;height: 100%;width: 100%;border-radius: 2px;position: absolute;top: 0;left: 0;}
 
+/*編輯框*/
 .modal-dialog{margin:30px auto;}
-
+.modal-header{padding: 10px 15px 8px 15px;}
+/*編輯框-查詢*/
 .kekTable-search .modal-body{padding: 0;}
 .kekTable-search .caret{margin-left: 2px;}
-.kekTable-search .kekTable-search-block{overflow: auto;padding: 15px;}
-.kekTable-search .kekTable-search-block li{margin: 6px 0;white-space: nowrap;}
-.kekTable-search .kekTable-search-block-sub{display: inline-block;border: 1px dashed #adadad;border-radius: 4px;padding: 0 6px;}
-.kekTable-search .kekTable-search-bool{vertical-align: top;}
-.kekTable-search .kekTable-search-item{border: 1px solid #ddd;border-radius: 4px;padding: 2px;display: inline-block;margin: 6px 0;}
-.kekTable-search .kekTable-search-item-first{margin-left: 54px;}
-.kekTable-search .kekTable-search-itemList{min-width: 0;}
-.kekTable-search .kekTable-search-itemList>li>span{padding: 3px 20px;font-weight: 400;color: #333;white-space: nowrap;cursor: pointer;display: block;}
-.kekTable-search .kekTable-search-itemList>li>span:hover{color: #262626;background-color: #f5f5f5;}
-.kekTable-search .kekTable-search-itemValue{width: 100px;display: inline-block;}
-
+.kekTable-search-block{overflow: auto;padding: 15px;}
+.kekTable-search-block li{margin: 6px 0;white-space: nowrap;}
+.kekTable-search-block-sub{display: inline-block;border: 1px dashed #adadad;border-radius: 4px;padding: 0 6px;}
+.kekTable-search-bool{vertical-align: top;}
+.kekTable-search-item{border: 1px solid #ddd;border-radius: 4px;padding: 2px;display: inline-block;margin: 6px 0;}
+.kekTable-search-item-first{margin-left: 54px;}
+.kekTable-search-itemList{min-width: 0;}
+.kekTable-search-itemList>li>span{padding: 3px 20px;font-weight: 400;color: #333;white-space: nowrap;cursor: pointer;display: block;}
+.kekTable-search-itemList>li>span:hover{color: #262626;background-color: #f5f5f5;}
+.kekTable-search-itemValue{width: 100px;display: inline-block;}
+/*編輯框-修改*/
 .kekTable-edit .modal-body{padding: 15px 0;}
 .kekTable-edit-block{overflow: auto;}
 .kekTable-edit-block li{overflow: hidden;}
-.kekTable-edit-block li .form-group{float: left;margin-left: 10px;}
-.kekTable-edit-block li .form-group input{padding: 6px 12px;}
-.kekTable-edit-block li .kekTable-edit-cling{margin-left: 0;}
+.kekTable-edit-block li .form-group{float: left;margin-left: 15px;}
+.kekTable-edit-block li .input-group .input-group-addon{width: auto;}
+/*编辑框-排序*/
+.kekTable-sort .modal-body{overflow: hidden;}
+.kekTable-sort-list{float: left;width: 100%;margin-right: -80px;padding-right: 95px;}
+.kekTable-sort-block li{cursor: pointer;}
+.kekTable-sort-block li:hover{color: #555;text-decoration: none;background-color: #f5f5f5;}
+.kekTable-sort-ctrl{float: left;width: 80px;}
+.kekTable-sort-ctrl .btn-group-vertical,.kekTable-sort-ctrl .btn-group{margin-bottom: 10px;}
+.kekTable-sort-ctrl .dropdown-menu li{padding: 3px 20px;font-weight: 400;color: #333;white-space: nowrap;cursor: pointer;display: block;}
+.kekTable-sort-ctrl .dropdown-menu li:hover{color: #555;background-color: #f5f5f5;}

@@ -39,47 +39,34 @@ var $testDM;
 			 */
 			showFooter:true,
 			/**
-			 * @desc 是否显示分页
-			 * @default true
-			 * @var {?bool} kekTable~_options#showPaging
+			 * @var {?bool} [kekTable~_options#showPaging=true] - 是否显示分页
 			 */
 			showPaging:true,
 			/**
 			 * @summary 面板的颜色 - class - bootstrap的panel样式
 			 * @desc 'panel-primary'(深蓝)、'panel-success'(浅绿)、'panel-info'(浅蓝)、'panel-warning'(浅黄)、'panel-danger'(浅灰)、'panel-default'(浅灰)
-			 * @default 'panel-primary'
-			 * @var {?string} kekTable~_options#panelColor
+			 * @var {?string} [kekTable~_options#panelColor='panel-primary']
 			 */
 			panelColor:'panel-primary',
 			/**
-			 * @summary 表格总宽度 - style的width属性。设置了colsWidth之后会自动计算表格的总宽度
-			 * @desc '100%'、'auto'
-			 * @default '100%'
-			 * @var {?string} kekTable~_options#tableWidth
+			 * @summary 表格总宽度需要加單位px - style的width属性。设置了colsWidth之后会自动计算表格的总宽度
+			 * @var {?string} [kekTable~_options#tableWidth='100%'] - '100%'、'auto'
 			 */
 			tableWidth:'100%',
 			/**
-			 * @desc 是否可以鼠标悬停背景
-			 * @default true
-			 * @var {?bool} kekTable~_options#canRowHover
+			 * @var {?bool} kekTable~_options#canRowHover=true - 是否可以鼠标悬停背景
 			 */
 			canRowHover:true,
 			/**
-			 * @desc 是否可以单击行
-			 * @default true
-			 * @var {?bool} kekTable~_options#canRowSelect
+			 * @var {?bool} [kekTable~_options#canRowSelect=true] - 是否可以单击行
 			 */
 			canRowSelect:true,
 			/**
-			 * @desc 表格是否可以折叠 同 bootstrap的collapse
-			 * @default false
-			 * @var {?bool} kekTable~_options#isCollapse
+			 * @var {?bool} [kekTable~_options#isCollapse=false] - 表格是否可以折叠 同 bootstrap的collapse
 			 */
 			isCollapse:false,
 			/**
-			 * @desc collapse是否默认展开 同 bootstrap的collapse的aria-expanded属性
-			 * @default true
-			 * @var {?bool} kekTable~_options#collapseExpanded
+			 * @var {?bool} [kekTable~_options#collapseExpanded=true] - collapse是否默认展开 同 bootstrap的collapse的aria-expanded属性
 			 */
 			collapseExpanded:true,
 			/**
@@ -87,24 +74,16 @@ var $testDM;
 			 * @desc 工具栏按钮
 			 */
 			/**
-			 * @name __toolbarItem#id
-			 * @desc id标识(必需)
-			 * @type {string}
+			 * @var {!string} __toolbarItem#id - id标识(必需)
 			 */
 			/**
-			 * @name __toolbarItem#icon
-			 * @desc 图标,bootstrap的glyphicon样式
-			 * @type {string}
+			 * @var {string} __toolbarItem#icon - 图标,bootstrap的glyphicon样式
 			 */
 			/**
-			 * @name __toolbarItem#label
-			 * @desc 按钮上的文字
-			 * @type {string}
+			 * @var {string} __toolbarItem#label - 按钮上的文字
 			 */
 			/**
-			 * @name __toolbarItem#title
-			 * @desc 按钮上的提示文字title
-			 * @type {string}
+			 * @var {string} __toolbarItem#title - 按钮上的提示文字title
 			 */
 			/**
 			 * @function __toolbarItem#action
@@ -128,29 +107,25 @@ var $testDM;
 			 */
 			toolbar:[[{id:'refresh'}],[{id:'search'},{id:'sort'}],[{id:'add'},{id:'edit'},{id:'delete'}]],
 			/**
-			 * @desc 是否是调试模式。调试模式会检查各个参数是否设置正确
-			 * @default true
-			 * @var {?bool} kekTable~_options#isDebug
+			 * @var {?bool} [kekTable~_options#isDebug=false] - 是否是调试模式。调试模式会检查各个参数是否设置正确
 			 */
-			isDebug:true,
+			isDebug:false,
 			/**
-			 * @desc 查询的ajax地址(必需)
-			 * @default null
-			 * @var {!string} kekTable~_options#listURL
+			 * @var {!string} [kekTable~_options#listURL=null] - 查询的ajax地址(必需)
 			 */
 			listURL:null,
 			/**
-			 * @desc 新增的ajax地址(设为null将通过adjustOptions调整为listURL)
-			 * @default null
-			 * @var {?string} kekTable~_options#insertURL
+			 * @var {?string} [kekTable~_options#insertURL=null] - 新增的ajax地址(设为null将通过adjustOptions调整为listURL)
 			 */
 			insertURL:null,
 			/**
-			 * @desc 字段配置(必需)
-			 * @default null
-			 * @var {!Object.<_column>} kekTable~_options#columns
+			 * @var {!Object.<_column>} [kekTable~_options#columns=null] - 字段配置(必需)
 			 */
 			columns:null,
+			/**
+			 * @var {?int} [kekTable~options#editDialogWidth=600] - 修改編輯框的寬度
+			 */
+			editDialogWidth:600,
 		},
 		/**
 		 * @namespace _column
@@ -165,10 +140,6 @@ var $testDM;
 			 * @var {?string} [_column#editTitle=__column#title] - 编辑框中栏位上面的标题
 			 */
 			editTitle:null,
-			/**
-			 * @var {?string} [_column#editLabel=null] - 编辑框中栏位后面的标签
-			 */
-			editLabel:null,
 			/**
 			 * @var {?bool} [_column#editClingPre=false] - 编辑框中inline栏位紧贴着前面一个栏位
 			 */
@@ -198,6 +169,15 @@ var $testDM;
 			 * @var {?bool} [_column#colLengthByte=true] - 栏位的长度按byte计算,false将按char计算
 			 */
 			colLengthByte:true,
+			/**
+			 * @summary 表格栏位的合计公式(满足所有条件的数据，非单页数据)
+			 * @var {?string} [_column#listPageSummary=null] - 'SUM'(求和)、'COUNT'(计数)、'AVG'(平均)、'MAX'(最大)、'MIN'(最小)、'STDDEV'(标准差)、'VARIANCE'(协方差)、'MEDIAN'(中间数)
+			 */
+			colTotalSummary:null,
+			/**
+			 * @var {?bool} [_column#colTotalAll=true] - 栏位合计公式是否统计所有值(oracle中聚合函数的DISTINCT、ALL)
+			 */
+			colTotalAll:true,
 		};
 			
 			
@@ -432,8 +412,79 @@ var $testDM;
 		/**
 		 * @var {string} Plugin#regional#buttonCancel - 取消按钮文字
 		 */
-		buttonCancel:'取消'
-		
+		buttonCancel:'取消',
+		/**
+		 * @var {string} Plugin#regional#totalSum - 总计公式[SUM]的文字
+		 */
+		totalSum:'总和',
+		/**
+		 * @var {string} Plugin#regional#totalAvg - 总计公式[AVG]的文字
+		 */
+		totalAvg:'总均值',
+		/**
+		 * @var {string} Plugin#regional#totalMax - 总计公式[MAX]的文字
+		 */
+		totalMax:'最大值',
+		/**
+		 * @var {string} Plugin#regional#totalMin - 总计公式[MIN]的文字
+		 */
+		totalMin:'最小值',
+		/**
+		 * @var {string} Plugin#regional#totalCount - 总计公式[COUNT]的文字
+		 */
+		totalCount:'总计数',
+		/**
+		 * @var {string} Plugin#regional#totalStddev - 总计公式[STDDEV]的文字
+		 */
+		totalStddev:'总标准差',
+		/**
+		 * @var {string} Plugin#regional#totalVariance - 总计公式[VARIANCE]的文字
+		 */
+		totalVariance:'总协方差',
+		/**
+		 * @var {string} Plugin#regional#totalMedian - 总计公式[MEDIAN]的文字
+		 */
+		totalMedian:'中间值',
+		/**
+		 * @var {string} Plugin#regional#sortTitle - 排序框标题
+		 */
+		sortTitle:'排序',
+		/**
+		 * @var {string} Plugin#regional#sortCommit - 排序框执行排序的按钮文字
+		 */
+		sortCommit:'排序',
+		/**
+		 * @var {string} Plugin#regional#sortAdd - 排序框添加按钮title
+		 */
+		sortAdd:'添加',
+		/**
+		 * @var {string} Plugin#regional#sortDelete - 排序框删除按钮title
+		 */
+		sortDelete:'刪除',
+		/**
+		 * @var {string} Plugin#regional#sortMoveUp - 排序框上移按钮title
+		 */
+		sortMoveUp:'上移',
+		/**
+		 * @var {string} Plugin#regional#sortMoveDown - 排序框下移按钮title
+		 */
+		sortMoveDown:'下移',
+		/**
+		 * @var {string} Plugin#regional#sortAsc - 排序框从小到大按钮文字
+		 */
+		sortAsc:'從小到大',
+		/**
+		 * @var {string} Plugin#regional#sortDesc - 排序框从大到小按钮文字
+		 */
+		sortDesc:'從大到小',
+		/**
+		 * @var {string} Plugin#regional#sortNullsLast - 排序框空值在后按钮文字
+		 */
+		sortNullsLast:'空值在後',
+		/**
+		 * @var {string} Plugin#regional#sortNullsFirst - 排序框空值在前按钮文字
+		 */
+		sortNullsFirst:'空值在前',
 	};
 	
 })(jQuery,window,document);
