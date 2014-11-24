@@ -15,11 +15,11 @@
 		<!--宽度=table宽度+3-->
 		<div id="tab" class="kekTable-listPanel panel-group" style="width: 653px;margin: auto;margin-top: 20px;">
 			<div class="panel panel-primary">
-		  		<div class="panel-heading" id="tabCollapseHead" data-toggle="collapse" data-target="#tabCollapseGroup" aria-expanded="true" aria-controls="tabCollapseGroup">
+		  		<div class="panel-heading" id="tabCollapseHead" data-toggle="collapse" data-target="#tabCollapseGroup" aria-expanded="true">
 		  			<h3 class="pull-left">表格标题</h3>
 		  			<h5 class="glyphicon glyphicon-chevron-down pull-right"></h5>
 		  		</div>
-		  		<div id="tabCollapseGroup" class="panel-collapse collapse in" aria-labelledby="kekCollapseHead" aria-expanded="true">
+		  		<div id="tabCollapseGroup" class="panel-collapse collapse in" aria-expanded="true">
 			  		<div class="panel-body">
 			  			<div class="btn-toolbar" role="toolbar">
 			  				<div class="btn-group btn-group-sm">
@@ -41,7 +41,7 @@
 						</div>
 			  		</div>
 			  		<div class="kekTable-table-group">
-						<table class="table table-hover table-bordered table-condensed" style="width: 648px;">
+						<table class="table table-hover table-bordered table-condensed">
 							<colgroup>
 								<col style="width:50px;" />
 								<col style="width:100px;" />
@@ -64,11 +64,209 @@
 									<td>1</td>
 								</tr>
 							</tbody>
-							<tfoot>
-								<tr><td colspan="4">字段一：小计 100(KG)，总计 1000(KG)</td></tr>
-								<tr><td colspan="4">字段一：小计 100(KG)</td></tr>
-							</tfoot>
 						</table>
+					</div>
+					<div class="kekTable-table-summary">
+						<h5>字段一：总计 1000(KG)</h5>
+						<h5>字段一：小计 100(KG)</h5>
+					</div>
+					<div class="panel-footer">
+						<nav>
+		 					<ul class="pagination">
+								<li class="disabled"><span>&laquo;</span></li>
+								<li class="active"><span>1</span></li>
+		    					<li><a href="#">2</a></li>
+		    					<li><a href="#">3</a></li>
+		    					<li><a href="#">4</a></li>
+		    					<li><a href="#">5</a></li>
+		    					<li><a href="#">&raquo;</a></li>
+							</ul>
+						</nav>
+					</div>
+				</div>
+			</div>
+			<div class="loading" style="display: none;">
+				<div class="bk-opacity"></div>
+				<p><span class="alert alert-info">now loading...</span></p>
+			</div>
+		</div>
+		<div id="single" class="kekTable-listPanel panel-group" style="width: 653px;margin: auto;margin-top: 20px;">
+			<div class="panel panel-primary">
+		  		<div class="panel-heading" data-toggle="collapse" data-target="#singleCollapseGroup" aria-expanded="true" >
+		  			<h3 class="pull-left">表格标题</h3>
+		  			<h5 class="glyphicon glyphicon-chevron-down pull-right"></h5>
+		  		</div>
+		  		<div id="singleCollapseGroup" class="panel-collapse collapse in" aria-expanded="true">
+			  		<div class="panel-body">
+			  			<div class="btn-toolbar" role="toolbar">
+			  				<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span>刷新</span>
+						  	</div>
+							<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-search"></span>查询</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-sort"></span>排序</span>
+						  	</div>
+						  	<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-plus"></span>新增</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-edit"></span>修改</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-minus"></span>删除</span>
+						  	</div>
+						  	<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-envelope"></span>代理邮件</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-export"></span>导出</span>
+						  	</div>
+						</div>
+			  		</div>
+			  		<div class="kekTable-table-group">
+						<ul class="kekTable-single-table kekTable-edit-block">
+		      				<li>
+		      					<div class="form-group has-feedback">
+									<div class="input-group">
+								    	<div class="input-group-addon">工号</div>
+								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
+								    	<!--editClingPre,ie8需要border-left-->
+								    	<div class="input-group-addon" style="width:100px;border-left-width: 0;"></div>
+								    </div>
+								</div>
+								<div class="form-group has-feedback">
+									<div class="input-group">
+								    	<div class="input-group-addon">工号</div>
+								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
+								    	<div class="input-group-addon" style="width:100px;border-left-width: 0;"></div>
+								    </div>
+								</div>
+		      				</li>
+		      				<li>
+		      					<div class="form-group has-feedback">
+									<div class="input-group">
+								    	<div class="input-group-addon">工号</div>
+								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
+								    	<!--editClingPre,ie8需要border-left-->
+								    	<div class="input-group-addon" style="width:100px;border-left-width: 0;"></div>
+								    </div>
+								</div>
+								<div class="form-group has-feedback">
+									<div class="input-group">
+								    	<div class="input-group-addon">工号</div>
+								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
+								    	<div class="input-group-addon" style="width:100px;border-left-width: 0;"></div>
+								    </div>
+								</div>
+		      				</li>
+		      				<li>
+		      					<div class="form-group has-feedback">
+									<div class="input-group">
+								    	<div class="input-group-addon">工号</div>
+								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
+								    	<!--editClingPre,ie8需要border-left-->
+								    	<div class="input-group-addon" style="width:100px;border-left-width: 0;"></div>
+								    </div>
+								</div>
+								<div class="form-group has-feedback">
+									<div class="input-group">
+								    	<div class="input-group-addon">工号</div>
+								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
+								    	<div class="input-group-addon" style="width:100px;border-left-width: 0;"></div>
+								    </div>
+								</div>
+		      				</li>
+		      			</ul>
+					</div>
+					<div class="kekTable-table-summary">
+						<h5>字段一：总计 1000(KG)</h5>
+						<h5>字段一：小计 100(KG)</h5>
+					</div>
+					<div class="panel-footer">
+						<nav>
+		 					<ul class="pagination">
+								<li class="disabled"><span>&laquo;</span></li>
+								<li class="active"><span>1</span></li>
+		    					<li><a href="#">2</a></li>
+		    					<li><a href="#">3</a></li>
+		    					<li><a href="#">4</a></li>
+		    					<li><a href="#">5</a></li>
+		    					<li><a href="#">&raquo;</a></li>
+							</ul>
+						</nav>
+					</div>
+				</div>
+			</div>
+			<div class="loading" style="display: none;">
+				<div class="bk-opacity"></div>
+				<p><span class="alert alert-info">now loading...</span></p>
+			</div>
+		</div>
+		<div id="frozen" class="kekTable-listPanel panel-group" style="width: 653px;margin: auto;margin-top: 20px;">
+			<div class="panel panel-primary">
+		  		<div class="panel-heading" data-toggle="collapse" data-target="#frozenCollapseGroup" aria-expanded="true">
+		  			<h3 class="pull-left">Frozen</h3>
+		  			<h5 class="glyphicon glyphicon-chevron-down pull-right"></h5>
+		  		</div>
+		  		<div id="frozenCollapseGroup" class="panel-collapse collapse in" aria-expanded="true">
+			  		<div class="panel-body">
+			  			<div class="btn-toolbar" role="toolbar">
+			  				<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span>刷新</span>
+						  	</div>
+							<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-search"></span>查询</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-sort"></span>排序</span>
+						  	</div>
+						  	<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-plus"></span>新增</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-edit"></span>修改</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-minus"></span>删除</span>
+						  	</div>
+						  	<div class="btn-group btn-group-sm">
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-envelope"></span>代理邮件</span>
+						  		<span class="btn btn-default"><span class="glyphicon glyphicon-export"></span>导出</span>
+						  	</div>
+						</div>
+			  		</div>
+			  		<div class="kekTable-table-group">
+			  			<table class="table table-hover table-bordered table-condensed kekTable-table-frozen">
+							<colgroup>
+								<col style="width:50px;" />
+							</colgroup>
+							<thead>
+								<tr>
+									<th>#</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>100</td>
+								</tr>
+							</tbody>
+						</table>
+						<table class="table table-hover table-bordered table-condensed">
+							<colgroup>
+								<col style="width:50px;" />
+								<col style="width:100px;" />
+								<col style="width:200px;" />
+								<col style="width:500px;" />
+							</colgroup>
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>字段一</th>
+									<th>字段二</th>
+									<th>字段三</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>100</td>
+									<td>1</td>
+									<td>1</td>
+									<td>1</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="kekTable-table-summary">
+						<h5>字段一：总计 1000(KG)</h5>
+						<h5>字段一：小计 100(KG)</h5>
 					</div>
 					<div class="panel-footer">
 						<nav>
@@ -203,7 +401,7 @@
 									<div class="input-group">
 								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
 								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
-								    	<input type="text" class="form-control" placeholder="部门名称" disabled="" style="width:100px;">
+								    	<div class="input-group-addon" style="width:100px;"></div>
 								    </div>
 								</div>
 								<div class="form-group has-feedback">
@@ -211,7 +409,7 @@
 									<div class="input-group">
 								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
 								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
-								    	<input type="text" class="form-control" placeholder="部门名称" disabled="" style="width:100px;">
+								    	<div class="input-group-addon" style="width:100px;"></div>
 								    </div>
 								</div>
 		      				</li>
@@ -221,7 +419,7 @@
 									<div class="input-group">
 								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
 								    	<input type="text" class="form-control" placeholder="電子窗口" style="width:70px;">
-								    	<input type="text" class="form-control" placeholder="部门名称" disabled="" style="width:100px;">
+								    	<div class="input-group-addon" style="width:100px;"></div>
 								    </div>
 								</div>
 		      				</li>

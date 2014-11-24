@@ -49,8 +49,8 @@ var $testDM;
 			 */
 			panelColor:'panel-primary',
 			/**
-			 * @summary 表格总宽度需要加單位px - style的width属性。设置了colsWidth之后会自动计算表格的总宽度
-			 * @var {?string} [kekTable~_options#tableWidth='100%'] - '100%'、'auto'
+			 * @summary 表格总宽度需要加單位px - style的width属性。
+			 * @var {?string} [kekTable~_options#tableWidth='100%'] - '100%'、'auto'(colgroup的和+3)
 			 */
 			tableWidth:'100%',
 			/**
@@ -119,13 +119,32 @@ var $testDM;
 			 */
 			insertURL:null,
 			/**
-			 * @var {!Object.<_column>} [kekTable~_options#columns=null] - 字段配置(必需)
+			 * @var {!Object.<Object.<_column>>} [kekTable~_options#columns=null] - 字段配置(必需)
 			 */
 			columns:null,
 			/**
 			 * @var {?int} [kekTable~options#editDialogWidth=600] - 修改編輯框的寬度
 			 */
 			editDialogWidth:600,
+			/**
+			 * @var {?Array.<Array.<int>>} [kekTable~options#tableRelations=null] - 多表间的关联(二维数组(后台数据库字段下标))
+			 * @example 工号关联。
+			 * // returns 后台下标1字段=后台下标4字段
+			 * tableRelations:[[1,4]]
+			 */
+			tableRelations:null,
+			/**
+			 * @var {?string} [kekTable~options#dataType='db'] - 取资料的方式。'db':从后台sql、'js':'从js变量'
+			 */
+			dataType:'DB',
+			/**
+			 * @var {?int} [kekTable~options#frozenNum=null] - 冻结前几列
+			 */
+			frozenNum:null,
+			/**
+			 * @var {?int} [kekTable~options#rowNum=20] - 显示多少笔。设为1的话，采用单笔显示方式
+			 */
+			rowNum:20,
 		},
 		/**
 		 * @namespace _column
@@ -133,11 +152,19 @@ var $testDM;
 		 */
 		_column={
 			/**
-			 * @var {?string} [_column#title=null] - 显示的表格栏位标题
+			 * @var {?int} [_column#tableId=null] - 后台数据库表名数组的下标，该字段所属的表，不设置代表该栏位非数据库栏位
 			 */
-			title:null,
+			tableId:null,
 			/**
-			 * @var {?string} [_column#editTitle=__column#title] - 编辑框中栏位上面的标题
+			 * @var {?int} [_column#colId=null] - 后台数据库字段数组的下标，不设置代表该栏位非数据库栏位
+			 */
+			colId:null,
+			/**
+			 * @var {?string} [_column#listTitle=null] - 显示的表格栏位标题
+			 */
+			listTitle:null,
+			/**
+			 * @var {?string} [_column#editTitle=__column#listTitle] - 编辑框中栏位上面的标题
 			 */
 			editTitle:null,
 			/**
@@ -179,6 +206,7 @@ var $testDM;
 			 */
 			colTotalAll:true,
 		};
+		
 			
 			
 			
@@ -233,11 +261,13 @@ var $testDM;
 	Plugin.prototype={
 		//插件初始化 this=Plugin
 		_init:function(){
+			console.log(_pluginName);
+			_pluginName='2';
 			this._adjustOptions();
 		},
 		//初始化时调整参数
 		_adjustOptions:function(){
-			
+			console.log(_pluginName);
 		},
 		//显示loading遮罩
 		_showLoading:function(){
