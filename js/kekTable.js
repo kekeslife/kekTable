@@ -27,19 +27,7 @@ var $testDM;
 			 */
 			title:null,
 			/**
-			 * @desc 是否显示标题
-			 * @default true
-			 * @var {?bool} kekTable~_options#showTitle
-			 */
-			showTitle:true,
-			/**
-			 * @desc 是否显示脚注
-			 * @default true
-			 * @var {?bool} kekTable~_options#showFooter
-			 */
-			showFooter:true,
-			/**
-			 * @var {?bool} [kekTable~_options#showPaging=true] - 是否显示分页
+			 * @var {?bool} [kekTable~_options#showPaging=true] - 是否显示分页，false将查询出所有的记录
 			 */
 			showPaging:true,
 			/**
@@ -54,7 +42,7 @@ var $testDM;
 			 */
 			tableWidth:'100%',
 			/**
-			 * @var {?bool} kekTable~_options#canRowHover=true - 是否可以鼠标悬停背景
+			 * @var {?bool} kekTable~_options#canRowHover=true - 是否可以鼠标悬停背景,冻结表格会影响性能
 			 */
 			canRowHover:true,
 			/**
@@ -145,6 +133,19 @@ var $testDM;
 			 * @var {?int} [kekTable~options#rowNum=20] - 显示多少笔。设为1的话，采用单笔显示方式
 			 */
 			rowNum:20,
+			/**
+			 * @var {?string} [kekTable~options#detailTable=null] - 从表id。
+			 */
+			detailTable:null,
+			/**
+			 * @var {?string} [kekTable~options#detailTable=null] - 主表id。绘制主从表界面
+			 */
+			masterTable:null,
+			/**
+			 * @summary 主表修改删除时，从表的联级操作类型
+			 * @var {?string} [kekTable~options#foreignType=default] - 'default'(按照数据库)、'cascade'(联级修改从表)、'restrict'(从表有资料禁止修改)
+			 */
+			foreignType:'default',
 		},
 		/**
 		 * @namespace _column
@@ -205,6 +206,10 @@ var $testDM;
 			 * @var {?bool} [_column#colTotalAll=true] - 栏位合计公式是否统计所有值(oracle中聚合函数的DISTINCT、ALL)
 			 */
 			colTotalAll:true,
+			/**
+			 * @var {?int} [_column#detailKeyId=null] - 主表中设置此项。关联从表的字段(后台字段数组下标)
+			 */
+			detailKeyId:null,
 		};
 		
 			
