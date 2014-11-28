@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Namespace: _column</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Namespace: _column</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        _column
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">配置columns中的项</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        <dl>
+            
+<dt>
+    <h4 class="name" id="colId"><span class="type-signature">(nullable) </span>colId<span class="type-signature"> :int</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        后台数据库字段数组的下标，不设置代表该栏位非数据库栏位
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="colLength"><span class="type-signature">(nullable) </span>colLength<span class="type-signature"> :int</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        栏位的长度，null则为无限制
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="colLengthByte"><span class="type-signature">(nullable) </span>colLengthByte<span class="type-signature"> :bool</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        栏位的长度按byte计算,false将按char计算
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>true</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="colTotalAll"><span class="type-signature">(nullable) </span>colTotalAll<span class="type-signature"> :bool</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        栏位合计公式是否统计所有值(oracle中聚合函数的DISTINCT、ALL)
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>true</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="detailKeyId"><span class="type-signature">(nullable) </span>detailKeyId<span class="type-signature"> :int</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        主表中设置此项。关联从表的字段(后台字段数组下标)
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="editClingPre"><span class="type-signature">(nullable) </span>editClingPre<span class="type-signature"> :bool</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        编辑框中inline栏位紧贴着前面一个栏位
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>false</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="editDisplay"><span class="type-signature">(nullable) </span>editDisplay<span class="type-signature"> :string</span></h4>
+
+    
+    <p class="summary">编辑框中栏位和前一个栏位在同一行</p>
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        'block'(换行)、'inline'(同一行)
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>'block'</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="editIndex"><span class="type-signature">(nullable) </span>editIndex<span class="type-signature"> :int</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        给值后此栏位将置于编辑框中，编辑框的栏位顺序按此
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="editPlaceholder"><span class="type-signature">(nullable) </span>editPlaceholder<span class="type-signature"> :string</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        编辑框栏位的placeholder属性
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="editTitle"><span class="type-signature">(nullable) </span>editTitle<span class="type-signature"> :string</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        编辑框中栏位上面的标题
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>__column#listTitle</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="editWidth"><span class="type-signature">(nullable) </span>editWidth<span class="type-signature"> :int</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        编辑框栏位的宽度
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>100</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="listPageSummary"><span class="type-signature">(nullable) </span>listPageSummary<span class="type-signature"> :string</span></h4>
+
+    
+    <p class="summary">表格栏位的合计公式(满足所有条件的数据，非单页数据)</p>
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        'SUM'(求和)、'COUNT'(计数)、'AVG'(平均)、'MAX'(最大)、'MIN'(最小)、'STDDEV'(标准差)、'VARIANCE'(协方差)、'MEDIAN'(中间数)
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="listTitle"><span class="type-signature">(nullable) </span>listTitle<span class="type-signature"> :string</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        显示的表格栏位标题
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="tableId"><span class="type-signature">(nullable) </span>tableId<span class="type-signature"> :int</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        后台数据库表名数组的下标，该字段所属的表，不设置代表该栏位非数据库栏位
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Plugin.html">Plugin</a></li></ul><h3>Namespaces</h3><ul><li><a href="__toolbarItem.html">__toolbarItem</a></li><li><a href="_column.html">_column</a></li><li><a href="kekTable.html">kekTable</a></li><li><a href="kekTable-_options.html">_options</a></li><li><a href="Plugin_regional.html">regional</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha10</a> on Wed Nov 26 2014 10:12:56 GMT+0800 (CST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

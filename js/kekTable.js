@@ -22,10 +22,10 @@ var $testDM;
 		_options={
 			/**
 			 * @desc 表格标题
-			 * @default null
+			 * @default ''
 			 * @var {?string} kekTable~_options#title
 			 */
-			title:null,
+			title:'',
 			/**
 			 * @var {?bool} [kekTable~_options#showPaging=true] - 是否显示分页，false将查询出所有的记录
 			 */
@@ -95,7 +95,7 @@ var $testDM;
 			 */
 			toolbar:[[{id:'refresh'}],[{id:'search'},{id:'sort'}],[{id:'add'},{id:'edit'},{id:'delete'}]],
 			/**
-			 * @var {?bool} [kekTable~_options#isDebug=false] - 是否是调试模式。调试模式会检查各个参数是否设置正确
+			 * @var {?bool} [kekTable~_options#isDebug=false] - 是否是调试模式。调试模式会检查各个参数是否设置正确。ie10+
 			 */
 			isDebug:false,
 			/**
@@ -138,7 +138,7 @@ var $testDM;
 			 */
 			detailTable:null,
 			/**
-			 * @var {?string} [kekTable~options#detailTable=null] - 主表id。绘制主从表界面
+			 * @var {?string} [kekTable~options#detailTable=null] - 主表id。绘制主从表界面，要求先初始化主表。
 			 */
 			masterTable:null,
 			/**
@@ -146,6 +146,11 @@ var $testDM;
 			 * @var {?string} [kekTable~options#foreignType=default] - 'default'(按照数据库)、'cascade'(联级修改从表)、'restrict'(从表有资料禁止修改)
 			 */
 			foreignType:'default',
+			/**
+			 * @function kekTable~options#beforeRefresh
+			 * @
+			 */
+			beforeRefresh:null,
 		},
 		/**
 		 * @namespace _column
@@ -226,9 +231,19 @@ var $testDM;
 		/**
 		 * @name Plugin~_element
 		 * @desc 插件的id
-		 * @type {jQUery} 
+		 * @type {dom} 
 		 */
 		this._element=element;
+		/**
+		 * @namespace _elements
+		 * @desc 内部的jQuery对象
+		 */
+		this._elements={
+			/**
+			 * @var {jQuery} _elements#plugin_panel - Plugin->panel
+			 */
+			$plugin_panel:null,
+		};
 		/**
 		 * @name Plugin~_options
 		 * @desc 插件的配置参数
@@ -243,7 +258,7 @@ var $testDM;
 		this._pluginName=_pluginName;
 		/**
 		 * @typedef Plugin~_tableValues
-		 * @desc 当年页面上的一系列值。供外部接口请用extend
+		 * @desc 当年页面上的一系列值。供外部接口（$.extend）
 		 * @prop {object[]} [curPageRecords=[]] - 当前页面上的所有数据库值
 		 * @prop {int} [curRecordNum=null] - 当前选中的行号
 		 * @prop {string} [tableStatus=null] - 表格狀態，一般為__toolbarIte.id
@@ -264,21 +279,204 @@ var $testDM;
 	 * @augments Plugin
 	 */
 	Plugin.prototype={
+		//内部方法
 		//插件初始化 this=Plugin
 		_init:function(){
-			console.log(_pluginName);
-			_pluginName='2';
+			if(this._options.isDebug)
+				this._debug();
 			this._adjustOptions();
+			this._createPlugin();
+		},
+		//检核参数配置
+		_debug:function(){
+			var opt=this._options;
+			//panelColor
+			if($.inArray(opt.panelColor,['panel-primary','panel-success','panel-info','panel-warning','panel-danger','panel-default'])===-1)
+				console.warn('panelColor非内建值，当然你可以使用自定义的css');
+			//tableWidth
+			if(!/^(\d+%|\d+px|\d+in|\d+cm|\d+mm|\d+em|\d+ex|\d+pt|\d+pc|auto)$/.test(opt.tableWidth))
+				throw 'tableWidth请使用正确的宽度单位';
+			//isCollapse && collapseExpanded
+			if($.inArray(opt.isCollapse,[true,false])===-1)
+				throw 'isCollapse类型错误';
+			else if(!opt.isCollapse && this._options.collapseExpanded != _options.collapseExpanded)
+				console.warn('未开启isCollapse，不用设置collapseExpanded');
+			//toolbar
+			if(!opt.toolbar || opt.toolbar.length===0)
+				console.log('未开启工具栏');
+			else{
+				if($.type(opt.toolbar)!=='array')
+					throw 'toolbar必需是数组';
+				for(var i=0,j=opt.toolbar.length;i<j;i++){
+					if($.type(opt.toolbar[i])!=='array')
+						throw 'toolbar按钮组必需是数组';
+					if(!opt.toolbar[i].id || $.type(opt.toolbar[i].id)!=='string')
+						throw 'toolbar.id必需要有(string类型)';
+					if(opt.toolbar[i].icon || $.type(opt.toolbar[i].icon)!=='string')
+						throw 'toolbar.icon必需是string类型';
+					if(opt.toolbar[i].label || $.type(opt.toolbar[i].label)!=='string')
+						throw 'toolbar.label必需是string类型';
+					if(opt.toolbar[i].title || $.type(opt.toolbar[i].title)!=='string')
+						throw 'toolbar.title必需是string类型';
+					if(opt.toolbar[i].action || $.type(opt.toolbar[i].action)!=='function')
+						throw 'toolbar.action必需是function类型';
+					if($.inArray(opt.toolbar[i].id,['refresh','search','sort','add','edit','delete','export'])===-1){
+						if(!opt.toolbar[i].icon && !opt.toolbar[i].label)
+							console.warn(opt.toolbar[i].id+'按钮没有图标也没有文字');
+						if(!opt.toolbar[i].action)
+							throw opt.toolbar[i].id+'没有action';
+						
+					}
+				}
+			}
+			
+			//something...
 		},
 		//初始化时调整参数
 		_adjustOptions:function(){
-			console.log(_pluginName);
+			
 		},
+		/**==========建立插件==========
+		 * Plugin
+		 *   Panel
+		 *     Head
+		 * 		 H3
+		 *       H5
+		 *     Collapse
+		 *       Toolbar
+		 *       Table-Group
+		 *       Table-Summary
+		 *       Table-Detail
+		 *       Pagging
+		 *   Loading
+		 */
+		_createPlugin:function(){
+			var $frag=$(document.createDocumentFragment());
+			$frag.append(this._createPlugin_panel()).append(this._createPlugin_loading());
+			$(this._element).addClass('kekTable-listPanel panel-group')
+							.append($frag);
+		},
+		_createPlugin_panel:function(){
+			this._elements.$plugin_panel=$('<div>');
+			var $el=this._elements.$plugin_panel;
+			$el.addClass('panel '+this._options.panelColor)
+			  .css('width',this._options.tableWidth)
+			  .append(this._createPanel_head())
+			  .append(this._createPanel_collapse());
+			return $el;
+		},
+		_createPanel_head:function(){
+			var $el=$('<div>');
+			$el.addClass('panel-heading');
+			//展开
+			if(this._options.isCollapse)
+				$el.attr({
+					'data-toggle':'collapse',
+					'data-target':'#'+this._element.id+'CollapseGroup'
+				}).append('<h5 class="glyphicon glyphicon-chevron-down pull-right"></h5>');
+			$el.append($('<h3 class="pull-left">'+this._options.title+'</h3>'));
+			return $el;
+		},
+		_createPanel_collapse:function(){
+			var $el=$('<div>');
+			$el.attr('id',this._element.id+'CollapseGroup')
+			  .addClass('panel-collapse collapse'+(this._options.collapseExpanded?' in':''))
+			  .append(this._createCollapse_toolbar())
+			  
+		},
+		_createCollapse_toolbar:function(){
+			var $el=$('<div>'),tb=this._options.toolbar;
+			$el.addClass('panel-body');
+			if(tb && tb.length>0){
+				var $tb=$('<div>');
+				$tb.addClass('btn-toolbar');
+				for(var i=0,j=tb.length;i<j;i++){
+					//分组
+					var btnGroup=$('<div class="btn-group btn-group-sm"></div>');
+					if(typeof this['_createTool_'+tb[i].id] === 'function')
+						$tb.append(this['_createTool_'+tb[i].id]());
+					else
+						$tb.append(this._createTool_custom());
+				}
+				$el.append($tb);
+			}
+			return $el;
+		},
+		_createTool_refresh:function(){
+			var that=this, $el=$('<span class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
+			$el.click(function(){
+				//beforeRefresh刷新前自定义操作
+				if(that._options.beforeRefresh){
+					var befR=that._options.beforeRefresh();
+					//debug
+					if(that._options.isDebug){
+						if(typeof befR !== 'object')
+							throw('beforeRefresh返回object');
+						if($.inArray(befR.Result,['ERROR','OK'])!==-1)
+							throw('beforeRefresh返回的Result必须是"ERROR"、"OK"');
+					}
+					if(befR.Result==='ERROR'){
+						if(befR.Action)
+							befR.Action($.extend({},that._tableValues));
+						else
+							that._showAlert(befR.Message?befR.Message:$[_pluginName].regional.beforeRefreshErr);
+						return true;
+					}
+				}
+				//something...
+			});
+			return $el;
+		},
+		_createTool_search:function(){
+			var $el=$('<span class="btn btn-default"><span class="glyphicon glyphicon-search"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
+			$el.click(function(){
+				
+			});
+			return $el;
+		},
+		_createTool_sort:function(){
+			
+		},
+		_createTool_add:function(){
+			
+		},
+		_createTool_edit:function(){
+			
+		},
+		_createTool_delete:function(){
+			
+		},
+		_createTool_export:function(){
+			
+		},
+		_createTool_custom:function(){
+			
+		},
+		_createCollapse_tableGroup:function(){
+			
+		},
+		_createCollapse_tableSummary:function(){
+			
+		},
+		_createCollapse_tableDetail:function(){
+			
+		},
+		_createCollapse_pagging:function(){
+			
+		},
+		_createPlugin_loading:function(){
+			return $('<div class="loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
+		},
+		//==========end建立插件==========
+		
 		//显示loading遮罩
 		_showLoading:function(){
 			
 		},
-		
+		//显示对话框
+		_showAlert:function(msg){
+			
+		},
 		//外部接口
 		
 		/**
@@ -289,7 +487,15 @@ var $testDM;
 		 */
 		showLoading:function(text,delay){
 			
-		}
+		},
+		/**
+		 * @function Plugin#showAlert
+		 * @desc 显示提示框
+		 * @param {string} text - 提示文字
+		 */
+		showAlert:function(msg){
+			
+		},
 	};
 	
 	//扩展jQuery插件
@@ -520,6 +726,14 @@ var $testDM;
 		 * @var {string} Plugin#regional#sortNullsFirst - 排序框空值在前按钮文字
 		 */
 		sortNullsFirst:'空值在前',
+		/**
+		 * @var {string} Plugin#regional#loadingTxt - 加载遮罩的显示文字
+		 */
+		loadingTxt:'請稍等片刻...',
+		/**
+		 * @var {string} Plugin#regional#beforeRefreshErr - beforeRefresh返回失败后的默认提示文字
+		 */
+		beforeRefreshErr:'刷新前操作失败'
 	};
 	
 })(jQuery,window,document);

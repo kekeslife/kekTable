@@ -15,11 +15,11 @@
 		<!--宽度=table宽度+3-->
 		<div id="tab" class="kekTable-listPanel panel-group" style="width: 653px;margin: auto;margin-top: 20px;">
 			<div class="panel panel-primary">
-		  		<div class="panel-heading" id="tabCollapseHead" data-toggle="collapse" data-target="#tabCollapseGroup" aria-expanded="true">
+		  		<div class="panel-heading" data-toggle="collapse" data-target="#tabCollapseGroup">
 		  			<h3 class="pull-left">表格标题</h3>
 		  			<h5 class="glyphicon glyphicon-chevron-down pull-right"></h5>
 		  		</div>
-		  		<div id="tabCollapseGroup" class="panel-collapse collapse in" aria-expanded="true">
+		  		<div id="tabCollapseGroup" class="panel-collapse collapse">
 			  		<div class="panel-body">
 			  			<div class="btn-toolbar" role="toolbar">
 			  				<div class="btn-group btn-group-sm">
@@ -41,6 +41,7 @@
 						</div>
 			  		</div>
 			  		<div class="kekTable-table-group">
+			  			<!--冻结取消table-hover-->
 						<table class="table table-hover table-bordered table-condensed">
 							<colgroup>
 								<col style="width:50px;" />
@@ -615,8 +616,12 @@
 		</div>
 		
 		
+		
+		<div id="test1"></div>
+		<div id="test2"></div>
 		<script type="text/javascript">
-			$('#tab').kekTable();
+			$('#test1,#test2').kekTable({isCollapse:true});
+			//$('#test2').kekTable();
 		</script>
 	</body>
 </html>

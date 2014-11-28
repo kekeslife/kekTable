@@ -3,7 +3,7 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .form-control{padding: 6px 12px !important;}
 
 /*表格*/
-.kekTable-listPanel{position: relative;}
+.kekTable-listPanel{position: relative;width: 100%;}
 /*表格-標題*/
 .kekTable-listPanel .panel-heading{overflow: hidden;padding: 2px 12px 2px 4px;}
 .kekTable-listPanel .panel-heading[data-toggle="collapse"]{cursor: pointer;}
