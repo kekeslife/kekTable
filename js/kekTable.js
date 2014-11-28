@@ -6,6 +6,18 @@
  * @description 表格插件 
  * @namespace kekTable
  */
+/**
+ * @namespace Plugin~_eventReturn
+ */
+/**
+ * @var {!string} [Plugin~_eventReturn#result] - 'OK'(成功)、'ERROR'(错误)
+ */
+/**
+ * @var {?function} [Plugin~_eventReturn#action] - 成功或失败后要执行的操作
+ */
+/**
+ * @var {?string} [Plugin~_eventReturn#message] - 错误后弹出对话框的提示文字
+ */
 var $testDM;
 (function($,window,document,undefined){
 	'use strict';
@@ -148,7 +160,9 @@ var $testDM;
 			foreignType:'default',
 			/**
 			 * @function kekTable~options#beforeRefresh
-			 * @
+			 * @desc 点击刷新按钮前的自定义操作
+			 * @param {Plugin~_tableValues} tableValues
+			 * @return {Plugin~_eventReturn} 
 			 */
 			beforeRefresh:null,
 		},
@@ -310,22 +324,27 @@ var $testDM;
 				for(var i=0,j=opt.toolbar.length;i<j;i++){
 					if($.type(opt.toolbar[i])!=='array')
 						throw 'toolbar按钮组必需是数组';
-					if(!opt.toolbar[i].id || $.type(opt.toolbar[i].id)!=='string')
-						throw 'toolbar.id必需要有(string类型)';
-					if(opt.toolbar[i].icon || $.type(opt.toolbar[i].icon)!=='string')
-						throw 'toolbar.icon必需是string类型';
-					if(opt.toolbar[i].label || $.type(opt.toolbar[i].label)!=='string')
-						throw 'toolbar.label必需是string类型';
-					if(opt.toolbar[i].title || $.type(opt.toolbar[i].title)!=='string')
-						throw 'toolbar.title必需是string类型';
-					if(opt.toolbar[i].action || $.type(opt.toolbar[i].action)!=='function')
-						throw 'toolbar.action必需是function类型';
-					if($.inArray(opt.toolbar[i].id,['refresh','search','sort','add','edit','delete','export'])===-1){
-						if(!opt.toolbar[i].icon && !opt.toolbar[i].label)
-							console.warn(opt.toolbar[i].id+'按钮没有图标也没有文字');
-						if(!opt.toolbar[i].action)
-							throw opt.toolbar[i].id+'没有action';
-						
+					for(var m=0,n=opt.toolbar[i].length;m<n;m++){
+						if(!opt.toolbar[i][m].id || $.type(opt.toolbar[i][m].id)!=='string')
+							throw 'toolbar.id必需要有(string类型)';
+						if(opt.toolbar[i][m].icon || $.type(opt.toolbar[i][m].icon)!=='string')
+							throw 'toolbar.icon必需是string类型';
+						if(opt.toolbar[i][m].label || $.type(opt.toolbar[i][m].label)!=='string')
+							throw 'toolbar.label必需是string类型';
+						if(opt.toolbar[i][m].title || $.type(opt.toolbar[i][m].title)!=='string')
+							throw 'toolbar.title必需是string类型';
+						if(opt.toolbar[i][m].action || $.type(opt.toolbar[i][m].action)!=='function')
+							throw 'toolbar.action必需是function类型';
+						if($.inArray(opt.toolbar[i][m].id,['refresh','search','sort','add','edit','delete','export'])===-1){
+							if(!opt.toolbar[i][m].icon && !opt.toolbar[i][m].label)
+								console.warn(opt.toolbar[i][m].id+'按钮没有icon也没有label');
+							if(!opt.toolbar[i][m].action)
+								throw opt.toolbar[i][m].id+'没有action';
+						}
+						else{
+							if(opt.toolbar[i][m].action || opt.toolbar[i][m].icon || opt.toolbar[i][m].title)
+								console.warn(opt.toolbar[i][m].id+'内建按钮无法改变其action,label,title');
+						}
 					}
 				}
 			}
@@ -403,32 +422,69 @@ var $testDM;
 			return $el;
 		},
 		_createTool_refresh:function(){
-			var that=this, $el=$('<span class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
+			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarAdd+'"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
 			$el.click(function(){
+				var defer=$.Deferred();
 				//beforeRefresh刷新前自定义操作
 				if(that._options.beforeRefresh){
-					var befR=that._options.beforeRefresh();
+					var befR=that._options.beforeRefresh($.extend({},that._tableValues),defer);
 					//debug
 					if(that._options.isDebug){
 						if(typeof befR !== 'object')
 							throw('beforeRefresh返回object');
-						if($.inArray(befR.Result,['ERROR','OK'])!==-1)
-							throw('beforeRefresh返回的Result必须是"ERROR"、"OK"');
+						if($.inArray(befR.result,['ERROR','OK'])!==-1 && !befR.state && !befR.done)
+							throw('beforeRefresh返回的Result必须是"ERROR"、"OK"，或返回$.Defer对象');
 					}
-					if(befR.Result==='ERROR'){
-						if(befR.Action)
-							befR.Action($.extend({},that._tableValues));
+					if(befR.result && befR.result==='ERROR'){
+						if(befR.action)
+							befR.action();
 						else
-							that._showAlert(befR.Message?befR.Message:$[_pluginName].regional.beforeRefreshErr);
-						return true;
+							that._showAlert(befR.message?befR.message:$[_pluginName].regional.beforeRefreshErr);
+						defer.reject();
+					}
+					else if(!befR.result){
+						var beforeDefer=defer.then(befR);
+						beforeDefer.done(function(){that._refreshData(defer);});
+						beforeDefer.fail(function(v){
+							that._showAlert(v);
+						});
 					}
 				}
-				//something...
+				//refreshing正在刷新
+				var inDefer=beforeDefer?beforeDefer.then(function(){that._refreshData(defer);}):defer.then(function(){that._refreshData(defer);});
+				inDefer.fail(function(v){
+					that._showAlert(v);
+				});
+				//afterRefresh属性后自定义操作
+				inDefer.done(function(){
+					if(that._options.afterRefresh){
+						var aftR=that._options.afterRefresh($.extend({},that._tableValues),defer);
+						if(aftR.result){
+							if(aftR.result==='ERROR'){
+								if(aftR.action)
+									aftR.action();
+								else
+									that._showAlert(aftR.message?aftR.message:$[_pluginName].regional.beforeRefreshErr);
+								defer.reject();
+							}
+							else
+								defer.resolve();
+						}
+						else if(!aftR.result){
+							var afterDefer=defer.then(aftR);
+							afterDefer.done(that._setState('已刷新'));
+							afterDefer.fail(function(v){
+								that._showAlert(v);
+							});
+							
+						}
+					}
+				});
 			});
 			return $el;
 		},
 		_createTool_search:function(){
-			var $el=$('<span class="btn btn-default"><span class="glyphicon glyphicon-search"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
+			var $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSearch+'"><span class="glyphicon glyphicon-search"></span><span>'+$[_pluginName].regional.toolbarSearch+'</span></span>');
 			$el.click(function(){
 				
 			});
