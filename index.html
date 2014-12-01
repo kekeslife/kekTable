@@ -83,6 +83,7 @@
 		    					<li><a href="#">&raquo;</a></li>
 							</ul>
 						</nav>
+						<b class="kekTable-state">成功刷新</b>
 					</div>
 				</div>
 			</div>
@@ -620,7 +621,11 @@
 		<div id="test1"></div>
 		<div id="test2"></div>
 		<script type="text/javascript">
-			$('#test1,#test2').kekTable({isCollapse:true});
+			$('#test1').kekTable({
+				isCollapse:true,isDebug:true,
+				beforeRefresh:function(v,d){d.resolve('刷新前失败')},
+				afterRefresh:function(v,d){d.resolve('刷新后失败')}
+			});
 			//$('#test2').kekTable();
 		</script>
 	</body>

@@ -6,18 +6,6 @@
  * @description 表格插件 
  * @namespace kekTable
  */
-/**
- * @namespace Plugin~_eventReturn
- */
-/**
- * @var {!string} [Plugin~_eventReturn#result] - 'OK'(成功)、'ERROR'(错误)
- */
-/**
- * @var {?function} [Plugin~_eventReturn#action] - 成功或失败后要执行的操作
- */
-/**
- * @var {?string} [Plugin~_eventReturn#message] - 错误后弹出对话框的提示文字
- */
 var $testDM;
 (function($,window,document,undefined){
 	'use strict';
@@ -162,7 +150,23 @@ var $testDM;
 			 * @function kekTable~options#beforeRefresh
 			 * @desc 点击刷新按钮前的自定义操作
 			 * @param {Plugin~_tableValues} tableValues
-			 * @return {Plugin~_eventReturn} 
+			 * @param {$.Deferred} defer - deferred对象
+			 * @return {$.Deferred} 
+			 * @example ajax
+			 * beforeRefresh:function(v,d){
+			 * 	var xx=$.ajax('test.html').done(function(){d.resolve('成功');$('tab').kekTable('showAlert','成功');}).fail(function(){d.reject('失败');$('tab').kekTable('showAlert','失败');});
+			 * 	return xx;
+			 * }
+			 * @example nomal
+			 * beforeRefresh:function(v,d){
+			 *  if(curRecordNum){
+			 * 		if(v.curPageRecords(curRecordNum).empNo='14623')
+			 * 			d.resolve('成功');
+			 * 		else
+			 * 			d.reject('失败');
+			 *  }
+			 * 	return d;
+			 * }
 			 */
 			beforeRefresh:null,
 		},
@@ -274,7 +278,7 @@ var $testDM;
 		 * @typedef Plugin~_tableValues
 		 * @desc 当年页面上的一系列值。供外部接口（$.extend）
 		 * @prop {object[]} [curPageRecords=[]] - 当前页面上的所有数据库值
-		 * @prop {int} [curRecordNum=null] - 当前选中的行号
+		 * @prop {int} [curRecordNum=null] - 当前选中的行号，1开头
 		 * @prop {string} [tableStatus=null] - 表格狀態，一般為__toolbarIte.id
 		 */
 		this._tableValues={
@@ -325,17 +329,17 @@ var $testDM;
 					if($.type(opt.toolbar[i])!=='array')
 						throw 'toolbar按钮组必需是数组';
 					for(var m=0,n=opt.toolbar[i].length;m<n;m++){
-						if(!opt.toolbar[i][m].id || $.type(opt.toolbar[i][m].id)!=='string')
-							throw 'toolbar.id必需要有(string类型)';
-						if(opt.toolbar[i][m].icon || $.type(opt.toolbar[i][m].icon)!=='string')
-							throw 'toolbar.icon必需是string类型';
-						if(opt.toolbar[i][m].label || $.type(opt.toolbar[i][m].label)!=='string')
-							throw 'toolbar.label必需是string类型';
-						if(opt.toolbar[i][m].title || $.type(opt.toolbar[i][m].title)!=='string')
-							throw 'toolbar.title必需是string类型';
-						if(opt.toolbar[i][m].action || $.type(opt.toolbar[i][m].action)!=='function')
-							throw 'toolbar.action必需是function类型';
 						if($.inArray(opt.toolbar[i][m].id,['refresh','search','sort','add','edit','delete','export'])===-1){
+							if(!opt.toolbar[i][m].id || $.type(opt.toolbar[i][m].id)!=='string')
+								throw 'toolbar.id必需要有(string类型)';
+							if(opt.toolbar[i][m].icon || $.type(opt.toolbar[i][m].icon)!=='string')
+								throw 'toolbar.icon必需是string类型';
+							if(opt.toolbar[i][m].label || $.type(opt.toolbar[i][m].label)!=='string')
+								throw 'toolbar.label必需是string类型';
+							if(opt.toolbar[i][m].title || $.type(opt.toolbar[i][m].title)!=='string')
+								throw 'toolbar.title必需是string类型';
+							if(opt.toolbar[i][m].action || $.type(opt.toolbar[i][m].action)!=='function')
+								throw 'toolbar.action必需是function类型';
 							if(!opt.toolbar[i][m].icon && !opt.toolbar[i][m].label)
 								console.warn(opt.toolbar[i][m].id+'按钮没有icon也没有label');
 							if(!opt.toolbar[i][m].action)
@@ -400,7 +404,11 @@ var $testDM;
 			var $el=$('<div>');
 			$el.attr('id',this._element.id+'CollapseGroup')
 			  .addClass('panel-collapse collapse'+(this._options.collapseExpanded?' in':''))
-			  .append(this._createCollapse_toolbar())
+			  .append(this._createCollapse_toolbar());
+			
+			
+			//something...
+			return $el;
 			  
 		},
 		_createCollapse_toolbar:function(){
@@ -411,75 +419,23 @@ var $testDM;
 				$tb.addClass('btn-toolbar');
 				for(var i=0,j=tb.length;i<j;i++){
 					//分组
-					var btnGroup=$('<div class="btn-group btn-group-sm"></div>');
-					if(typeof this['_createTool_'+tb[i].id] === 'function')
-						$tb.append(this['_createTool_'+tb[i].id]());
-					else
-						$tb.append(this._createTool_custom());
+					var $btnGroup=$('<div class="btn-group btn-group-sm"></div>');
+					for(var m=0,n=tb[i].length;m<n;m++){
+						if(typeof this['_createTool_'+tb[i][m].id] === 'function')
+							$btnGroup.append(this['_createTool_'+tb[i][m].id]());
+						else
+							$btnGroup.append(this._createTool_custom(tb[i][m]));
+					}
+					$tb.append($btnGroup);
 				}
 				$el.append($tb);
 			}
 			return $el;
 		},
 		_createTool_refresh:function(){
-			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarAdd+'"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
+			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarRefresh+'"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarRefresh+'</span></span>');
 			$el.click(function(){
-				var defer=$.Deferred();
-				//beforeRefresh刷新前自定义操作
-				if(that._options.beforeRefresh){
-					var befR=that._options.beforeRefresh($.extend({},that._tableValues),defer);
-					//debug
-					if(that._options.isDebug){
-						if(typeof befR !== 'object')
-							throw('beforeRefresh返回object');
-						if($.inArray(befR.result,['ERROR','OK'])!==-1 && !befR.state && !befR.done)
-							throw('beforeRefresh返回的Result必须是"ERROR"、"OK"，或返回$.Defer对象');
-					}
-					if(befR.result && befR.result==='ERROR'){
-						if(befR.action)
-							befR.action();
-						else
-							that._showAlert(befR.message?befR.message:$[_pluginName].regional.beforeRefreshErr);
-						defer.reject();
-					}
-					else if(!befR.result){
-						var beforeDefer=defer.then(befR);
-						beforeDefer.done(function(){that._refreshData(defer);});
-						beforeDefer.fail(function(v){
-							that._showAlert(v);
-						});
-					}
-				}
-				//refreshing正在刷新
-				var inDefer=beforeDefer?beforeDefer.then(function(){that._refreshData(defer);}):defer.then(function(){that._refreshData(defer);});
-				inDefer.fail(function(v){
-					that._showAlert(v);
-				});
-				//afterRefresh属性后自定义操作
-				inDefer.done(function(){
-					if(that._options.afterRefresh){
-						var aftR=that._options.afterRefresh($.extend({},that._tableValues),defer);
-						if(aftR.result){
-							if(aftR.result==='ERROR'){
-								if(aftR.action)
-									aftR.action();
-								else
-									that._showAlert(aftR.message?aftR.message:$[_pluginName].regional.beforeRefreshErr);
-								defer.reject();
-							}
-							else
-								defer.resolve();
-						}
-						else if(!aftR.result){
-							var afterDefer=defer.then(aftR);
-							afterDefer.done(that._setState('已刷新'));
-							afterDefer.fail(function(v){
-								that._showAlert(v);
-							});
-							
-						}
-					}
-				});
+				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh);
 			});
 			return $el;
 		},
@@ -525,6 +481,13 @@ var $testDM;
 		},
 		//==========end建立插件==========
 		
+		//==========工具栏内置功能==========
+		_refresh:function(v,d){
+			d.resolve('okokoko');
+			//something...
+		},
+		//==========end工具栏内置功能==========
+		
 		//显示loading遮罩
 		_showLoading:function(){
 			
@@ -533,6 +496,51 @@ var $testDM;
 		_showAlert:function(msg){
 			
 		},
+		//显示状态信息
+		_showState:function(msg){
+			console.log(msg);
+		},
+		
+		//工具栏按钮事件组。点击按钮前，点击按钮，点击按钮后
+		_toolbarEvent:function(b,i,a){
+			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve();return d;});
+			if(this._options.isDebug){
+				if(!promise.done && !promise.fail)
+					throw 'beforeEvent必需返回deferred对象';
+			}
+			var that=this;
+			promise.done(function(){
+				promise=that._eventDefer(i);
+				if(that._options.isDebug){
+					if(!promise.done && !promise.fail)
+						throw 'beforeEvent必需返回deferred对象';
+				}
+				promise.done(function(v){
+					if(a){
+						promise=a?that._eventDefer(a):that._eventDefer(function(v,d){d.resolve()});
+						if(that._options.isDebug){
+							if(!promise.done && !promise.fail)
+								throw 'beforeEvent必需返回deferred对象';
+						}
+						promise.done(function(v){that._showState(v?v:$[_pluginName].regional.eventSuccess);});
+					}
+					else
+						that._showState(v?v:$[_pluginName].regional.eventSuccess);
+				});
+			});
+			
+		},
+		//event所使用的jQuery.deferred
+		_eventDefer:function(f){
+			var d=$.Deferred(),
+				that=this,
+				p=d.then(f($.extend({},this._tableValues),d));
+			p.fail(function(v){
+				that._showState(v);
+			});
+			return p.promise();
+		},
+		
 		//外部接口
 		
 		/**
@@ -787,9 +795,13 @@ var $testDM;
 		 */
 		loadingTxt:'請稍等片刻...',
 		/**
-		 * @var {string} Plugin#regional#beforeRefreshErr - beforeRefresh返回失败后的默认提示文字
+		 * @var {string} Plugin#regional#eventSuccess - 事件操作成功后的状态信息
 		 */
-		beforeRefreshErr:'刷新前操作失败'
+		eventSuccess:'操作成功',
+		/**
+		 * @var {string} Plugin#regional#eventFail - 事件操作异常后的状态信息
+		 */
+		eventFail:'操作失敗',
 	};
 	
 })(jQuery,window,document);
