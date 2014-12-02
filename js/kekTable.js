@@ -148,14 +148,14 @@ var $testDM;
 			foreignType:'default',
 			/**
 			 * @function kekTable~options#beforeRefresh
-			 * @desc 点击刷新按钮前的自定义操作
+			 * @desc 点击刷新按钮前的自定义操作。必需要写d.resolve()或者d.reject()
 			 * @param {Plugin~_tableValues} tableValues
-			 * @param {$.Deferred} defer - deferred对象
-			 * @return {$.Deferred} 
+			 * @param {$.Deferred} defer - deferred对象,d.reject()将组织事件,d.resolve()将继续执行。
+			 * //@return {$.Deferred} 
 			 * @example ajax
 			 * beforeRefresh:function(v,d){
 			 * 	var xx=$.ajax('test.html').done(function(){d.resolve('成功');$('tab').kekTable('showAlert','成功');}).fail(function(){d.reject('失败');$('tab').kekTable('showAlert','失败');});
-			 * 	return xx;
+			 * 	//return xx;
 			 * }
 			 * @example nomal
 			 * beforeRefresh:function(v,d){
@@ -165,7 +165,7 @@ var $testDM;
 			 * 		else
 			 * 			d.reject('失败');
 			 *  }
-			 * 	return d;
+			 * 	//return d;
 			 * }
 			 */
 			beforeRefresh:null,
@@ -277,19 +277,15 @@ var $testDM;
 		/**
 		 * @typedef Plugin~_tableValues
 		 * @desc 当年页面上的一系列值。供外部接口（$.extend）
-		 * @prop {object[]} [curPageRecords=[]] - 当前页面上的所有数据库值
+		 * @prop {object[]} [curPageRecords=null] - 当前页面上的所有数据库值
 		 * @prop {int} [curRecordNum=null] - 当前选中的行号，1开头
 		 * @prop {string} [tableStatus=null] - 表格狀態，一般為__toolbarIte.id
 		 */
 		this._tableValues={
-			curPageRecords:[],
+			curPageRecords:null,
 			curRecordNum:null,
 			tableStatus:null
 		};
-		/**
-		 * 
-		 */
-		this._toolbar=null;
 		
 		this._init();
 	}
@@ -332,18 +328,18 @@ var $testDM;
 						if($.inArray(opt.toolbar[i][m].id,['refresh','search','sort','add','edit','delete','export'])===-1){
 							if(!opt.toolbar[i][m].id || $.type(opt.toolbar[i][m].id)!=='string')
 								throw 'toolbar.id必需要有(string类型)';
-							if(opt.toolbar[i][m].icon || $.type(opt.toolbar[i][m].icon)!=='string')
+							if(opt.toolbar[i][m].icon && $.type(opt.toolbar[i][m].icon)!=='string')
 								throw 'toolbar.icon必需是string类型';
-							if(opt.toolbar[i][m].label || $.type(opt.toolbar[i][m].label)!=='string')
+							if(opt.toolbar[i][m].label && $.type(opt.toolbar[i][m].label)!=='string')
 								throw 'toolbar.label必需是string类型';
-							if(opt.toolbar[i][m].title || $.type(opt.toolbar[i][m].title)!=='string')
+							if(opt.toolbar[i][m].title && $.type(opt.toolbar[i][m].title)!=='string')
 								throw 'toolbar.title必需是string类型';
-							if(opt.toolbar[i][m].action || $.type(opt.toolbar[i][m].action)!=='function')
+							if(opt.toolbar[i][m].action && $.type(opt.toolbar[i][m].action)!=='function')
 								throw 'toolbar.action必需是function类型';
 							if(!opt.toolbar[i][m].icon && !opt.toolbar[i][m].label)
 								console.warn(opt.toolbar[i][m].id+'按钮没有icon也没有label');
 							if(!opt.toolbar[i][m].action)
-								throw opt.toolbar[i][m].id+'没有action';
+								throw 'toolbar.'+opt.toolbar[i][m].id+'没有action';
 						}
 						else{
 							if(opt.toolbar[i][m].action || opt.toolbar[i][m].icon || opt.toolbar[i][m].title)
@@ -440,29 +436,53 @@ var $testDM;
 			return $el;
 		},
 		_createTool_search:function(){
-			var $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSearch+'"><span class="glyphicon glyphicon-search"></span><span>'+$[_pluginName].regional.toolbarSearch+'</span></span>');
+			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSearch+'"><span class="glyphicon glyphicon-search"></span><span>'+$[_pluginName].regional.toolbarSearch+'</span></span>');
 			$el.click(function(){
-				
+				that._toolbarEvent(that._options.beforeSearch,that._search,that._options.afterSearch);
 			});
 			return $el;
 		},
 		_createTool_sort:function(){
-			
+			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSort+'"><span class="glyphicon glyphicon-sort"></span><span>'+$[_pluginName].regional.toolbarSort+'</span></span>');
+			$el.click(function(){
+				that._toolbarEvent(that._options.beforeSort,that._sort,that._options.afterSort);
+			});
+			return $el;
 		},
 		_createTool_add:function(){
-			
+			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarAdd+'"><span class="glyphicon glyphicon-plus"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
+			$el.click(function(){
+				that._toolbarEvent(that._options.beforeAdd,that._add,that._options.afterAdd);
+			});
+			return $el;
 		},
 		_createTool_edit:function(){
-			
+			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarEdit+'"><span class="glyphicon glyphicon-edit"></span><span>'+$[_pluginName].regional.toolbarEdit+'</span></span>');
+			$el.click(function(){
+				that._toolbarEvent(that._options.beforeEdit,that._edit,that._options.afterEdit);
+			});
+			return $el;
 		},
 		_createTool_delete:function(){
-			
+			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarDelete+'"><span class="glyphicon glyphicon-minus"></span><span>'+$[_pluginName].regional.toolbarDelete+'</span></span>');
+			$el.click(function(){
+				that._toolbarEvent(that._options.beforeDelete,that._delete,that._options.afterDelete);
+			});
+			return $el;
 		},
 		_createTool_export:function(){
-			
+			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarExport+'"><span class="glyphicon glyphicon-export"></span><span>'+$[_pluginName].regional.toolbarExport+'</span></span>');
+			$el.click(function(){
+				that._toolbarEvent(that._options.beforeExport,that._export,that._options.afterExport);
+			});
+			return $el;
 		},
-		_createTool_custom:function(){
-			
+		_createTool_custom:function(btn){
+			var that=this, $el=$('<span class="btn btn-default" title="'+(btn.title || btn.label || btn.id)+'"><span class="glyphicon '+(btn.icon || '')+'"></span><span>'+(btn.label || '')+'</span></span>');
+			$el.click(function(){
+				btn.action(that._tableValues);
+			});
+			return $el;
 		},
 		_createCollapse_tableGroup:function(){
 			
@@ -483,7 +503,31 @@ var $testDM;
 		
 		//==========工具栏内置功能==========
 		_refresh:function(v,d){
-			d.resolve('okokoko');
+			d.resolve('_refresh');
+			//something...
+		},
+		_search:function(v,d){
+			d.resolve('_search');
+			//something...
+		},
+		_sort:function(v,d){
+			d.resolve('_sort');
+			//something...
+		},
+		_add:function(v,d){
+			d.resolve('_add');
+			//something...
+		},
+		_edit:function(v,d){
+			d.resolve('_edit');
+			//something...
+		},
+		_delete:function(v,d){
+			d.resolve('_delete');
+			//something...
+		},
+		_export:function(v,d){
+			d.resolve('_export');
 			//something...
 		},
 		//==========end工具栏内置功能==========
@@ -501,27 +545,16 @@ var $testDM;
 			console.log(msg);
 		},
 		
-		//工具栏按钮事件组。点击按钮前，点击按钮，点击按钮后
+		//工具栏按钮事件组。点击按钮前，点击按钮，点击按钮后。
+		//回调函数必需执行d.resolve()或d.reject()
 		_toolbarEvent:function(b,i,a){
 			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve();return d;});
-			if(this._options.isDebug){
-				if(!promise.done && !promise.fail)
-					throw 'beforeEvent必需返回deferred对象';
-			}
 			var that=this;
 			promise.done(function(){
 				promise=that._eventDefer(i);
-				if(that._options.isDebug){
-					if(!promise.done && !promise.fail)
-						throw 'beforeEvent必需返回deferred对象';
-				}
 				promise.done(function(v){
 					if(a){
 						promise=a?that._eventDefer(a):that._eventDefer(function(v,d){d.resolve()});
-						if(that._options.isDebug){
-							if(!promise.done && !promise.fail)
-								throw 'beforeEvent必需返回deferred对象';
-						}
 						promise.done(function(v){that._showState(v?v:$[_pluginName].regional.eventSuccess);});
 					}
 					else
