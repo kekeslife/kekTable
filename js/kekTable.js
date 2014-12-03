@@ -258,9 +258,17 @@ var $testDM;
 		 */
 		this._elements={
 			/**
-			 * @var {jQuery} _elements#plugin_panel - Plugin->panel
+			 * @var {jQuery} _elements#$plugin_panel - Plugin->panel
 			 */
 			$plugin_panel:null,
+			/**
+			 * @var {jQuery} _elements#$loading - 表格loading遮罩
+			 */
+			$loading:null,
+			/**
+			 * @var {jQuery} _elements#$editLoading - 修改框loading遮罩
+			 */
+			$editLoading:null,
 		};
 		/**
 		 * @name Plugin~_options
@@ -286,6 +294,10 @@ var $testDM;
 			curRecordNum:null,
 			tableStatus:null
 		};
+		
+		//显示loading用的setTimeout返回值
+		this._loadingDelay=null;
+		this._curLoading=null;
 		
 		this._init();
 	}
@@ -431,13 +443,15 @@ var $testDM;
 		_createTool_refresh:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarRefresh+'"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarRefresh+'</span></span>');
 			$el.click(function(){
-				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh);
+				that._tableValues.tableStatus='refresh';
+				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
 			});
 			return $el;
 		},
 		_createTool_search:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSearch+'"><span class="glyphicon glyphicon-search"></span><span>'+$[_pluginName].regional.toolbarSearch+'</span></span>');
 			$el.click(function(){
+				that._tableValues.tableStatus='search';
 				that._toolbarEvent(that._options.beforeSearch,that._search,that._options.afterSearch);
 			});
 			return $el;
@@ -445,6 +459,7 @@ var $testDM;
 		_createTool_sort:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSort+'"><span class="glyphicon glyphicon-sort"></span><span>'+$[_pluginName].regional.toolbarSort+'</span></span>');
 			$el.click(function(){
+				that._tableValues.tableStatus='sort';
 				that._toolbarEvent(that._options.beforeSort,that._sort,that._options.afterSort);
 			});
 			return $el;
@@ -452,6 +467,7 @@ var $testDM;
 		_createTool_add:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarAdd+'"><span class="glyphicon glyphicon-plus"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
 			$el.click(function(){
+				that._tableValues.tableStatus='add';
 				that._toolbarEvent(that._options.beforeAdd,that._add,that._options.afterAdd);
 			});
 			return $el;
@@ -459,6 +475,7 @@ var $testDM;
 		_createTool_edit:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarEdit+'"><span class="glyphicon glyphicon-edit"></span><span>'+$[_pluginName].regional.toolbarEdit+'</span></span>');
 			$el.click(function(){
+				that._tableValues.tableStatus='edit';
 				that._toolbarEvent(that._options.beforeEdit,that._edit,that._options.afterEdit);
 			});
 			return $el;
@@ -466,6 +483,7 @@ var $testDM;
 		_createTool_delete:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarDelete+'"><span class="glyphicon glyphicon-minus"></span><span>'+$[_pluginName].regional.toolbarDelete+'</span></span>');
 			$el.click(function(){
+				that._tableValues.tableStatus='delete';
 				that._toolbarEvent(that._options.beforeDelete,that._delete,that._options.afterDelete);
 			});
 			return $el;
@@ -473,6 +491,7 @@ var $testDM;
 		_createTool_export:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarExport+'"><span class="glyphicon glyphicon-export"></span><span>'+$[_pluginName].regional.toolbarExport+'</span></span>');
 			$el.click(function(){
+				that._tableValues.tableStatus='export';
 				that._toolbarEvent(that._options.beforeExport,that._export,that._options.afterExport);
 			});
 			return $el;
@@ -480,6 +499,7 @@ var $testDM;
 		_createTool_custom:function(btn){
 			var that=this, $el=$('<span class="btn btn-default" title="'+(btn.title || btn.label || btn.id)+'"><span class="glyphicon '+(btn.icon || '')+'"></span><span>'+(btn.label || '')+'</span></span>');
 			$el.click(function(){
+				that._tableValues.tableStatus=btn.id;
 				btn.action(that._tableValues);
 			});
 			return $el;
@@ -496,8 +516,8 @@ var $testDM;
 		_createCollapse_pagging:function(){
 			
 		},
-		_createPlugin_loading:function(){
-			return $('<div class="loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
+		_createPlugin_loading:function(el){
+			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
 		},
 		//==========end建立插件==========
 		
@@ -532,9 +552,36 @@ var $testDM;
 		},
 		//==========end工具栏内置功能==========
 		
-		//显示loading遮罩
-		_showLoading:function(){
-			
+		/**
+		 * @function Plugin~_showLoading
+		 * @desc 显示加载遮罩
+		 * @param {?string} [msg=regional.loadingTxt] - 加载提示文字
+		 * @param {?string} [el='list'] - 哪个对象要显示加载遮罩('list'、'edit')，两者不可同时显示。空为当前遮罩
+		 * @param {?int} [delay=this._options._loadingDelay] - 延时(毫秒)
+		 */
+		_showLoading:function(msg,el,delay){
+			el=el||this._curLoading||'list';
+			var $el=el==='edit'?this._elements.$editLoading:this._elements.$loading;
+			$el.find('.alert').text(msg||$[_pluginName].regional.loadingTxt);
+			if(el!==this._curLoading){
+				this._hideLoading(this._curLoading);
+				delay=delay||this._options._loadingDelay;
+				this._loadingDelay || (this._loadingDelay=setTimeout(function(){$el.show();},delay));
+			}
+			this._curLoading=el;
+		},
+		/**
+		 * @function Plugin~_hideLoading
+		 * @desc 隐藏加载遮罩(从loading列中去除)
+		 * @param {?string} [el='list'] - 哪个对象要显示加载遮罩('list'、'edit')，两者不可同时显示
+		 */
+		_hideLoading:function(el){
+			el=el||this._curLoading;
+			var $el=el==='edit'?this._elements.$editLoading:this._elements.$loading;
+			this._loadingDelay && clearTimeout(this._loadingDelay);
+			this._loadingDelay=null;
+			$el.hide();
+			this._curLoading=null;
 		},
 		//显示对话框
 		_showAlert:function(msg){
@@ -545,9 +592,10 @@ var $testDM;
 			console.log(msg);
 		},
 		
-		//工具栏按钮事件组。点击按钮前，点击按钮，点击按钮后。
+		//事件组。前，中，后。
+		//el:显示加载遮罩的对象('list'、'edit')
 		//回调函数必需执行d.resolve()或d.reject()
-		_toolbarEvent:function(b,i,a){
+		_toolbarEvent:function(b,i,a,el){
 			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve();return d;});
 			var that=this;
 			promise.done(function(){
@@ -555,10 +603,15 @@ var $testDM;
 				promise.done(function(v){
 					if(a){
 						promise=a?that._eventDefer(a):that._eventDefer(function(v,d){d.resolve()});
-						promise.done(function(v){that._showState(v?v:$[_pluginName].regional.eventSuccess);});
+						promise.done(function(v){
+							that._hideLoading();
+							that._showState(v?v:$[_pluginName].regional.eventSuccess);
+						});
 					}
-					else
+					else{
+						that._hideLoading();
 						that._showState(v?v:$[_pluginName].regional.eventSuccess);
+					}
 				});
 			});
 			
@@ -569,6 +622,7 @@ var $testDM;
 				that=this,
 				p=d.then(f($.extend({},this._tableValues),d));
 			p.fail(function(v){
+				that._hideLoading();
 				that._showState(v);
 			});
 			return p.promise();
@@ -579,11 +633,12 @@ var $testDM;
 		/**
 		 * @function Plugin#showLoading
 		 * @desc 显示loading遮罩
-		 * @param {string} text - 显示的文字
-		 * @param {int} delay - 延时显示时间(毫秒)
+		 * @param {?string} [msg=regional.loadingTxt] - 加载提示文字
+		 * @param {?string} [el='list'] - 哪个对象要显示加载遮罩('list'、'edit')，两者不可同时显示。空为当前遮罩
+		 * @param {?int} [delay=this._options._loadingDelay] - 延时(毫秒)
 		 */
-		showLoading:function(text,delay){
-			
+		showLoading:function(msg,el,delay){
+			this._showLoading(msg,el,delay);
 		},
 		/**
 		 * @function Plugin#showAlert
@@ -607,7 +662,7 @@ var $testDM;
 			//_开头的方法是内部方法，不允许外部调用
 			else if(typeof options ==='string'){
 				if(typeof data[options]=== 'function'){
-					if(options.substr(0,1)==='_')
+					if(options.substr(0,1)!=='_')
 						data[options].apply(data,Array.prototype.slice.call(args,1));
 					else
 						throw $[_pluginName].regional.errApiPrivate + options;

@@ -623,9 +623,9 @@
 		<script type="text/javascript">
 			$('#test1').kekTable({
 				isCollapse:true,isDebug:true,
-				beforeRefresh:function(v,d){d.resolve('刷新前失败')},
-				afterRefresh:function(v,d){d.resolve('刷新后失败')},
-				toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]]
+				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('b');d.resolve('bok');},5000) },
+				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('a');d.resolve('aok');},5000) },
+				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]]
 			});
 			//$('#test2').kekTable();
 		</script>
