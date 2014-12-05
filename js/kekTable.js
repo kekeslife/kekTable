@@ -46,10 +46,6 @@ var $testDM;
 			 */
 			canRowHover:true,
 			/**
-			 * @var {?bool} [kekTable~_options#canRowSelect=true] - 是否可以单击行
-			 */
-			canRowSelect:true,
-			/**
 			 * @var {?bool} [kekTable~_options#isCollapse=false] - 表格是否可以折叠 同 bootstrap的collapse
 			 */
 			isCollapse:false,
@@ -126,13 +122,17 @@ var $testDM;
 			 */
 			dataType:'DB',
 			/**
-			 * @var {?int} [kekTable~options#frozenNum=null] - 冻结前几列
+			 * @var {?int} [kekTable~options#frozenNum=null] - 冻结前几列,不包含序号列
 			 */
 			frozenNum:null,
 			/**
 			 * @var {?int} [kekTable~options#rowNum=20] - 显示多少笔。设为1的话，采用单笔显示方式
 			 */
 			rowNum:20,
+			/**
+			 * @var {?bool} [kekTable~options#showRowNo=false] - 是否显示行号
+			 */
+			showRowNo:false,
 			/**
 			 * @var {?string} [kekTable~options#detailTable=null] - 从表id。
 			 */
@@ -184,15 +184,27 @@ var $testDM;
 			 */
 			colId:null,
 			/**
+			 * @var {?int} [_column#listIndex=null] - 给值后此栏位将置于Table中，顺序按此
+			 */
+			listIndex:null,
+			/**
 			 * @var {?string} [_column#listTitle=null] - 显示的表格栏位标题
 			 */
 			listTitle:null,
+			/**
+			 * @var {?int} [_column#listWidth=null] - table栏位的宽度，可带单位。纯数字会通过_adjustOptions添加单位px
+			 */
+			listWidth:null,
+			/**
+			 * @var {?bool} [_column#listClingPre=false] - 单笔记录显示时，此栏位是否和前一个栏位在同一行显示
+			 */
+			listClingPre:false,
 			/**
 			 * @var {?string} [_column#editTitle=__column#listTitle] - 编辑框中栏位上面的标题
 			 */
 			editTitle:null,
 			/**
-			 * @var {?bool} [_column#editClingPre=false] - 编辑框中inline栏位紧贴着前面一个栏位
+			 * @var {?bool} [_column#editClingPre=false] - 编辑框中此栏位是否和前一个栏位在同一行显示
 			 */
 			editClingPre:false,
 			/**
@@ -205,7 +217,7 @@ var $testDM;
 			 */
 			editIndex:null,
 			/**
-			 * @var {?int} [_column#editWidth=100] - 编辑框栏位的宽度
+			 * @var {?int} [_column#editWidth=100] - 编辑框栏位的宽度，可带单位。纯数字会通过_adjustOptions添加单位px
 			 */
 			editWidth:100,
 			/**
@@ -297,7 +309,12 @@ var $testDM;
 		
 		//显示loading用的setTimeout返回值
 		this._loadingDelay=null;
+		//当前画面上显示的是哪个遮罩'list'、'edit'
 		this._curLoading=null;
+		//显示栏位['empNo','empName']
+		this._listCols=[];
+		//数据库栏位['empNo','empName']
+		this._dbCols=[];
 		
 		this._init();
 	}
@@ -360,12 +377,45 @@ var $testDM;
 					}
 				}
 			}
-			
+			//singleTable
+			if(!opt.rowNum)
+				throw 'rowNum必需大于0。否则你需要这个表来做什么';
+			else if(opt.rowNum===1 && opt.frozenNum)
+				console.warn('rowNum设置为1代表是单笔显示模式，此模式下没有冻结功能，你可以去掉frozenNum');
+			//columns
+			if(!opt.columns)
+				throw '必需设置columns';
+			else if($.type(opt.columns)!=='object')
+				throw 'columns必需是object类型';
 			//something...
 		},
 		//初始化时调整参数
 		_adjustOptions:function(){
+			var opt=this._options,
+				that=this;
+			//columns
+			$.each(opt.columns,function(colName,colObj){
+				$.each(colObj, function(prop,val) {
+		      		if(prop==='listIndex')
+		      			that._listCols[val]=colName;
+		      		else if(prop==='colId')
+		      			that._dbCols[val]=colName;
+		      		else if(prop==='listWidth')
+		      			(val-0==val-0) && (val-0) && (colObj[prop]+='px');
+		      		//something...
+				});
+				//something...
+			});
 			
+			//check
+			if(!this._listCols.length)
+				throw '没有设置任何的listIndex';
+			this._listCols=$.map(this._listCols, function(v) {return v;});
+			if(!this._dbCols.length)
+				throw '没有设置任何的colId';
+			this._dbCols=$.map(this._dbCols, function(v) {return v;});
+			
+			//something...
 		},
 		/**==========建立插件==========
 		 * Plugin
@@ -385,13 +435,13 @@ var $testDM;
 			var $frag=$(document.createDocumentFragment());
 			$frag.append(this._createPlugin_panel()).append(this._createPlugin_loading());
 			$(this._element).addClass('kekTable-listPanel panel-group')
+							.css('width',this._options.tableWidth)
 							.append($frag);
 		},
 		_createPlugin_panel:function(){
 			this._elements.$plugin_panel=$('<div>');
 			var $el=this._elements.$plugin_panel;
 			$el.addClass('panel '+this._options.panelColor)
-			  .css('width',this._options.tableWidth)
 			  .append(this._createPanel_head())
 			  .append(this._createPanel_collapse());
 			return $el;
@@ -412,7 +462,8 @@ var $testDM;
 			var $el=$('<div>');
 			$el.attr('id',this._element.id+'CollapseGroup')
 			  .addClass('panel-collapse collapse'+(this._options.collapseExpanded?' in':''))
-			  .append(this._createCollapse_toolbar());
+			  .append(this._createCollapse_toolbar())
+			  .append(this._createCollapse_tableGroup());
 			
 			
 			//something...
@@ -505,6 +556,59 @@ var $testDM;
 			return $el;
 		},
 		_createCollapse_tableGroup:function(){
+			var $el=$('<div class="kekTable-table-group"></div>'),
+				opt=this._options;
+			$el.append((opt.rowNum===1 && this._createTable_single()) || (opt.frozenNum && this._createTable_frozen()) || this._createTable());
+			return $el;
+		},
+		_createTable:function(){
+			var $el=$('<table>'),
+				colgroup=[],
+				thead=[],
+				cols=this._options.columns;
+			$el.addClass('table table-bordered table-condensed'+(this._options.canRowHover?' table-hover':''));
+			if(this._options.showRowNo){
+				colgroup.push('<col style="width:50px;">');
+				thead.push('<th>#</th>');
+			}
+			$.each(this._listCols, function(i,v) {
+				colgroup.push('<col'+(cols[v].listWidth?(' style="width:'+cols[v].listWidth+';"'):'')+' />');
+				thead.push('<th>'+cols[v].listTitle+'</th>');
+			});
+			$el.append('<colgroup>'+colgroup.join('')+'</colgroup>')
+			   .append('<thead><tr>'+thead.join('')+'</tr></thead>')
+			   .append('<tbody></tbody>');
+			return $el;
+		},
+		_createTable_frozen:function(){
+			var $el=$(document.createDocumentFragment()),
+				$fTable=$('<table class="table table-bordered table-condensed kekTable-table-frozen"></table>'),
+				colgroup=[],
+				thead=[],
+				cols=this._options.columns;
+			//frozen
+			if(this._options.showRowNo){
+				colgroup.push('<col style="width:50px;">');
+				thead.push('<th>#</th>');
+			}
+			for(var i=0;i<this._options.frozenNum;i++){
+				colgroup.push('<col'+(cols[this._listCols[i]].listWidth?(' style="width:'+cols[this._listCols[i]].listWidth+';"'):'')+' />');
+				thead.push('<th>'+cols[this._listCols[i]].listTitle+'</th>');
+			}
+			$fTable.append('<colgroup>'+colgroup.join('')+'</colgroup>')
+			   	   .append('<thead><tr>'+thead.join('')+'</tr></thead>')
+			   	   .append('<tbody></tbody>');
+			$el.append($fTable).append(this._createTable());
+			return $el;
+		},
+		_createTable_single:function(){
+			var $el=$('<ul class="kekTable-single-table"></ul>'),
+				ul=[],
+				li=[],
+				that=this;
+			$.each(this._listCols, function(i,colName) {
+				
+			});
 			
 		},
 		_createCollapse_tableSummary:function(){

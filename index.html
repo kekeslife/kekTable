@@ -46,8 +46,8 @@
 							<colgroup>
 								<col style="width:50px;" />
 								<col style="width:100px;" />
-								<col style="width:200px;" />
-								<col style="width:300px;" />
+								<col />
+								<col />
 							</colgroup>
 							<thead>
 								<tr>
@@ -626,6 +626,35 @@
 				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('b');d.resolve('bok');},5000) },
 				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('a');d.resolve('aok');},5000) },
 				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]]
+				columns:{
+					empNo:{
+						colId:0,
+						listIndex:0,
+						listWidth:100,
+						listTitle:'empNo'
+					},
+					empName:{
+						colId:1,
+						listIndex:1,
+						listWidth:100,
+						listTitle:'empName'
+					},
+					deptName:{
+						colId:4,
+						listIndex:4,
+						listWidth:100,
+						listTitle:'deptName'
+					},
+					deptNo:{
+						colId:2,
+						listIndex:2,
+						listTitle:'deptNo'
+					},
+					emp:{
+					}
+				},
+				showRowNo:true,
+				frozenNum:2
 			});
 			//$('#test2').kekTable();
 		</script>
