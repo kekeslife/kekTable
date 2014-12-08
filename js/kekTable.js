@@ -281,6 +281,10 @@ var $testDM;
 			 * @var {jQuery} _elements#$editLoading - 修改框loading遮罩
 			 */
 			$editLoading:null,
+			/**
+			 * @var {jQuery} _elements#$pagging - 分页ul
+			 */
+			$pagging:null
 		};
 		/**
 		 * @name Plugin~_options
@@ -315,6 +319,10 @@ var $testDM;
 		this._listCols=[];
 		//数据库栏位['empNo','empName']
 		this._dbCols=[];
+		//合计栏位
+		this._summaryCols=[];
+		//当前页码
+		this._currentPageNo=1;
 		
 		this._init();
 	}
@@ -377,11 +385,19 @@ var $testDM;
 					}
 				}
 			}
-			//singleTable
+			
 			if(!opt.rowNum)
 				throw 'rowNum必需大于0。否则你需要这个表来做什么';
+			//singleTable
 			else if(opt.rowNum===1 && opt.frozenNum)
 				console.warn('rowNum设置为1代表是单笔显示模式，此模式下没有冻结功能，你可以去掉frozenNum');
+			if(opt.rowNum===1 && opt.showRowNo)
+				console.warn('rowNum设置为1代表是单笔显示模式，此模式下没有序号列，你可以去掉showRowNo');
+			//detailTable
+			if(opt.detailTable){
+				if(!$('#'+opt.detailTable).length)
+					throw '没有detailTable的id'+opt.detailTable;
+			}
 			//columns
 			if(!opt.columns)
 				throw '必需设置columns';
@@ -396,12 +412,14 @@ var $testDM;
 			//columns
 			$.each(opt.columns,function(colName,colObj){
 				$.each(colObj, function(prop,val) {
-		      		if(prop==='listIndex')
+		      		if(prop==='listIndex' && val != null)
 		      			that._listCols[val]=colName;
-		      		else if(prop==='colId')
+		      		else if(prop==='colId' && val != null)
 		      			that._dbCols[val]=colName;
-		      		else if(prop==='listWidth')
+		      		else if(prop==='listWidth' && val != null)
 		      			(val-0==val-0) && (val-0) && (colObj[prop]+='px');
+		      		else if(prop==='colTotalSummary' && val != null)
+		      			that._summaryCols.push(colName);
 		      		//something...
 				});
 				//something...
@@ -428,8 +446,12 @@ var $testDM;
 		 *       Table-Group
 		 *       Table-Summary
 		 *       Table-Detail
-		 *       Pagging
+		 *       Footer
+		 *         Pagging
 		 *   Loading
+		 * 	 Search
+		 * 	 Edit
+		 * 	 Sort
 		 */
 		_createPlugin:function(){
 			var $frag=$(document.createDocumentFragment());
@@ -463,7 +485,10 @@ var $testDM;
 			$el.attr('id',this._element.id+'CollapseGroup')
 			  .addClass('panel-collapse collapse'+(this._options.collapseExpanded?' in':''))
 			  .append(this._createCollapse_toolbar())
-			  .append(this._createCollapse_tableGroup());
+			  .append(this._createCollapse_tableGroup())
+			  .append(this._createCollapse_tableSummary())
+			  .append(this._createCollapse_tableDetail())
+			  .append(this._createCollapse_footer());
 			
 			
 			//something...
@@ -605,20 +630,89 @@ var $testDM;
 			var $el=$('<ul class="kekTable-single-table"></ul>'),
 				ul=[],
 				li=[],
-				that=this;
+				cols=this._options.columns;
 			$.each(this._listCols, function(i,colName) {
-				
+				if(li.length && !cols[colName].listClingPre){
+					ul.push('<li>'+li.join('')+'</li>');
+					li.length=0;
+				}
+				li.push('<div><b>'+cols[colName].listTitle+'</b><span class="kekTable-col"'+(cols[colName].listWidth?(' style="width:'+cols[colName].listWidth+';"'):'')+'></span></div>');
 			});
-			
+			if(li.length)
+				ul.push('<li>'+li.join('')+'</li>');
+			$el.append(ul.join(''));
+			return $el;
 		},
 		_createCollapse_tableSummary:function(){
-			
+			if(this._summaryCols.length){
+				var $el=$('<div class="kekTable-table-summary"></div>'),
+					cols=this._options.columns;
+				$.each(this._summaryCols, function(i,colName) {
+					$el.append('<h5>'+cols[colName].listTitle+': '+$[_pluginName].regional['total'+cols[colName].colTotalSummary]+'<b></b></h5>');
+				});
+				return $el;
+			}
 		},
 		_createCollapse_tableDetail:function(){
-			
+			if(this._options.detailTable){
+				var $el=$('<div class="kekTable-table-md"></div>');
+				$('#'+this._options.detailTable).appendTo($el);
+				return $el;
+			}
 		},
-		_createCollapse_pagging:function(){
-			
+		_createCollapse_footer:function(){
+			return $('<div class="panel-footer"></div>').append(this._createFooter_pagging(1));
+		},
+		_createFooter_pagging:function(recordCount){
+			if(this._options.showPaging){
+				var $el=this._elements.$pagging || (this._elements.$pagging = $('<nav><ul class="pagination"></ul></nav>'));
+				if(recordCount==null)
+					throw '没有记录数';
+				var curPageBA=1;//当前页前后的按钮数量
+				var intactPages=curPageBA*2+5;//一共有多少个按钮  1 .. 10 11 12 .. 20
+				var pageCount=Math.ceil(recordCount / this._options.rowNum);//总页
+				var pageArr=[];//分页按钮组
+				pageArr[0]='<li><a href="#">1</a></li>';
+				//最後頁
+		        if (pageCount > 1)
+		            pageArr[(intactPages > pageCount ? pageCount : intactPages) - 1] = '<li><a href="#">' + pageCount + '</a></li>';
+		        var i = 0;
+		        if (pageCount <= intactPages) {
+		            for (i = 2; i <= pageCount - 1; i++)
+		                pageArr[i - 1] = '<li><a href="#">' + i + '</a></li>';
+		            pageArr[this._currentPageNo - 1] = '<li class="active"><span>' + this._currentPageNo + '</span></li>';
+		        }
+		        else {
+		            //1 2 3 4 5 ... 8
+		            if (this._currentPageNo <= curPageBA + 3) {
+		                for (i = 2; i <= curPageBA + 4; i++)
+		                    pageArr[i - 1] = '<li><a href="#">' + i + '</a></li>';
+		                pageArr[this._currentPageNo - 1] = '<li class="active"><span>' + this._currentPageNo + '</span></li>';
+		                pageArr[intactPages - 2] = '<li class="disabled"><span>...</span></li>';
+		            }
+		                //1 ... 4 5 6 7 8
+		            else if (this._currentPageNo >= pageCount - curPageBA - 2) {
+		                for (i = 2; i <= curPageBA + 4; i++)
+		                    pageArr[intactPages - i] = '<li><a href="#">' + (pageCount - i + 1) + '</a></li>';
+		                pageArr[intactPages - (pageCount - this._currentPageNo) - 1] = '<li class="active"><span>' + this._currentPageNo + '</span></li>';
+		                pageArr[1] = '<li class="disabled"><span>...</span></li>';
+		            }
+		                //1 ... 4 5 6 ... 9
+		            else {
+		                pageArr[1] = '<li class="disabled"><span>...</span></li>';
+		                pageArr[intactPages - 2] = '<li class="disabled"><span>...</span></li>';
+		                for (i = 1; i <= curPageBA; i++) {
+		                    pageArr[i + 1] = '<li><a href="#">' + (this._currentPageNo - i) + '</a></li>';
+		                }
+		                for (i = 1; i <= curPageBA; i++) {
+		                    pageArr[intactPages - 2 - i] = '<li><a href="#">' + (this._currentPageNo - i + 1 + curPageBA) + '</a></li>';
+		                }
+		                pageArr[Math.ceil(intactPages / 2) - 1] = '<li class="active"><span>' + this._currentPageNo + '</span></li>';
+		            }
+		        }
+		        $el.children().append(pageArr.join(''));
+		        return $el;
+			}
 		},
 		_createPlugin_loading:function(el){
 			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
@@ -913,35 +1007,35 @@ var $testDM;
 		/**
 		 * @var {string} Plugin#regional#totalSum - 总计公式[SUM]的文字
 		 */
-		totalSum:'总和',
+		totalSUM:'总和',
 		/**
 		 * @var {string} Plugin#regional#totalAvg - 总计公式[AVG]的文字
 		 */
-		totalAvg:'总均值',
+		totalAVG:'总均值',
 		/**
 		 * @var {string} Plugin#regional#totalMax - 总计公式[MAX]的文字
 		 */
-		totalMax:'最大值',
+		totalMAX:'最大值',
 		/**
 		 * @var {string} Plugin#regional#totalMin - 总计公式[MIN]的文字
 		 */
-		totalMin:'最小值',
+		totalMIN:'最小值',
 		/**
 		 * @var {string} Plugin#regional#totalCount - 总计公式[COUNT]的文字
 		 */
-		totalCount:'总计数',
+		totalCOUNT:'总计数',
 		/**
 		 * @var {string} Plugin#regional#totalStddev - 总计公式[STDDEV]的文字
 		 */
-		totalStddev:'总标准差',
+		totalSTDDEV:'总标准差',
 		/**
 		 * @var {string} Plugin#regional#totalVariance - 总计公式[VARIANCE]的文字
 		 */
-		totalVariance:'总协方差',
+		totalVARIANCE:'总协方差',
 		/**
 		 * @var {string} Plugin#regional#totalMedian - 总计公式[MEDIAN]的文字
 		 */
-		totalMedian:'中间值',
+		totalMEDIAN:'中间值',
 		/**
 		 * @var {string} Plugin#regional#sortTitle - 排序框标题
 		 */
