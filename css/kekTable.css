@@ -44,6 +44,7 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .modal-dialog{margin:30px auto;}
 .modal-header{padding: 10px 15px 8px 15px;}
 /*編輯框-查詢*/
+.kekTable-search .modal-dialog{width: 600px;}
 .kekTable-search .modal-body{padding: 0;}
 .kekTable-search .caret{margin-left: 2px;}
 .kekTable-search-block{overflow: auto;padding: 15px;}

@@ -414,12 +414,12 @@
 		
 		<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#search">查询</button>
 		<!-- search -->
-		<div class="modal fade kekTable-search" id="search" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal fade kekTable-search" id="search" data-backdrop="static" tabindex="-1">
 		  	<div class="modal-dialog" style="width: 600px;">
 		    	<div class="modal-content">
 		      		<div class="modal-header">
 		        		<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-		        		<h4 class="modal-title" id="myModalLabel">查询</h4>
+		        		<h4 class="modal-title">查询</h4>
 		      		</div>
 		      		<div class="modal-body">
 		      			<ul class="kekTable-search-block">
@@ -625,7 +625,7 @@
 				isCollapse:true,isDebug:true,
 				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('b');d.resolve('bok');},5000) },
 				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('a');d.resolve('aok');},5000) },
-				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]]
+				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]],
 				columns:{
 					empNo:{
 						colId:0,

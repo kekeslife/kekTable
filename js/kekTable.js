@@ -118,10 +118,6 @@ var $testDM;
 			 */
 			tableRelations:null,
 			/**
-			 * @var {?string} [kekTable~options#dataType='db'] - 取资料的方式。'db':从后台sql、'js':'从js变量'
-			 */
-			dataType:'DB',
-			/**
 			 * @var {?int} [kekTable~options#frozenNum=null] - 冻结前几列,不包含序号列
 			 */
 			frozenNum:null,
@@ -200,6 +196,10 @@ var $testDM;
 			 */
 			listClingPre:false,
 			/**
+			 * @var {?bool} [_column#canSearch=true] - 数据库栏位是否可以被自定义查询
+			 */
+			canSearch:true,
+			/**
 			 * @var {?string} [_column#editTitle=__column#listTitle] - 编辑框中栏位上面的标题
 			 */
 			editTitle:null,
@@ -261,7 +261,7 @@ var $testDM;
 		/**
 		 * @name Plugin~_element
 		 * @desc 插件的id
-		 * @type {dom} 
+		 * @type {string} 
 		 */
 		this._element=element;
 		/**
@@ -284,7 +284,22 @@ var $testDM;
 			/**
 			 * @var {jQuery} _elements#$pagging - 分页ul
 			 */
-			$pagging:null
+			$pagging:null,
+			/**
+			 * @typedef _elements#search - 查询框
+			 * @prop {jQuery} [$dialog=null] - 查询框
+			 * @prop {jQuery} [$col=null] - 字段
+			 * @prop {jQuery} [$operator=null] - 关系运算符
+			 * @prop {jQuery} [$bool=null] - 逻辑运算符
+			 * @prop {jQuery} [$control=null] - 功能项
+			 */
+			search:{
+				$dialog:null,
+				$col:null,
+				$operator:null,
+				$bool:null,
+				$control:null
+			},
 		};
 		/**
 		 * @name Plugin~_options
@@ -340,7 +355,8 @@ var $testDM;
 		},
 		//检核参数配置
 		_debug:function(){
-			var opt=this._options;
+			var opt=this._options,
+				hasTool={};
 			//panelColor
 			if($.inArray(opt.panelColor,['panel-primary','panel-success','panel-info','panel-warning','panel-danger','panel-default'])===-1)
 				console.warn('panelColor非内建值，当然你可以使用自定义的css');
@@ -377,6 +393,7 @@ var $testDM;
 								console.warn(opt.toolbar[i][m].id+'按钮没有icon也没有label');
 							if(!opt.toolbar[i][m].action)
 								throw 'toolbar.'+opt.toolbar[i][m].id+'没有action';
+							hasTool[opt.toolbar[i][m].id]=true;
 						}
 						else{
 							if(opt.toolbar[i][m].action || opt.toolbar[i][m].icon || opt.toolbar[i][m].title)
@@ -403,6 +420,17 @@ var $testDM;
 				throw '必需设置columns';
 			else if($.type(opt.columns)!=='object')
 				throw 'columns必需是object类型';
+			//col
+			$.each(opt.columns, function(colName,colObj) {
+				if(colObj.listIndex==null && colObj.listWidth)
+					console.warn(colName+'没有设置listIndex代表非显示栏位，不用设置listWidth');
+				if(colObj.listWidth===0)
+					console.warn(colName+'的listWidth被设置为0，如果不需要显示，请设置listIndex=null');
+				if(colObj.colId==null && colObj.canSearch)
+					console.warn(colName+'没设置colId,代表非数据库栏位，canSearch设置将无效');
+				if(hasTool.search && colObj.canSearch)
+					console.warn(colName+'没开启查询功能，canSearch设置将无效');
+			});
 			//something...
 		},
 		//初始化时调整参数
@@ -411,11 +439,18 @@ var $testDM;
 				that=this;
 			//columns
 			$.each(opt.columns,function(colName,colObj){
+				opt.columns[colName]=$.extend({},_column, colObj);
 				$.each(colObj, function(prop,val) {
-		      		if(prop==='listIndex' && val != null)
+		      		if(prop==='listIndex' && val != null){
+		      			if(that._listCols[val])
+							throw '有重复的listIndex';
 		      			that._listCols[val]=colName;
-		      		else if(prop==='colId' && val != null)
-		      			that._dbCols[val]=colName;
+		      		}
+		      		else if(prop==='colId' && val != null){
+		      			if(that._dbCols[val])
+							throw '有重复的colId';
+						that._dbCols[val]=colName;
+		      		}
 		      		else if(prop==='listWidth' && val != null)
 		      			(val-0==val-0) && (val-0) && (colObj[prop]+='px');
 		      		else if(prop==='colTotalSummary' && val != null)
@@ -455,7 +490,7 @@ var $testDM;
 		 */
 		_createPlugin:function(){
 			var $frag=$(document.createDocumentFragment());
-			$frag.append(this._createPlugin_panel()).append(this._createPlugin_loading());
+			$frag.append(this._createPlugin_panel()).append(this._createPlugin_loading()).append(this._createPlugin_search());
 			$(this._element).addClass('kekTable-listPanel panel-group')
 							.css('width',this._options.tableWidth)
 							.append($frag);
@@ -717,6 +752,58 @@ var $testDM;
 		_createPlugin_loading:function(el){
 			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
 		},
+		_createPlugin_search:function(){
+			var noSearch=true;
+			$.each(this._options.toolbar, function(i,g) {
+				$.each(g, function(i,obj) {
+					if(obj.id==='search')
+						return noSearch=false;
+				});
+				return noSearch;
+			});
+			if(!noSearch){
+				var regional=$[_pluginName].regional;
+				this._elements.search.$dialog=$('<div class="modal fade kekTable-search" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
+					regional.searchTitle+'</h4></div><div class="modal-body"><ul class="kekTable-search-block"></ul></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
+					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.searchCommit+'</button></div></div></div></div>');
+				this._elements.search.$dialog.find('.modal-body').append(this._createSearch_col())
+					.append(this._createSearch_operator());
+				
+				
+				//something...
+				return this._elements.search.$dialog;
+			}
+		},
+		_createSearch_col:function(){
+			this._elements.search.$col=$('<ul class="dropdown-menu kekTable-search-itemList" style="display: block;"></ul>');
+			var li=[],cols=this._options.columns;
+			$.each(this._dbCols, function(i,colName) {
+				if(cols[colName].canSearch)
+					li.push('<li data-col="'+colName+'"><span>'+cols[colName].listTitle+'</span></li>');
+			});
+			this._elements.search.$col.append(li.join(''));
+			return this._elements.search.$col;
+		},
+		_createSearch_operator:function(){
+			this._elements.search.$operator=$('<ul class="dropdown-menu kekTable-search-itemList" style="display: block;"></ul>');
+			var li=[],regional=$[_pluginName].regional;
+			li.push(
+				'<li data-opt="eq"><span>'+regional.searchOptEq+'</span></li>',
+				'<li data-opt="gt"><span>'+regional.searchOptGt+'</span></li>',
+				'<li data-opt="lt"><span>'+regional.searchOptLt+'</span></li>',
+				'<li data-opt="ge"><span>'+regional.searchOptGe+'</span></li>',
+				'<li data-opt="le"><span>'+regional.searchOptLe+'</span></li>',
+				'<li data-opt="ne"><span>'+regional.searchOptNe+'</span></li>',
+				'<li data-opt="beg"><span>'+regional.searchOptBeg+'</span></li>',
+				'<li data-opt="end"><span>'+regional.searchOptEnd+'</span></li>',
+				'<li data-opt="like"><span>'+regional.searchOptLike+'</span></li>',
+				'<li data-opt="null"><span>'+regional.searchOptNull+'</span></li>',
+				'<li data-opt="nnull"><span>'+regional.searchOptNNull+'</span></li>'
+			);
+			this._elements.search.$operator.append(li.join(''));
+			return this._elements.search.$operator;
+		},
+		
 		//==========end建立插件==========
 		
 		//==========工具栏内置功能==========
