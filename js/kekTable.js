@@ -143,6 +143,19 @@ var $testDM;
 			 */
 			foreignType:'default',
 			/**
+			 * @var {?Array.<object>} [kekTable~options#defaultSearch=null] - 默认的过滤条件。
+			 * @example 过滤条件
+			 * defaultSearch = [
+			 * 		['empNo','=','14563'],
+			 * 		['AND','state','IS NOT NULL'],
+			 * 		['AND',[
+			 * 			['deptNo','=','D02'],
+			 * 			['OR','deptNo','=','D03']
+			 * 		]]
+			 * ]
+			 */
+			defaultSearch:null,
+			/**
 			 * @function kekTable~options#beforeRefresh
 			 * @desc 点击刷新按钮前的自定义操作。必需要写d.resolve()或者d.reject()
 			 * @param {Plugin~_tableValues} tableValues
@@ -415,6 +428,9 @@ var $testDM;
 				if(!$('#'+opt.detailTable).length)
 					throw '没有detailTable的id'+opt.detailTable;
 			}
+			//defaultSearch
+			if(opt.defaultSearch)
+				this._checkSearchCondition(opt.defaultSearch);
 			//columns
 			if(!opt.columns)
 				throw '必需设置columns';
@@ -422,6 +438,8 @@ var $testDM;
 				throw 'columns必需是object类型';
 			//col
 			$.each(opt.columns, function(colName,colObj) {
+				if(colObj==null)
+					throw colName+'不能设为Null，如需要请设置为{}';
 				if(colObj.listIndex==null && colObj.listWidth)
 					console.warn(colName+'没有设置listIndex代表非显示栏位，不用设置listWidth');
 				if(colObj.listWidth===0)
@@ -432,6 +450,49 @@ var $testDM;
 					console.warn(colName+'没开启查询功能，canSearch设置将无效');
 			});
 			//something...
+		},
+		//检核查询条件
+		_checkSearchCondition:function(arr){
+			var that=this,opt=this._options;
+			if($.type(arr)!=='array' || !arr.length)
+				throw 'defaultSearch项必需是有内容的数组';
+			$.each(arr, function(i,condition) {
+				if($.type(condition)!=='array')
+					throw 'defaultSearch子项必需是数组';
+				var len=condition.length;
+				if(i){
+					if($.inArray(condition[0],['AND','OR'])===-1)
+						throw 'defaultSearch非第一个子项的第一个值必须是AND，OR';
+					if($.inArray(len,[2,3,4])===-1)
+						throw 'defaultSearch非第一个子项只能有2，3，4个值';
+					//['AND',[]]
+					if(len===2)
+						that._checkSearchCondition(condition[1]);
+					//['AND','empNo','IS NOT NULL']
+					else{
+						if(opt.columns[condition[1]]==null || opt.columns[condition[1]].colId==null)
+							throw 'columns设置中没有'+condition[1]+'栏位，或没有设置colId';
+						if($.inArray(condition[2],['IS NULL','IS NOT NULL','=','LIKE','>','>=','<','<=','!='])===-1)
+							throw '3,4个值的defaultSearch子项的第三个值必需是IS NULL、IS NOT NULL、=、LIKE、>、>=、<、<=、!=';
+						if($.inArray(condition[2],['IS NULL','IS NOT NULL'])!==-1 && condition[3] != null)
+							throw 'defaultSearch子项的关系符为IS NULL、IS NOT NULL，不用设置第四个值';
+						else if($.inArray(condition[2],['IS NULL','IS NOT NULL'])===-1 && condition[3] == null)
+							throw 'defaultSearch子项的关系符不为IS NULL、IS NOT NULL，必需设置第四个值';
+					}
+				}
+				else{
+					if($.inArray(len,[2,3])===-1)
+						throw 'defaultSearch第一个子项只能有2，3个值';
+					if(opt.columns[condition[0]]==null || opt.columns[condition[0]].colId==null)
+						throw 'columns设置中没有'+condition[0]+'栏位，或没有设置colId';
+					if($.inArray(condition[1],['IS NULL','IS NOT NULL','=','LIKE','>','>=','<','<=','!='])===-1)
+						throw 'defaultSearch子项的第2个值必需是IS NULL、IS NOT NULL、=、LIKE、>、>=、<、<=、!=';
+					if($.inArray(condition[1],['IS NULL','IS NOT NULL'])!==-1 && condition[2] != null)
+						throw 'defaultSearch子项的关系符为IS NULL、IS NOT NULL，不用设置第3个值';
+					else if($.inArray(condition[1],['IS NULL','IS NOT NULL'])===-1 && condition[2] == null)
+						throw 'defaultSearch子项的关系符不为IS NULL、IS NOT NULL，必需设置第3个值';
+				}
+			});
 		},
 		//初始化时调整参数
 		_adjustOptions:function(){
@@ -766,11 +827,10 @@ var $testDM;
 				this._elements.search.$dialog=$('<div class="modal fade kekTable-search" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
 					regional.searchTitle+'</h4></div><div class="modal-body"><ul class="kekTable-search-block"></ul></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
 					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.searchCommit+'</button></div></div></div></div>');
-				this._elements.search.$dialog.find('.modal-body').append(this._createSearch_col())
-					.append(this._createSearch_operator());
-				
-				
-				//something...
+				$('.modal-body',this._elements.search.$dialog).append(this._createSearch_col())
+					.append(this._createSearch_operator())
+					.append(this._createSearch_bool())
+					.append(this._createSearch_control());
 				return this._elements.search.$dialog;
 			}
 		},
@@ -782,6 +842,7 @@ var $testDM;
 					li.push('<li data-col="'+colName+'"><span>'+cols[colName].listTitle+'</span></li>');
 			});
 			this._elements.search.$col.append(li.join(''));
+			this._setSearchDialog();
 			return this._elements.search.$col;
 		},
 		_createSearch_operator:function(){
@@ -802,6 +863,31 @@ var $testDM;
 			);
 			this._elements.search.$operator.append(li.join(''));
 			return this._elements.search.$operator;
+		},
+		_createSearch_bool:function(){
+			this._elements.search.$bool=$('<ul class="dropdown-menu kekTable-search-itemList" style="display: block;"></ul>');
+			var li=[],regional=$[_pluginName].regional;
+			li.push(
+				'<li data-opt="and"><span>'+regional.searchBoolAnd+'</span></li>',
+				'<li data-opt="or"><span>'+regional.searchBoolOr+'</span></li>'
+			);
+			this._elements.search.$bool.append(li.join(''));
+			return this._elements.search.$bool;
+		},
+		_createSearch_control:function(){
+			this._elements.search.$control=$('<ul class="dropdown-menu kekTable-search-itemList" style="display: block;"></ul>');
+			var li=[],regional=$[_pluginName].regional;
+			li.push(
+				'<li data-ctrl="pc"><span>'+regional.searchAddPreCond+'</span></li>',
+				'<li data-ctrl="nc"><span>'+regional.searchAddNxtCond+'</span></li>',
+				'<li class="divider"></li>',
+				'<li data-ctrl="pg"><span>'+regional.searchAddPreGrp+'</span></li>',
+				'<li data-ctrl="ng"><span>'+regional.searchAddNxtGrp+'</span></li>',
+				'<li class="divider"></li>',
+				'<li data-ctrl="del"><span>'+regional.searchDelCond+'</span></li>'
+			);
+			this._elements.search.$control.append(li.join(''));
+			return this._elements.search.$control;
 		},
 		
 		//==========end建立插件==========
@@ -838,6 +924,20 @@ var $testDM;
 		//==========end工具栏内置功能==========
 		
 		/**
+		 * @function Plugin~_setSearchDialog
+		 * @desc 将排序条件列表数组显示到查询对话框中
+		 * @param {Plugin~_sortConditions} sortConditions - 排序的条件列表
+		 */
+		_setSearchDialog:function(arr){
+			var $block=$('.kekTable-search-block',this._elements.search.$dialog),
+				regional=$[_pluginName].regional;
+			if(!arr || !arr.length)
+				$block.empty().append('<li><button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button" data-col=""><span>'+regional.defaultCol
+									+'</span><span class="caret"></span></button><button class="btn btn-default dropdown-toggle" type="button" data-opt="">=<span class="caret"></span></button><input type="text" class="form-control kekTable-search-itemValue"><button class="btn btn-default dropdown-toggle" type="button"><span class="glyphicon glyphicon-cog"></span></button></li>');
+			//something...
+		},
+		
+		/**
 		 * @function Plugin~_showLoading
 		 * @desc 显示加载遮罩
 		 * @param {?string} [msg=regional.loadingTxt] - 加载提示文字
@@ -847,7 +947,7 @@ var $testDM;
 		_showLoading:function(msg,el,delay){
 			el=el||this._curLoading||'list';
 			var $el=el==='edit'?this._elements.$editLoading:this._elements.$loading;
-			$el.find('.alert').text(msg||$[_pluginName].regional.loadingTxt);
+			$('.alert',$el).text(msg||$[_pluginName].regional.loadingTxt);
 			if(el!==this._curLoading){
 				this._hideLoading(this._curLoading);
 				delay=delay||this._options._loadingDelay;
@@ -967,6 +1067,10 @@ var $testDM;
 	 * $.kekTable.regional={}
 	 */
 	$[_pluginName].regional={
+		/**
+		 * @var {string} Plugin#regional#defaultCol - 默认字段栏位的文字
+		 */
+		defaultCol:'欄位',
 		/**
 		 * @var {string} Plugin#regional#toolbarAdd - 工具栏新增按钮的显示文字
 		 */
