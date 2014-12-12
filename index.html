@@ -6,10 +6,12 @@
 		<script src="js/jquery.min.1.11.1.js" type="text/javascript" charset="utf-8"></script>
 		<script src="js/bootstrap-3.3.0/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
 		<script src="js/kekTable.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/jquery.datetimepicker.js" type="text/javascript" charset="utf-8"></script>
 		<link rel="stylesheet" type="text/css" href="css/main.css"/>
 		<link rel="stylesheet" type="text/css" href="css/skin.css"/>
 		<link rel="stylesheet" type="text/css" href="js/bootstrap-3.3.0/css/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/kekTable.css"/>
+		<link rel="stylesheet" type="text/css" href="css/jquery.datetimepicker.css"/>
 	</head>
 	<body>
 		<!--宽度=table宽度+3-->
@@ -473,23 +475,23 @@
 			        			</ul>
 			        		</li>
 		        		</ul>
-			        	<ul class="dropdown-menu kekTable-search-itemList" style="display: block;">
+			        	<ul class="dropdown-menu kekTable-search-itemList kekTable-dropList" style="display: block;">
 						    <li><span>Action</span></li>
 						    <li><span>Another action</span></li>
 						    <li><span>Something else here</span></li>
 						    <li><span>Separated link</span></li>
 						</ul>
-						<ul class="dropdown-menu kekTable-search-itemList" style="display: block;">
+						<ul class="dropdown-menu kekTable-search-itemList kekTable-dropList" style="display: block;">
 						    <li><span>=</span></li>
 						    <li><span>></span></li>
 						    <li><span><</span></li>
 						    <li><span>>=</span></li>
 						</ul>
-						<ul class="dropdown-menu kekTable-search-itemList" style="display: block;">
+						<ul class="dropdown-menu kekTable-search-itemList kekTable-dropList" style="display: block;">
 						    <li><span>且</span></li>
 						    <li><span>或</span></li>
 						</ul>
-						<ul class="dropdown-menu kekTable-search-itemList" style="display: block;">
+						<ul class="dropdown-menu kekTable-search-itemList kekTable-dropList" style="display: block;">
 						    <li><span>新增条件至前</span></li>
 						    <li><span>新增条件至后</span></li>
 						    <li class="divider"></li>
@@ -578,11 +580,11 @@
 		      			<div class="kekTable-sort-ctrl">
 		      				<div class="btn-group">
 								<button type="button" class="btn btn-default dropdown-toggle" title="添加" data-toggle="dropdown"><span class="glyphicon glyphicon-plus"></span></button>
-								<ul class="dropdown-menu dropdown-menu-right">
-								    <li>Action</li>
-								    <li>Another action</li>
-								    <li>Something else here</li>
-								    <li>Separated link</li>
+								<ul class="dropdown-menu dropdown-menu-right kekTable-dropList">
+								    <li><span>Action</span></li>
+								    <li><span>Action</span></li>
+								    <li><span>Action</span></li>
+								    <li><span>Action</span></li>
 								  </ul>
 								<button type="button" class="btn btn-default" title="删除"><span class="glyphicon glyphicon-remove"></span></button>
 							</div>
@@ -615,12 +617,49 @@
 		    </div>
 		  </div>
 		</div>
-		
+		<!--lov-->
+		<div class="dropdown">
+			<button class="btn btn-default dropdown-toggle" type="button" data-col="empNo" data-toggle="dropdown">
+				<span>14623</span>
+				<span class="caret"></span>
+			</button>
+			<ul class="dropdown-menu kekTable-dropList">
+				<li role="presentation"><span>Action</span>
+				</li>
+				<li role="presentation"><span>Another action</span>
+				</li>
+				<li role="presentation"><span>Something else here</span>
+				</li>
+				<li role="presentation"><span>Separated link</span>
+				</li>
+			</ul>
+		</div>
+		<div class="dropdown">
+			<input class="form-control" readonly data-toggle="dropdown" value="123王珂" />
+			<!--<button class="btn btn-default dropdown-toggle" type="button" data-col="empNo" data-toggle="dropdown">
+				<span>14623</span>
+				<span class="caret"></span>
+			</button>-->
+			<table class="dropdown-menu table table-hover table-condensed kekTable-lov">
+				<thead>
+					<tr><th>工号</th><th>姓名</th><th>部门</th></tr>
+				</thead>
+				<tbody>
+					<tr><td>14623</td><td>王珂</td><td>资讯室</td></tr>
+					<tr><td>14623</td><td>王珂</td><td>资讯室</td></tr>
+					<tr><td>14623</td><td>王珂</td><td>资讯室</td></tr>
+					<tr><td>14623</td><td>王珂</td><td>资讯室</td></tr>
+				</tbody>
+			</table>
+		</div>
+		<!--datetime-->
+		<input id="datetimepicker" type="text" >
 		
 		
 		<div id="test1"></div>
 		<div id="test2"></div>
 		<script type="text/javascript">
+			$('#datetimepicker').datetimepicker();
 			$('#test1').kekTable({
 				isCollapse:true,isDebug:true,
 				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('b');d.resolve('bok');},5000) },

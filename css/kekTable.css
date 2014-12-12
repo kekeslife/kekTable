@@ -2,6 +2,13 @@
 input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .form-control{padding: 6px 12px !important;}
 
+/*下拉列表*/
+.kekTable-dropList{min-width: 0;}
+.kekTable-dropList>li>span{padding: 3px 20px;font-weight: 400;color: #333;white-space: nowrap;cursor: pointer;display: block;}
+.kekTable-dropList>li>span:hover{color: #262626;background-color: #f5f5f5;}
+/*lov*/
+.kekTable-lov{padding: 5px;width:auto;}
+.kekTable-lov tbody tr{cursor: pointer;}
 /*表格*/
 .kekTable-listPanel{position: relative;}
 /*表格-標題*/
@@ -53,9 +60,9 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .kekTable-search-bool{vertical-align: top;}
 .kekTable-search-item{border: 1px solid #ddd;border-radius: 4px;padding: 2px;display: inline-block;margin: 6px 0;}
 .kekTable-search-item-first{margin-left: 54px;}
-.kekTable-search-itemList{min-width: 0;}
+/*.kekTable-search-itemList{min-width: 0;}
 .kekTable-search-itemList>li>span{padding: 3px 20px;font-weight: 400;color: #333;white-space: nowrap;cursor: pointer;display: block;}
-.kekTable-search-itemList>li>span:hover{color: #262626;background-color: #f5f5f5;}
+.kekTable-search-itemList>li>span:hover{color: #262626;background-color: #f5f5f5;}*/
 .kekTable-search-itemValue{width: 100px;display: inline-block;}
 /*編輯框-修改*/
 .kekTable-edit .modal-body{padding: 15px 0;}
@@ -70,5 +77,5 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .kekTable-sort-block li:hover{color: #555;text-decoration: none;background-color: #f5f5f5;}
 .kekTable-sort-ctrl{float: left;width: 80px;}
 .kekTable-sort-ctrl .btn-group-vertical,.kekTable-sort-ctrl .btn-group{margin-bottom: 10px;}
-.kekTable-sort-ctrl .dropdown-menu li{padding: 3px 20px;font-weight: 400;color: #333;white-space: nowrap;cursor: pointer;display: block;}
-.kekTable-sort-ctrl .dropdown-menu li:hover{color: #555;background-color: #f5f5f5;}
+/*.kekTable-sort-ctrl .dropdown-menu li{padding: 3px 20px;font-weight: 400;color: #333;white-space: nowrap;cursor: pointer;display: block;}
+.kekTable-sort-ctrl .dropdown-menu li:hover{color: #555;background-color: #f5f5f5;}*/

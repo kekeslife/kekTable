@@ -205,9 +205,9 @@ var $testDM;
 			 */
 			listWidth:null,
 			/**
-			 * @var {?bool} [_column#listClingPre=false] - 单笔记录显示时，此栏位是否和前一个栏位在同一行显示
+			 * @var {?bool} [_column#listInline=false] - 单笔记录显示时，此栏位是否和前一个栏位在同一行显示
 			 */
-			listClingPre:false,
+			listInline:false,
 			/**
 			 * @var {?bool} [_column#canSearch=true] - 数据库栏位是否可以被自定义查询
 			 */
@@ -217,12 +217,8 @@ var $testDM;
 			 */
 			editTitle:null,
 			/**
-			 * @var {?bool} [_column#editClingPre=false] - 编辑框中此栏位是否和前一个栏位在同一行显示
-			 */
-			editClingPre:false,
-			/**
-			 * @var {?string} [_column#editDisplay='block'] - 'block'(换行)、'inline'(同一行)
-			 * @summary 编辑框中栏位和前一个栏位在同一行
+			 * @var {?bool} [_column#editDisplay='block'] - 'block'(单独一行)、'inline'(与前一个栏位同一行)、'cling'(紧贴前一个栏位)
+			 * @summary 编辑框中此栏位的显示方式
 			 */
 			editDisplay:'block',
 			/**
@@ -313,6 +309,9 @@ var $testDM;
 				$bool:null,
 				$control:null
 			},
+			edit:{
+				$dialog:null
+			}
 		};
 		/**
 		 * @name Plugin~_options
@@ -338,13 +337,27 @@ var $testDM;
 			curRecordNum:null,
 			tableStatus:null
 		};
-		
+		/**
+		 * @typedef Plugin~_hasTool
+		 * @desc 是否开启内建功能
+		 */
+		this._hasTool={
+			'search':null,
+			'edit':null,
+			'add':null,
+			'refresh':null,
+			'sort':null,
+			'delete':null,
+			'export':null
+		};
 		//显示loading用的setTimeout返回值
 		this._loadingDelay=null;
 		//当前画面上显示的是哪个遮罩'list'、'edit'
 		this._curLoading=null;
 		//显示栏位['empNo','empName']
 		this._listCols=[];
+		//编辑栏位
+		this._editCols=[];
 		//数据库栏位['empNo','empName']
 		this._dbCols=[];
 		//合计栏位
@@ -361,15 +374,15 @@ var $testDM;
 		//内部方法
 		//插件初始化 this=Plugin
 		_init:function(){
+			this._adjustOptions();
 			if(this._options.isDebug)
 				this._debug();
-			this._adjustOptions();
 			this._createPlugin();
 		},
 		//检核参数配置
 		_debug:function(){
 			var opt=this._options,
-				hasTool={};
+				that=this;
 			//panelColor
 			if($.inArray(opt.panelColor,['panel-primary','panel-success','panel-info','panel-warning','panel-danger','panel-default'])===-1)
 				console.warn('panelColor非内建值，当然你可以使用自定义的css');
@@ -406,7 +419,6 @@ var $testDM;
 								console.warn(opt.toolbar[i][m].id+'按钮没有icon也没有label');
 							if(!opt.toolbar[i][m].action)
 								throw 'toolbar.'+opt.toolbar[i][m].id+'没有action';
-							hasTool[opt.toolbar[i][m].id]=true;
 						}
 						else{
 							if(opt.toolbar[i][m].action || opt.toolbar[i][m].icon || opt.toolbar[i][m].title)
@@ -446,9 +458,25 @@ var $testDM;
 					console.warn(colName+'的listWidth被设置为0，如果不需要显示，请设置listIndex=null');
 				if(colObj.colId==null && colObj.canSearch)
 					console.warn(colName+'没设置colId,代表非数据库栏位，canSearch设置将无效');
-				if(hasTool.search && colObj.canSearch)
+				if(!that._hasTool.search && colObj.canSearch)
 					console.warn(colName+'没开启查询功能，canSearch设置将无效');
+				if(!that._hasTool.edit && !that._hasTool.add){
+					if(colObj.editTitle || colObj.editIndex || colObj.editPlaceholder)
+						console.warn('没有开启新增修改功能，不用设置edit参数');
+				}
+				if($.inArray(colObj.editDisplay,['block','inline','cling']===-1)
+					throw colName+'editDisplay只能设置为block,inline,cling';
 			});
+			//col array
+			if(!this._listCols.length)
+				throw '没有设置任何的listIndex';
+			if(!this._dbCols.length)
+				throw '没有设置任何的colId';
+			if(this._hasTool.add && this._hasTool.edit && !this._editCols.length)
+				console.warn('开启了新增修改功能却没有任何的editIndex');
+			//editCols
+			if(this._editCols.length && opt.columns[this._editCols[0]].editDisplay!=='block')
+				console.warn(this._editCols[0]+'只能设置为block');
 			//something...
 		},
 		//检核查询条件
@@ -498,37 +526,47 @@ var $testDM;
 		_adjustOptions:function(){
 			var opt=this._options,
 				that=this;
+			//hasTool
+			$.each(opt.toolbar, function(i,g) {
+				$.each(g, function(m,obj) {
+					if($.inArray(obj.id,['refresh','search','sort','add','edit','delete','export'])!==-1)
+						that._hasTool[obj.id]=true;
+				});
+			});
 			//columns
 			$.each(opt.columns,function(colName,colObj){
-				opt.columns[colName]=$.extend({},_column, colObj);
+				colObj=$.extend({},_column, colObj);
 				$.each(colObj, function(prop,val) {
 		      		if(prop==='listIndex' && val != null){
 		      			if(that._listCols[val])
 							throw '有重复的listIndex';
 		      			that._listCols[val]=colName;
 		      		}
+		      		else if(prop==='editIndex' && val != null){
+		      			if(that._editCols[val])
+							throw '有重复的editIndex';
+		      			that._editCols[val]=colName;
+		      		}
 		      		else if(prop==='colId' && val != null){
 		      			if(that._dbCols[val])
 							throw '有重复的colId';
 						that._dbCols[val]=colName;
 		      		}
-		      		else if(prop==='listWidth' && val != null)
+		      		else if((prop==='listWidth' || prop==='editWidth') && val != null)
 		      			(val-0==val-0) && (val-0) && (colObj[prop]+='px');
 		      		else if(prop==='colTotalSummary' && val != null)
 		      			that._summaryCols.push(colName);
 		      		//something...
 				});
 				//something...
+				opt.columns[colName]=colObj;
 			});
-			
-			//check
-			if(!this._listCols.length)
-				throw '没有设置任何的listIndex';
+			//array
 			this._listCols=$.map(this._listCols, function(v) {return v;});
-			if(!this._dbCols.length)
-				throw '没有设置任何的colId';
 			this._dbCols=$.map(this._dbCols, function(v) {return v;});
-			
+			this._editCols=$.map(this._editCols, function(v) {return v;});
+			//editCols
+			this._editCols.length && opt.columns[this._editCols[0]].editDisplay='block';
 			//something...
 		},
 		/**==========建立插件==========
@@ -551,7 +589,10 @@ var $testDM;
 		 */
 		_createPlugin:function(){
 			var $frag=$(document.createDocumentFragment());
-			$frag.append(this._createPlugin_panel()).append(this._createPlugin_loading()).append(this._createPlugin_search());
+			$frag.append(this._createPlugin_panel())
+				 .append(this._createPlugin_loading())
+				 .append(this._createPlugin_search())
+				 .append(this._createPlugin_edit());
 			$(this._element).addClass('kekTable-listPanel panel-group')
 							.css('width',this._options.tableWidth)
 							.append($frag);
@@ -728,7 +769,7 @@ var $testDM;
 				li=[],
 				cols=this._options.columns;
 			$.each(this._listCols, function(i,colName) {
-				if(li.length && !cols[colName].listClingPre){
+				if(li.length && !cols[colName].listInline){
 					ul.push('<li>'+li.join('')+'</li>');
 					li.length=0;
 				}
@@ -814,15 +855,7 @@ var $testDM;
 			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
 		},
 		_createPlugin_search:function(){
-			var noSearch=true;
-			$.each(this._options.toolbar, function(i,g) {
-				$.each(g, function(i,obj) {
-					if(obj.id==='search')
-						return noSearch=false;
-				});
-				return noSearch;
-			});
-			if(!noSearch){
+			if(this._hasTool.search){
 				var regional=$[_pluginName].regional;
 				this._elements.search.$dialog=$('<div class="modal fade kekTable-search" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
 					regional.searchTitle+'</h4></div><div class="modal-body"><ul class="kekTable-search-block"></ul></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
@@ -835,7 +868,7 @@ var $testDM;
 			}
 		},
 		_createSearch_col:function(){
-			this._elements.search.$col=$('<ul class="dropdown-menu kekTable-search-itemList" style="display: block;"></ul>');
+			this._elements.search.$col=$('<ul class="dropdown-menu kekTable-dropList" style="display: block;"></ul>');
 			var li=[],cols=this._options.columns;
 			$.each(this._dbCols, function(i,colName) {
 				if(cols[colName].canSearch)
@@ -846,7 +879,7 @@ var $testDM;
 			return this._elements.search.$col;
 		},
 		_createSearch_operator:function(){
-			this._elements.search.$operator=$('<ul class="dropdown-menu kekTable-search-itemList" style="display: block;"></ul>');
+			this._elements.search.$operator=$('<ul class="dropdown-menu kekTable-dropList" style="display: block;"></ul>');
 			var li=[],regional=$[_pluginName].regional;
 			li.push(
 				'<li data-opt="eq"><span>'+regional.searchOptEq+'</span></li>',
@@ -865,7 +898,7 @@ var $testDM;
 			return this._elements.search.$operator;
 		},
 		_createSearch_bool:function(){
-			this._elements.search.$bool=$('<ul class="dropdown-menu kekTable-search-itemList" style="display: block;"></ul>');
+			this._elements.search.$bool=$('<ul class="dropdown-menu kekTable-dropList" style="display: block;"></ul>');
 			var li=[],regional=$[_pluginName].regional;
 			li.push(
 				'<li data-opt="and"><span>'+regional.searchBoolAnd+'</span></li>',
@@ -875,7 +908,7 @@ var $testDM;
 			return this._elements.search.$bool;
 		},
 		_createSearch_control:function(){
-			this._elements.search.$control=$('<ul class="dropdown-menu kekTable-search-itemList" style="display: block;"></ul>');
+			this._elements.search.$control=$('<ul class="dropdown-menu kekTable-dropList" style="display: block;"></ul>');
 			var li=[],regional=$[_pluginName].regional;
 			li.push(
 				'<li data-ctrl="pc"><span>'+regional.searchAddPreCond+'</span></li>',
@@ -889,7 +922,24 @@ var $testDM;
 			this._elements.search.$control.append(li.join(''));
 			return this._elements.search.$control;
 		},
-		
+		_createPlugin_edit:function(){
+			if(this._hasTool.edit){
+				var regional=$[_pluginName].regional;
+				this._elements.edit.$dialog=$('<div class="modal fade kekTable-search" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
+					regional.editTitle+'</h4></div><div class="modal-body"><ul class="kekTable-edit-block"></ul></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
+					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.editCommit+'</button></div></div></div></div>');
+				return this._elements.edit.$dialog;
+			}
+		},
+		_createEdit_block:function(){
+			var li=[],that=this,cols=this._options.columns,$l;
+			$.each(this._editCols, function(i,colName) {
+				if(cols[colName].editDisplay==='block'){
+					$l && li.push($l);
+					$l=$('<li><div class="form-group has-feedback"><label>'+cols[colName].editTitle+'</label><div class="input-group"></div></div></li>');
+				}
+			});
+		},
 		//==========end建立插件==========
 		
 		//==========工具栏内置功能==========
