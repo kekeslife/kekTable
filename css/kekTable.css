@@ -9,6 +9,7 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 /*lov*/
 .kekTable-lov{padding: 5px;width:auto;}
 .kekTable-lov tbody tr{cursor: pointer;}
+.dropdown .kekTable-lov-input{cursor: pointer;background: #fff;}
 /*表格*/
 .kekTable-listPanel{position: relative;}
 /*表格-標題*/

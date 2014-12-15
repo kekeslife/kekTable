@@ -234,7 +234,30 @@ var $testDM;
 			 */
 			editPlaceholder:null,
 			/**
-			 * @var {?int} [_column#colLength=null] - 栏位的长度，null则为无限制
+			 * @var {?string} [_column#editType=null] - ''(text)、'list'(下拉框)、'lov'、'textarea'
+			 * @summary 编辑框栏位的类型
+			 */
+			editType:null,
+			/**
+			 * @var {?string} [_column#editAttr=null] - ''(正常)、'readonly'(只读)、'hidden'(隐藏)
+			 * @summary 编辑框栏位的特性
+			 */
+			editAttr:null,
+			/**
+			 * @var {?bool} [_column#editPost=true] - 编辑框栏位是否更新至数据库
+			 */
+			editPost:null,
+			/**
+			 * @var {?string} [_column#colType=null] - ''(文本)、'number'、'date'
+			 * @summary 栏位的数据类型
+			 */
+			colType:null,
+			/**
+			 * @var {?string} [_column#colFormat=null] - 栏位遮罩(暂只有date类型)
+			 */
+			colFormat:null,
+			/**
+			 * @var {?int} [_column#colLength=null] - 栏位的长度，null则为无限制，(3.2代表3位整数，2位小数)
 			 */
 			colLength:null,
 			/**
@@ -462,10 +485,13 @@ var $testDM;
 					console.warn(colName+'没开启查询功能，canSearch设置将无效');
 				if(!that._hasTool.edit && !that._hasTool.add){
 					if(colObj.editTitle || colObj.editIndex || colObj.editPlaceholder)
-						console.warn('没有开启新增修改功能，不用设置edit参数');
+						console.warn(colName+'没有开启新增修改功能，不用设置edit参数');
 				}
+				//editCols
 				if($.inArray(colObj.editDisplay,['block','inline','cling']===-1)
 					throw colName+'editDisplay只能设置为block,inline,cling';
+				if(colObj.editIndex==null && colObj.editDisplay)
+					console.warn(colName+'沒有設置editIndex,不用設置editDisplay')
 			});
 			//col array
 			if(!this._listCols.length)
@@ -552,10 +578,15 @@ var $testDM;
 							throw '有重复的colId';
 						that._dbCols[val]=colName;
 		      		}
-		      		else if((prop==='listWidth' || prop==='editWidth') && val != null)
+		      		else if((prop==='listWidth' || prop==='editWidth'))){
+		      			if(val==null)
+		      				val=100;
 		      			(val-0==val-0) && (val-0) && (colObj[prop]+='px');
+		      		}
 		      		else if(prop==='colTotalSummary' && val != null)
 		      			that._summaryCols.push(colName);
+		      		else if(prop==='editPost' && colObj.colId !=null && colObj.editIndex !=null && val != null)
+		      			colObj[prop]=true;
 		      		//something...
 				});
 				//something...
@@ -926,20 +957,47 @@ var $testDM;
 			if(this._hasTool.edit){
 				var regional=$[_pluginName].regional;
 				this._elements.edit.$dialog=$('<div class="modal fade kekTable-search" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
-					regional.editTitle+'</h4></div><div class="modal-body"><ul class="kekTable-edit-block"></ul></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
+					regional.editTitle+'</h4></div><div class="modal-body"></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
 					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.editCommit+'</button></div></div></div></div>');
+				this._elements.edit.$block=$('<ul class="kekTable-edit-block">'+this._createEdit_block()+'</ul>');
+				$('.modal-body',this._elements.edit.$dialog).append(this._elements.edit.$block);
 				return this._elements.edit.$dialog;
 			}
 		},
 		_createEdit_block:function(){
-			var li=[],that=this,cols=this._options.columns,$l;
+			var li=[],that=this,cols=this._options.columns,that=this,$l,$filed;
 			$.each(this._editCols, function(i,colName) {
 				if(cols[colName].editDisplay==='block'){
 					$l && li.push($l);
-					$l=$('<li><div class="form-group has-feedback"><label>'+cols[colName].editTitle+'</label><div class="input-group"></div></div></li>');
+					$filed=$l=$('<li><div class="form-group has-feedback"><label>'+cols[colName].editTitle+'</label><div class="input-group"></div></div></li>');
 				}
+				else if(cols[colName].editDisplay==='inline'){
+					$filed=$('<div class="form-group has-feedback"><label>'+cols[colName].editTitle+'</label><div class="input-group"></div></div>');
+					$l.append($filed);
+				}
+				$filed.append(that._createEdit_item(colName));
 			});
+			$l $$ li.push($l);
+			return li.join('');
 		},
+		_createEdit_item:function(colName){
+			var $el,col=this._options.columns[colName];
+			if(col.editType==='textarea')
+				$el=$('<textarea />')
+			else
+				$el=$('<input type="text" />');
+			$el.data('col',colName).addClass('form-control');
+			//hidden,readonly
+			(col.editAttr==='hidden' && $el.style('display','none')) || (col.editAttr==='readonly' && $el.attr('readonly',''));
+			//number,date
+			col.colType && $el.addClass('kekTable-'+col.colType);
+			col.editPlaceholder && $el.attr('placeholder',col.editPlaceholder);
+			//lov
+			if(!col.editAttr && col.editType==='lov')
+				$el.addClass('kekTable-lov-input').attr('data-toggle','dropdown').attr('aria-expanded',false);
+			return $el;
+		},
+		
 		//==========end建立插件==========
 		
 		//==========工具栏内置功能==========
