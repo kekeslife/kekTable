@@ -107,9 +107,9 @@ var $testDM;
 			 */
 			columns:null,
 			/**
-			 * @var {?int} [kekTable~options#editDialogWidth=600] - 修改編輯框的寬度
+			 * @var {?string} [kekTable~options#editDialogWidth='600px'] - 修改編輯框的寬度
 			 */
-			editDialogWidth:600,
+			editDialogWidth:'600px',
 			/**
 			 * @var {?Array.<Array.<int>>} [kekTable~options#tableRelations=null] - 多表间的关联(二维数组(后台数据库字段下标))
 			 * @example 工号关联。
@@ -220,7 +220,7 @@ var $testDM;
 			 * @var {?bool} [_column#editDisplay='block'] - 'block'(单独一行)、'inline'(与前一个栏位同一行)、'cling'(紧贴前一个栏位)
 			 * @summary 编辑框中此栏位的显示方式
 			 */
-			editDisplay:'block',
+			editDisplay:null,
 			/**
 			 * @var {?int} [_column#editIndex=null] - 给值后此栏位将置于编辑框中，编辑框的栏位顺序按此
 			 */
@@ -412,6 +412,9 @@ var $testDM;
 			//tableWidth
 			if(!/^(\d+%|\d+px|\d+in|\d+cm|\d+mm|\d+em|\d+ex|\d+pt|\d+pc|auto)$/.test(opt.tableWidth))
 				throw 'tableWidth请使用正确的宽度单位';
+			//editDialogWidth
+			if(!/^(\d+%|\d+px|\d+in|\d+cm|\d+mm|\d+em|\d+ex|\d+pt|\d+pc|auto)$/.test(opt.editDialogWidth))
+				throw 'editDialogWidth请使用正确的宽度单位';
 			//isCollapse && collapseExpanded
 			if($.inArray(opt.isCollapse,[true,false])===-1)
 				throw 'isCollapse类型错误';
@@ -470,9 +473,11 @@ var $testDM;
 			if(!opt.columns)
 				throw '必需设置columns';
 			else if($.type(opt.columns)!=='object')
-				throw 'columns必需是object类型';
+				throw ' columns必需是object类型';
 			//col
 			$.each(opt.columns, function(colName,colObj) {
+				if(colObj.colId<0 || colObj.listIndex<0 || colObj.editIndex<0 || colObj.tableId<0)
+					throw colName+'不能设为负数(colId,listIndex,editIndex,tableId)';
 				if(colObj==null)
 					throw colName+'不能设为Null，如需要请设置为{}';
 				if(colObj.listIndex==null && colObj.listWidth)
@@ -488,8 +493,8 @@ var $testDM;
 						console.warn(colName+'没有开启新增修改功能，不用设置edit参数');
 				}
 				//editCols
-				if($.inArray(colObj.editDisplay,['block','inline','cling']===-1)
-					throw colName+'editDisplay只能设置为block,inline,cling';
+				if(colObj.editDisplay && $.inArray(colObj.editDisplay,['block','inline','cling'])===-1)
+					throw colName+' editDisplay只能设置为block,inline,cling';
 				if(colObj.editIndex==null && colObj.editDisplay)
 					console.warn(colName+'沒有設置editIndex,不用設置editDisplay')
 			});
@@ -565,20 +570,27 @@ var $testDM;
 				$.each(colObj, function(prop,val) {
 		      		if(prop==='listIndex' && val != null){
 		      			if(that._listCols[val])
-							throw '有重复的listIndex';
+							throw colName+'有重复的listIndex';
 		      			that._listCols[val]=colName;
 		      		}
 		      		else if(prop==='editIndex' && val != null){
 		      			if(that._editCols[val])
-							throw '有重复的editIndex';
+							throw colName+'有重复的editIndex';
 		      			that._editCols[val]=colName;
+		      			if(colObj.editTitle !=null){
+		      				if(!$.trim(colObj.editTitle))
+		      					colObj.editTitle='&nbsp;';
+		      			}
+		      			else
+		      				colObj.editTitle=colObj.listTitle;
+		      			colObj.editDisplay || (colObj.editDisplay='block');
 		      		}
 		      		else if(prop==='colId' && val != null){
 		      			if(that._dbCols[val])
-							throw '有重复的colId';
+							throw colName+'有重复的colId';
 						that._dbCols[val]=colName;
 		      		}
-		      		else if((prop==='listWidth' || prop==='editWidth'))){
+		      		else if((prop==='listWidth' || prop==='editWidth')){
 		      			if(val==null)
 		      				val=100;
 		      			(val-0==val-0) && (val-0) && (colObj[prop]+='px');
@@ -597,7 +609,7 @@ var $testDM;
 			this._dbCols=$.map(this._dbCols, function(v) {return v;});
 			this._editCols=$.map(this._editCols, function(v) {return v;});
 			//editCols
-			this._editCols.length && opt.columns[this._editCols[0]].editDisplay='block';
+			this._editCols.length && (opt.columns[this._editCols[0]].editDisplay='block');
 			//something...
 		},
 		/**==========建立插件==========
@@ -956,29 +968,38 @@ var $testDM;
 		_createPlugin_edit:function(){
 			if(this._hasTool.edit){
 				var regional=$[_pluginName].regional;
-				this._elements.edit.$dialog=$('<div class="modal fade kekTable-search" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
+				this._elements.edit.$dialog=$('<div class="modal fade kekTable-edit" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
 					regional.editTitle+'</h4></div><div class="modal-body"></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
 					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.editCommit+'</button></div></div></div></div>');
-				this._elements.edit.$block=$('<ul class="kekTable-edit-block">'+this._createEdit_block()+'</ul>');
-				$('.modal-body',this._elements.edit.$dialog).append(this._elements.edit.$block);
+				$('.modal-body',this._elements.edit.$dialog).append(this._createEdit_block());
+				$('.modal-dialog',this._elements.edit.$dialog).css('width',this._options.editDialogWidth);
 				return this._elements.edit.$dialog;
 			}
 		},
 		_createEdit_block:function(){
-			var li=[],that=this,cols=this._options.columns,that=this,$l,$filed;
+			var $el=$('<ul class="kekTable-edit-block"></ul>'), li=[],that=this,cols=this._options.columns,that=this,$l,$filed,atr;
 			$.each(this._editCols, function(i,colName) {
 				if(cols[colName].editDisplay==='block'){
-					$l && li.push($l);
-					$filed=$l=$('<li><div class="form-group has-feedback"><label>'+cols[colName].editTitle+'</label><div class="input-group"></div></div></li>');
+					$l && $el.append($l);
+					$l=$('<li><div class="form-group has-feedback"><label>'+cols[colName].editTitle+'</label></div></li>');
+					$filed=$('.form-group',$l);
+					$($filed).append(that._createEdit_item(colName));
 				}
 				else if(cols[colName].editDisplay==='inline'){
-					$filed=$('<div class="form-group has-feedback"><label>'+cols[colName].editTitle+'</label><div class="input-group"></div></div>');
+					$filed=$('<div class="form-group has-feedback"><label>'+cols[colName].editTitle+'</label></div>');
 					$l.append($filed);
+					$($filed).append(that._createEdit_item(colName));
 				}
-				$filed.append(that._createEdit_item(colName));
+				else if(cols[colName].editDisplay==='cling'){
+					if(!$('.input-group',$filed).length)
+						$('.form-control',$filed).wrap('<div class="input-group"></div>');
+					$('.input-group',$filed).append(that._createEdit_item(colName));
+				}
+				if(cols[colName].editAttr==='hidden')
+					$filed.css('display','none');
 			});
-			$l $$ li.push($l);
-			return li.join('');
+			$l && $el.append($l);
+			return this._elements.edit.$block=$el;
 		},
 		_createEdit_item:function(colName){
 			var $el,col=this._options.columns[colName];
@@ -986,9 +1007,9 @@ var $testDM;
 				$el=$('<textarea />')
 			else
 				$el=$('<input type="text" />');
-			$el.data('col',colName).addClass('form-control');
+			$el.data('col',colName).addClass('form-control').css('width',col.editWidth);
 			//hidden,readonly
-			(col.editAttr==='hidden' && $el.style('display','none')) || (col.editAttr==='readonly' && $el.attr('readonly',''));
+			(col.editAttr==='hidden' && $el.css('display','none')) || (col.editAttr==='readonly' && $el.attr('readonly',''));
 			//number,date
 			col.colType && $el.addClass('kekTable-'+col.colType);
 			col.editPlaceholder && $el.attr('placeholder',col.editPlaceholder);
@@ -1014,8 +1035,10 @@ var $testDM;
 			//something...
 		},
 		_add:function(v,d){
-			d.resolve('_add');
+			$('.modal-title',this._elements.edit.$dialog).text($[_pluginName].regional.addTitle);
+			this._elements.edit.$dialog.modal('show');
 			//something...
+			d.resolve('_add');
 		},
 		_edit:function(v,d){
 			d.resolve('_edit');
@@ -1082,17 +1105,17 @@ var $testDM;
 		},
 		//显示状态信息
 		_showState:function(msg){
-			console.log(msg);
+			console.log('_showState:'+msg);
 		},
 		
-		//事件组。前，中，后。
+		//事件组。前，中，后。将改变i的this指向
 		//el:显示加载遮罩的对象('list'、'edit')
 		//回调函数必需执行d.resolve()或d.reject()
 		_toolbarEvent:function(b,i,a,el){
-			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve();return d;});
+			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve();});
 			var that=this;
 			promise.done(function(){
-				promise=that._eventDefer(i);
+				promise=that._eventDefer(i.bind(that));
 				promise.done(function(v){
 					if(a){
 						promise=a?that._eventDefer(a):that._eventDefer(function(v,d){d.resolve()});
@@ -1299,6 +1322,14 @@ var $testDM;
 		 * @var {string} Plugin#regional#searchCommit - 查询框执行查询的按钮文字
 		 */
 		editCommit:'保存',
+		/**
+		 * @var {string} Plugin#regional#addTitle - 编辑框新增标题
+		 */
+		addTitle:'新增',
+		/**
+		 * @var {string} Plugin#regional#editTitle - 编辑框修改标题
+		 */
+		editTitle:'修改',
 		/**
 		 * @var {string} Plugin#regional#buttonCancel - 取消按钮文字
 		 */

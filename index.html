@@ -662,8 +662,8 @@
 			$('#datetimepicker').datetimepicker();
 			$('#test1').kekTable({
 				isCollapse:true,isDebug:true,
-				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('b');d.resolve('bok');},5000) },
-				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('a');d.resolve('aok');},5000) },
+				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log(this);console.log('b');d.resolve('bok');},500) },
+				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('a');d.resolve('aok');},500) },
 				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]],
 				columns:{
 					empNo:{
@@ -671,32 +671,46 @@
 						listIndex:0,
 						listWidth:100,
 						listTitle:'empNo',
-						colTotalSummary:'COUNT'
+						colTotalSummary:'COUNT',
+						editIndex:0,
+						editTitle:'empNo'
 					},
 					empName:{
 						colId:1,
 						listIndex:1,
 						listWidth:100,
 						listTitle:'empName',
-						listClingPre:true
+						listInline:true,
+						editIndex:2,
+						editDisplay:'cling',
+						editAttr:'readonly'
 					},
 					deptName:{
 						colId:4,
 						listIndex:4,
 						listWidth:100,
 						listTitle:'deptName',
-						listClingPre:true
+						listInline:true,
+						editIndex:4,
+						editDisplay:'cling',
+						editAttr:'readonly'
 					},
 					deptNo:{
 						colId:2,
 						listIndex:2,
-						listTitle:'deptNo'
+						listTitle:'deptNo',
+						editIndex:3,
+						editDisplay:'inline'
 					},
-					emp:{
+					rowid:{
+						colId:5,
+						editIndex:5,
+						editAttr:'hidden'
+						
 					}
 				},
-				showRowNo:true,
-				frozenNum:2,
+				//showRowNo:true,
+				//frozenNum:2,
 				rowNum:1
 			});
 			//$('#test2').kekTable();
