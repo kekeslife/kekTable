@@ -111,6 +111,14 @@ var $testDM;
 			 */
 			editDialogWidth:'600px',
 			/**
+			 * @var {?string} [kekTable~options#sortDialogWidth='600px'] - 修改排序框的寬度
+			 */
+			sortDialogWidth:'600px',
+			/**
+			 * @var {?string} [kekTable~options#searchDialogWidth='600px'] - 修改查询框的寬度
+			 */
+			searchDialogWidth:'600px',
+			/**
 			 * @var {?Array.<Array.<int>>} [kekTable~options#tableRelations=null] - 多表间的关联(二维数组(后台数据库字段下标))
 			 * @example 工号关联。
 			 * // returns 后台下标1字段=后台下标4字段
@@ -212,6 +220,10 @@ var $testDM;
 			 * @var {?bool} [_column#canSearch=true] - 数据库栏位是否可以被自定义查询
 			 */
 			canSearch:true,
+			/**
+			 * @var {?bool} [_column#canSort=true] - 数据库栏位是否可以被自定义排序
+			 */
+			canSort:null,
 			/**
 			 * @var {?string} [_column#editTitle=__column#listTitle] - 编辑框中栏位上面的标题
 			 */
@@ -333,7 +345,12 @@ var $testDM;
 				$control:null
 			},
 			edit:{
-				$dialog:null
+				$dialog:null,
+				$block:null
+			},
+			sort:{
+				$dialog:null,
+				$block:null
 			}
 		};
 		/**
@@ -387,6 +404,10 @@ var $testDM;
 		this._summaryCols=[];
 		//当前页码
 		this._currentPageNo=1;
+		//排序条件
+		this._sortConditions=null;
+		//排序条件
+		this._searchConditions=null;
 		
 		this._init();
 	}
@@ -406,6 +427,8 @@ var $testDM;
 		_debug:function(){
 			var opt=this._options,
 				that=this;
+			if(!opt.listURL)
+				throw '没有listURL';
 			//panelColor
 			if($.inArray(opt.panelColor,['panel-primary','panel-success','panel-info','panel-warning','panel-danger','panel-default'])===-1)
 				console.warn('panelColor非内建值，当然你可以使用自定义的css');
@@ -415,6 +438,12 @@ var $testDM;
 			//editDialogWidth
 			if(!/^(\d+%|\d+px|\d+in|\d+cm|\d+mm|\d+em|\d+ex|\d+pt|\d+pc|auto)$/.test(opt.editDialogWidth))
 				throw 'editDialogWidth请使用正确的宽度单位';
+			//sortDialogWidth
+			if(!/^(\d+%|\d+px|\d+in|\d+cm|\d+mm|\d+em|\d+ex|\d+pt|\d+pc|auto)$/.test(opt.sortDialogWidth))
+				throw 'sortDialogWidth请使用正确的宽度单位';
+			//searchDialogWidth
+			if(!/^(\d+%|\d+px|\d+in|\d+cm|\d+mm|\d+em|\d+ex|\d+pt|\d+pc|auto)$/.test(opt.searchDialogWidth))
+				throw 'searchDialogWidth请使用正确的宽度单位';
 			//isCollapse && collapseExpanded
 			if($.inArray(opt.isCollapse,[true,false])===-1)
 				throw 'isCollapse类型错误';
@@ -599,6 +628,12 @@ var $testDM;
 		      			that._summaryCols.push(colName);
 		      		else if(prop==='editPost' && colObj.colId !=null && colObj.editIndex !=null && val != null)
 		      			colObj[prop]=true;
+		      		else if(prop==='canSort'){
+		      			if(that._hasTool.sort && val==null){
+		      				if(colObj.colId != null && colObj.listIndex != null)
+		      					colObj[prop]=true;
+		      			}
+		      		}
 		      		//something...
 				});
 				//something...
@@ -610,6 +645,10 @@ var $testDM;
 			this._editCols=$.map(this._editCols, function(v) {return v;});
 			//editCols
 			this._editCols.length && (opt.columns[this._editCols[0]].editDisplay='block');
+			//sortConditions
+			this._sortConditions=opt.defaultSort || [];
+			//searchConditions
+			this._searchConditions=opt.defaultSearch || [];
 			//something...
 		},
 		/**==========建立插件==========
@@ -635,7 +674,8 @@ var $testDM;
 			$frag.append(this._createPlugin_panel())
 				 .append(this._createPlugin_loading())
 				 .append(this._createPlugin_search())
-				 .append(this._createPlugin_edit());
+				 .append(this._createPlugin_edit())
+				 .append(this._createPlugin_sort());
 			$(this._element).addClass('kekTable-listPanel panel-group')
 							.css('width',this._options.tableWidth)
 							.append($frag);
@@ -895,7 +935,7 @@ var $testDM;
 			}
 		},
 		_createPlugin_loading:function(el){
-			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
+			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="kekTable-loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
 		},
 		_createPlugin_search:function(){
 			if(this._hasTool.search){
@@ -907,6 +947,7 @@ var $testDM;
 					.append(this._createSearch_operator())
 					.append(this._createSearch_bool())
 					.append(this._createSearch_control());
+				$('.modal-dialog',this._elements.search.$dialog).css('width',this._options.searchDialogWidth);
 				return this._elements.search.$dialog;
 			}
 		},
@@ -966,12 +1007,13 @@ var $testDM;
 			return this._elements.search.$control;
 		},
 		_createPlugin_edit:function(){
-			if(this._hasTool.edit){
+			if(this._hasTool.edit || this._hasTool.add){
 				var regional=$[_pluginName].regional;
 				this._elements.edit.$dialog=$('<div class="modal fade kekTable-edit" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
-					regional.editTitle+'</h4></div><div class="modal-body"></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
+					regional.editTitle+'</h4></div><div class="modal-body"></div><div class="modal-footer"><div class="alert alert-danger"></div><button type="button" class="btn btn-default" data-dismiss="modal">'+
 					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.editCommit+'</button></div></div></div></div>');
 				$('.modal-body',this._elements.edit.$dialog).append(this._createEdit_block());
+				$('.modal-dialog',this._elements.edit.$dialog).append(this._elements.$editLoading=this._createPlugin_loading('edit'));
 				$('.modal-dialog',this._elements.edit.$dialog).css('width',this._options.editDialogWidth);
 				return this._elements.edit.$dialog;
 			}
@@ -1001,6 +1043,7 @@ var $testDM;
 			$l && $el.append($l);
 			return this._elements.edit.$block=$el;
 		},
+		//data-col
 		_createEdit_item:function(colName){
 			var $el,col=this._options.columns[colName];
 			if(col.editType==='textarea')
@@ -1018,12 +1061,52 @@ var $testDM;
 				$el.addClass('kekTable-lov-input').attr('data-toggle','dropdown').attr('aria-expanded',false);
 			return $el;
 		},
-		
+		_createPlugin_sort:function(){
+			if(this._hasTool.sort){
+				var regional=$[_pluginName].regional;
+				this._elements.sort.$dialog=$('<div class="modal fade kekTable-sort" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
+					regional.sortTitle+'</h4></div><div class="modal-body"></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
+					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.sortCommit+'</button></div></div></div></div>');
+				$('.modal-body',this._elements.sort.$dialog).append(this._createSort_list()).append(this._createSort_ctrl());
+				$('.modal-dialog',this._elements.sort.$dialog).css('width',this._options.sortDialogWidth);
+				return this._elements.sort.$dialog;
+			}
+		},
+		_createSort_list:function(){
+			var $el=$('<div class="kekTable-sort-list"></div>');
+			this._elements.sort.$block=$('<ul class="kekTable-sort-block list-group"></ul>');
+			$el.append(this._elements.sort.$block);
+			return $el;
+		},
+		_createSort_ctrl:function(){
+			var $el=$('<div class="kekTable-sort-ctrl"></div>'),
+				regional=$[_pluginName].regional,
+				cols=[],that=this;
+			$.each(this._listCols, function(i,colName) {
+				if(that._options.columns[colName].canSort)
+					cols.push('<li data-col="'+colName+'"><span>'+(that._options.columns[colName].listTitle||colName)+'</span></li>');
+			});
+			$el.append('<div class="btn-group"><div class="btn-group"><button type="button" class="btn btn-default dropdown-toggle" title="'+regional.sortAdd+
+					'" data-toggle="dropdown"><span class="glyphicon glyphicon-plus"></span></button>'+
+					'<ul class="dropdown-menu dropdown-menu-right kekTable-dropList">'+cols.join('')+'</ul></div>'+
+					'<button type="button" class="btn btn-default" title="'+regional.sortDelete+'"><span class="glyphicon glyphicon-remove"></span></button></div>')
+				.append('<div class="btn-group"><button type="button" class="btn btn-default" title="'+regional.sortMoveUp+'"><span class="glyphicon glyphicon-chevron-up"></span></button>'+
+					'<button type="button" class="btn btn-default" title="'+regional.sortMoveDown+'"><span class="glyphicon glyphicon-chevron-down"></span></button></div>')
+				.append('<div class="btn-group-vertical" data-toggle="buttons"><label class="btn btn-default active"><input type="radio" name="sort-type" autocomplete="off" value="ASC" checked />'+regional.sortAsc+'</label>'+
+					'<label class="btn btn-default"><input type="radio" name="sort-type" autocomplete="off" value="DESC" />'+regional.sortDesc+'</label></div>')
+				.append('<div class="btn-group-vertical" data-toggle="buttons"><label class="btn btn-default active"><input type="radio" name="sort-nulls" autocomplete="off" value="NULLS FIRST" checked />'+regional.sortNullsFirst+'</label>'+
+					'<label class="btn btn-default"><input type="radio" name="sort-nulls" autocomplete="off" value="NULLS LAST" />'+regional.sortNullsLast+'</label></div>');
+			return $el;
+		},
 		//==========end建立插件==========
 		
 		//==========工具栏内置功能==========
 		_refresh:function(v,d){
-			d.resolve('_refresh');
+			this._loadData(d);
+//			ajax.fail(function(){
+//				d.reject()
+//			})
+			//d.resolve('_refresh');
 			//something...
 		},
 		_search:function(v,d){
@@ -1031,6 +1114,7 @@ var $testDM;
 			//something...
 		},
 		_sort:function(v,d){
+			this._elements.sort.$dialog.modal('show');
 			d.resolve('_sort');
 			//something...
 		},
@@ -1045,6 +1129,7 @@ var $testDM;
 			//something...
 		},
 		_delete:function(v,d){
+			this._elements.$editLoading.show();
 			d.resolve('_delete');
 			//something...
 		},
@@ -1053,7 +1138,31 @@ var $testDM;
 			//something...
 		},
 		//==========end工具栏内置功能==========
-		
+		//===============读取资料===============
+		//d:deferred
+		_loadData:function(d){
+			var colsId=[],that=this,cols=this._options.columns;
+			//colsId
+			$.each(this._dbCols, function(i,colName) {
+				colsId.push(cols[colName].ColsId);
+			});
+			this._showLoading($[_pluginName].regional.loadData);
+			var ajax=$.post(this._options.listURL,{
+				act:'List',
+				listPars:JSON.stringify({
+					ColsId:colsId,
+					SortConditions:that._sortConditions,
+					SearchConditions:that._searchConditions,
+					Range:[(that._currentPageNo - 1) * that._options.rowNum,that._currentPageNo* that._options.rowNum],
+					Relations:that._options.tableRelations
+				})
+			}).done(function(res){
+				console.log(this);
+			}).fail(function(){
+				d.reject($[_pluginName].regional.loadDataErr);
+			})
+		},
+		//==============end读取资料=============
 		/**
 		 * @function Plugin~_setSearchDialog
 		 * @desc 将排序条件列表数组显示到查询对话框中
@@ -1105,7 +1214,8 @@ var $testDM;
 		},
 		//显示状态信息
 		_showState:function(msg){
-			console.log('_showState:'+msg);
+			if(msg)
+				console.log('_showState:'+msg);
 		},
 		
 		//事件组。前，中，后。将改变i的this指向
@@ -1410,6 +1520,14 @@ var $testDM;
 		 * @var {string} Plugin#regional#loadingTxt - 加载遮罩的显示文字
 		 */
 		loadingTxt:'請稍等片刻...',
+		/**
+		 * @var {string} Plugin#regional#loadData - 读取资料的遮罩显示文字
+		 */
+		loadData:'正在讀取資料...',
+		/**
+		 * @var {string} Plugin#regional#loadDataErr - 读取资料异常的文字
+		 */
+		loadDataErr:'讀取資料異常',
 		/**
 		 * @var {string} Plugin#regional#eventSuccess - 事件操作成功后的状态信息
 		 */

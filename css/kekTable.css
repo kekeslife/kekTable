@@ -34,10 +34,10 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .kekTable-listPanel .panel-footer .pagination>li>a,.kekTable-listPanel .panel-footer .pagination>li>span {font-size: 14px;}
 /*表格状态*/
 .kekTable-listPanel .kekTable-state{position: absolute;top: 12px;right: 6px;}
-/*表格-加載*/
-.kekTable-listPanel .loading{position: absolute;left: 0;top: 0;z-index: 3;height: 100%;width: 100%;}
-.kekTable-listPanel .loading p{display: block;position: relative;top: 49%;text-align: center;}
-.kekTable-listPanel .loading .bk-opacity{opacity: 0.8;filter: alpha(Opacity=80);background-color: #000;height: 100%;width: 100%;border-radius: 2px;position: absolute;top: 0;left: 0;}
+/*loading*/
+.kekTable-loading{position: absolute;left: 0;top: 0;z-index: 3;height: 100%;width: 100%;border-radius: 4px;}
+.kekTable-loading p{display: block;position: relative;top: 49%;text-align: center;}
+.kekTable-loading .bk-opacity{opacity: 0.8;filter: alpha(Opacity=80);background-color: #000;height: 100%;width: 100%;border-radius: 4px;position: absolute;top: 0;left: 0;}
 /*表格-单笔记录*/
 .kekTable-single-table{margin-bottom: 0;border-bottom: 1px solid #ddd;padding-bottom: 15px;}
 .kekTable-single-table>li>div{margin: 15px 0 0 15px;display: inline-block;}
@@ -52,7 +52,7 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .modal-dialog{margin:30px auto;}
 .modal-header{padding: 10px 15px 8px 15px;}
 /*編輯框-查詢*/
-.kekTable-search .modal-dialog{width: 600px;}
+/*.kekTable-search .modal-dialog{width: 600px;}*/
 .kekTable-search .modal-body{padding: 0;}
 .kekTable-search .caret{margin-left: 2px;}
 .kekTable-search-block{overflow: auto;padding: 15px;}
@@ -67,6 +67,7 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .kekTable-search-itemValue{width: 100px;display: inline-block;}
 /*編輯框-修改*/
 .kekTable-edit .modal-body{padding: 15px 0;}
+.kekTable-edit .modal-footer .alert{float: left;padding: 6px 12px;margin-bottom: 0;max-width: 440px;text-align: left;display: none;}
 .kekTable-edit-block{overflow: auto;}
 .kekTable-edit-block li{overflow: hidden;}
 .kekTable-edit-block li .form-group{float: left;margin-left: 15px;}

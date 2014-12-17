@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 	<head>
@@ -484,7 +485,7 @@
 						<ul class="dropdown-menu kekTable-search-itemList kekTable-dropList" style="display: block;">
 						    <li><span>=</span></li>
 						    <li><span>></span></li>
-						    <li><span><</span></li>
+						    <li><span>小于</span></li>
 						    <li><span>>=</span></li>
 						</ul>
 						<ul class="dropdown-menu kekTable-search-itemList kekTable-dropList" style="display: block;">
@@ -570,7 +571,7 @@
 		      		<div class="modal-body">
 		      			<div class="kekTable-sort-list">
 		      				<ul class="kekTable-sort-block list-group">
-		      					<li class="list-group-item">1</li>
+		      					<li class="list-group-item" data-col="empNo">1<span class="glyphicon glyphicon-sort-by-attributes pull-right"></span></li>
 		      					<li class="list-group-item">1</li>
 		      					<li class="list-group-item">1</li>
 		      					<li class="list-group-item">1</li>
@@ -654,15 +655,16 @@
 		</div>
 		<!--datetime-->
 		<input id="datetimepicker" type="text" >
-		
+		<button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="left" title="Tooltip on left">Tooltip on left</button>
 		
 		<div id="test1"></div>
 		<div id="test2"></div>
 		<script type="text/javascript">
-			$('#datetimepicker').datetimepicker();
+			//$('#datetimepicker').datetimepicker();
 			$('#test1').kekTable({
+				listURL:'testData.json',
 				isCollapse:true,isDebug:true,
-				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log(this);console.log('b');d.resolve('bok');},500) },
+				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('b');d.resolve('bok');},500) },
 				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('a');d.resolve('aok');},500) },
 				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]],
 				columns:{
