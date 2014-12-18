@@ -167,7 +167,7 @@ var $testDM;
 			 * @function kekTable~options#beforeRefresh
 			 * @desc 点击刷新按钮前的自定义操作。必需要写d.resolve()或者d.reject()
 			 * @param {Plugin~_tableValues} tableValues
-			 * @param {$.Deferred} defer - deferred对象,d.reject()将组织事件,d.resolve()将继续执行。
+			 * @param {$.Deferred} defer - deferred对象,d.reject()将停止事件,d.resolve()将继续执行。
 			 * //@return {$.Deferred} 
 			 * @example ajax
 			 * beforeRefresh:function(v,d){
@@ -289,6 +289,21 @@ var $testDM;
 			 * @var {?int} [_column#detailKeyId=null] - 主表中设置此项。关联从表的字段(后台字段数组下标)
 			 */
 			detailKeyId:null,
+			/**
+			 * @function _column#beforeList
+			 * @desc 栏位显示数据之前的自定义操作。必需要写d.resolve('将要显示的文字或HTML')或者d.reject('将会产生提示框')
+			 * @param {object} rowData - 该行的数据{empNo:'14623',empName:'xxxx'}
+			 * @param {$.Deferred} defer - deferred对象,d.reject()将停止事件,d.resolve()将继续执行。
+			 * @example ajax
+			 * beforeList:function(r,d){
+			 * 	var xx=$.ajax('test.html').done(function(res){d.resolve(res.EmpName);}).fail(function(){d.reject('失败');});
+			 * }
+			 * @example nomal
+			 * beforeList:function(r,d){
+	 		 * 		d.resolve(r.empNo+' - '+r.empName);
+			 * }
+			 */
+			beforeList:null,
 		};
 		
 			
@@ -325,6 +340,10 @@ var $testDM;
 			 * @var {jQuery} _elements#$editLoading - 修改框loading遮罩
 			 */
 			$editLoading:null,
+			/**
+			 * @var {jQuery} _elements#$alert - 提示框
+			 */
+			$alert:null,
 			/**
 			 * @var {jQuery} _elements#$pagging - 分页ul
 			 */
@@ -665,6 +684,7 @@ var $testDM;
 		 *       Footer
 		 *         Pagging
 		 *   Loading
+		 * 	 Alert
 		 * 	 Search
 		 * 	 Edit
 		 * 	 Sort
@@ -673,6 +693,7 @@ var $testDM;
 			var $frag=$(document.createDocumentFragment());
 			$frag.append(this._createPlugin_panel())
 				 .append(this._createPlugin_loading())
+				 .append(this._createPlugin_alert())
 				 .append(this._createPlugin_search())
 				 .append(this._createPlugin_edit())
 				 .append(this._createPlugin_sort());
@@ -740,7 +761,9 @@ var $testDM;
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarRefresh+'"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarRefresh+'</span></span>');
 			$el.click(function(){
 				that._tableValues.tableStatus='refresh';
-				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
+				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list',function(v){
+					that._showState(v?v:$[_pluginName].regional.eventSuccess);
+				});
 			});
 			return $el;
 		},
@@ -801,8 +824,8 @@ var $testDM;
 			return $el;
 		},
 		_createCollapse_tableGroup:function(){
-			var $el=$('<div class="kekTable-table-group"></div>'),
-				opt=this._options;
+			var $el,opt=this._options;
+			this._elements.$tableGroup=$el=$('<div class="kekTable-table-group"></div>');
 			$el.append((opt.rowNum===1 && this._createTable_single()) || (opt.frozenNum && this._createTable_frozen()) || this._createTable());
 			return $el;
 		},
@@ -856,7 +879,7 @@ var $testDM;
 					ul.push('<li>'+li.join('')+'</li>');
 					li.length=0;
 				}
-				li.push('<div><b>'+cols[colName].listTitle+'</b><span class="kekTable-col"'+(cols[colName].listWidth?(' style="width:'+cols[colName].listWidth+';"'):'')+'></span></div>');
+				li.push('<div><b>'+cols[colName].listTitle+'</b><span class="kekTable-col" data-col="'+colName+'"'+(cols[colName].listWidth?(' style="width:'+cols[colName].listWidth+';"'):'')+'></span></div>');
 			});
 			if(li.length)
 				ul.push('<li>'+li.join('')+'</li>');
@@ -936,6 +959,10 @@ var $testDM;
 		},
 		_createPlugin_loading:function(el){
 			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="kekTable-loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
+		},
+		_createPlugin_alert:function(el){
+			return this._elements.$alert=$('<div class="modal fade" data-backdrop="static" tabindex="-1"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
+				$[_pluginName].regional.alertTitle+'</h4></div><div class="modal-body"><p></p></div></div></div></div>');
 		},
 		_createPlugin_search:function(){
 			if(this._hasTool.search){
@@ -1139,7 +1166,11 @@ var $testDM;
 		},
 		//==========end工具栏内置功能==========
 		//===============读取资料===============
-		//d:deferred
+		/**
+		 * @function Plugin~_loadData
+		 * @desc 后台数据格式 { Result="OK" , Total=100 , Data=[['a1','b1','c1'],['a2','b2','c2']]}
+		 * @summary 读取数据
+		 */
 		_loadData:function(d){
 			var colsId=[],that=this,cols=this._options.columns;
 			//colsId
@@ -1147,7 +1178,7 @@ var $testDM;
 				colsId.push(cols[colName].ColsId);
 			});
 			this._showLoading($[_pluginName].regional.loadData);
-			var ajax=$.post(this._options.listURL,{
+			$.get(this._options.listURL,{
 				act:'List',
 				listPars:JSON.stringify({
 					ColsId:colsId,
@@ -1157,10 +1188,68 @@ var $testDM;
 					Relations:that._options.tableRelations
 				})
 			}).done(function(res){
-				console.log(this);
+				if(!res)
+					d.reject(that._options.isDebug?'后台未返回数据':$[_pluginName].regional.loadDataErr);
+				var obj=$.parseJSON(res);
+				if(!obj.Result)
+					d.reject(that._options.isDebug?'后台未返回Result值': $[_pluginName].regional.loadDataErr);
+				else if(obj.Result.toUpperCase()==='OK'){
+					if(obj.Total==null || obj.Data==null)
+						d.reject(that._options.isDebug?'后台返回数据结构错误':$[_pluginName].regional.loadDataErr);
+					that._tableValues.curPageRecords=obj.Data;
+					that._tableValues.curRecordNum=1;
+					that._createFooter_pagging(obj.Total);
+					if(that._options.rowNum===1)
+						that._listData_single(obj.Data,d);
+					else if(that._options.frozenNum)
+						that._listData_frozen(obj.Data,d);
+					else
+						that._listData(obj.Data,d);
+				}
+				else
+					d.reject(obj.Message || $[_pluginName].regional.loadDataErr);
 			}).fail(function(){
 				d.reject($[_pluginName].regional.loadDataErr);
 			})
+		},
+		//$el:栏位dom
+		//colData:栏位原始数据
+		//b:栏位beforeList回调函数
+		_listColData:function($el,colData,b,d){
+			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve(colData);});
+			promise.done(function(v){
+				$el.html(v);
+			}).fail(function(){
+				$el.text('');
+			});
+			return promise;
+		},
+		_listData_single:function(data,def){
+			if(data.length){
+				var d=data[0],cols=this._listCols,that=this,
+					$block=$('.kekTable-single-table',this._elements.$tableGroup),
+					defArr=[];
+//				var len=d.length;
+//				var i=0;
+//				
+//				var defLoop=function(i,len)
+//				{
+//					var $col=$('span[data-col="'+cols[i]+'"]');
+//					return that._listColData($col,d[i],that._options.columns[cols[i]].beforeList,d).then(function(){
+//						if(i+1<len){
+//							defLoop(i+1,len);
+//						}
+//					});
+//				}
+				//defLoop(i,len);
+				$.each(d, function(i,val) {
+					//defArr.push(that._listColData($col,val,that._options.columns[cols[i]].beforeList,d))
+					var $col=$('span[data-col="'+cols[i]+'"]');
+					defArr.push(that._listColData($col,val,that._options.columns[cols[i]].beforeList));
+				});
+				$.when.apply($,defArr)
+				  .then(function(){def.resolve()});
+			}
 		},
 		//==============end读取资料=============
 		/**
@@ -1210,7 +1299,8 @@ var $testDM;
 		},
 		//显示对话框
 		_showAlert:function(msg){
-			
+			$('.modal-body p',this._elements.$alert).text(msg);
+			this._elements.$alert.show();
 		},
 		//显示状态信息
 		_showState:function(msg){
@@ -1220,8 +1310,9 @@ var $testDM;
 		
 		//事件组。前，中，后。将改变i的this指向
 		//el:显示加载遮罩的对象('list'、'edit')
+		//fcDone:成功后的回调函数
 		//回调函数必需执行d.resolve()或d.reject()
-		_toolbarEvent:function(b,i,a,el){
+		_toolbarEvent:function(b,i,a,load,fcDone){
 			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve();});
 			var that=this;
 			promise.done(function(){
@@ -1230,18 +1321,41 @@ var $testDM;
 					if(a){
 						promise=a?that._eventDefer(a):that._eventDefer(function(v,d){d.resolve()});
 						promise.done(function(v){
-							that._hideLoading();
-							that._showState(v?v:$[_pluginName].regional.eventSuccess);
+							that._hideLoading(load);
+							fcDone && fcDone(v);
+							//that._showState(v?v:$[_pluginName].regional.eventSuccess);
 						});
 					}
 					else{
-						that._hideLoading();
-						that._showState(v?v:$[_pluginName].regional.eventSuccess);
+						that._hideLoading(load);
+						fcDone && fcDone(v);
+						//that._showState(v?v:$[_pluginName].regional.eventSuccess);
 					}
 				});
 			});
-			
+			return promise;
 		},
+		//事件组。前，中，后。将改变i的this指向
+		//回调函数必需执行d.resolve()或d.reject()
+		//返回值被显示到画面
+//		_listDataEvent:function(b,i,a,colData){
+//			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve(colData);}),
+//				that=this;
+//			promise.done(function(colData){
+//				promise=that._eventDefer(i.bind(that));
+//				promise.done(function(){
+//					if(a){
+//						promise=a?that._eventDefer(a):that._eventDefer(function(v,d){d.resolve()});
+//						promise.done(function(v){
+//							that._hideLoading();
+//						});
+//					}
+//					else{
+//						that._hideLoading();
+//					}
+//				});
+//			});
+//		},
 		//event所使用的jQuery.deferred
 		_eventDefer:function(f){
 			var d=$.Deferred(),
@@ -1249,7 +1363,7 @@ var $testDM;
 				p=d.then(f($.extend({},this._tableValues),d));
 			p.fail(function(v){
 				that._hideLoading();
-				that._showState(v);
+				that._showAlert(v);
 			});
 			return p.promise();
 		},
@@ -1308,6 +1422,10 @@ var $testDM;
 	 * $.kekTable.regional={}
 	 */
 	$[_pluginName].regional={
+		/**
+		 * @var {string} Plugin#regional#alertTitle - 提示框的标题文字
+		 */
+		alertTitle:'提示',
 		/**
 		 * @var {string} Plugin#regional#defaultCol - 默认字段栏位的文字
 		 */

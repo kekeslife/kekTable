@@ -656,13 +656,13 @@
 		<!--datetime-->
 		<input id="datetimepicker" type="text" >
 		<button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="left" title="Tooltip on left">Tooltip on left</button>
-		
+		<button id="ttt" class="tttx btn btn-default">ttt</button>
 		<div id="test1"></div>
 		<div id="test2"></div>
 		<script type="text/javascript">
 			//$('#datetimepicker').datetimepicker();
 			$('#test1').kekTable({
-				listURL:'testData.json',
+				listURL:'testData.txt',
 				isCollapse:true,isDebug:true,
 				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('b');d.resolve('bok');},500) },
 				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('a');d.resolve('aok');},500) },
@@ -675,7 +675,8 @@
 						listTitle:'empNo',
 						colTotalSummary:'COUNT',
 						editIndex:0,
-						editTitle:'empNo'
+						editTitle:'empNo',
+						beforeList:function(r,d){setTimeout(function(){console.log('empNo');d.resolve('empNo');},3000)}
 					},
 					empName:{
 						colId:1,
@@ -685,7 +686,8 @@
 						listInline:true,
 						editIndex:2,
 						editDisplay:'cling',
-						editAttr:'readonly'
+						editAttr:'readonly',
+						beforeList:function(r,d){setTimeout(function(){console.log('empName');d.resolve('empName');},3000)}
 					},
 					deptName:{
 						colId:4,
@@ -716,6 +718,9 @@
 				rowNum:1
 			});
 			//$('#test2').kekTable();
+//			$('.ttt').click(function(){
+//				$('.ttt').removeClass('btn');
+//			})
 		</script>
 	</body>
 </html>
