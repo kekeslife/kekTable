@@ -42,7 +42,7 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .kekTable-single-table{margin-bottom: 0;border-bottom: 1px solid #ddd;padding-bottom: 15px;}
 .kekTable-single-table>li>div{margin: 15px 0 0 15px;display: inline-block;}
 .kekTable-single-table>li>div>b:after{content: ' :';font-size: 16px;}
-.kekTable-single-table .kekTable-col{border-bottom: 1px solid #333;display: inline-block;line-height: 16px;margin-left: 6px;}
+.kekTable-single-table .kekTable-col{border-bottom: 1px solid #333;display: inline-block;line-height: 16px;margin-left: 6px;vertical-align: bottom;}
 /*表格-冻结*/
 .kekTable-table-frozen{position: absolute;width: auto;}
 .kekTable-table-frozen tbody td{background-color: #fff;}

@@ -186,6 +186,11 @@ var $testDM;
 			 * }
 			 */
 			beforeRefresh:null,
+			/**
+			 * @function kekTable~options#afterRefresh
+			 * @desc 成功刷新之后 用法同beforeRefresh
+			 */
+			afterRefresh:null,
 		},
 		/**
 		 * @namespace _column
@@ -305,11 +310,58 @@ var $testDM;
 			 */
 			beforeList:null,
 		};
-		
-			
-			
-			
-			
+	
+	//=======================扩展==========================
+	//ie bind
+	if (!Function.prototype.bind) {
+        Function.prototype.bind = function (obj) {
+            var _self = this;
+            var args = Array.prototype.slice.call(arguments, 1);
+            return function () {
+                _self.apply(obj, args.concat(Array.prototype.slice.call(arguments)));
+            }
+        }
+    }		
+	$.whenAll=function( subordinate) {
+		var i = 0,fails,
+			slice=Array.prototype.slice,
+			resolveValues = slice.call( arguments ),
+			length = resolveValues.length,
+			remaining = length !== 1 || ( subordinate && $.isFunction( subordinate.promise ) ) ? length : 0,
+			deferred = remaining === 1 ? subordinate : $.Deferred(),
+			updateFunc = function( i, contexts, values,isDone ) {
+				!isDone && fails++;
+				return function( value ) {
+					contexts[ i ] = this;
+					values[ i ] = arguments.length > 1 ? slice.call( arguments ) : value;
+					if ( values === progressValues ) {
+						deferred.notifyWith( contexts, values );
+					} else if ( !( --remaining ) ) {
+						deferred.resolveWith( contexts, values );
+					}
+				};
+			},
+			progressValues, progressContexts, resolveContexts;
+		if ( length > 1 ) {
+			progressValues = new Array( length );
+			progressContexts = new Array( length );
+			resolveContexts = new Array( length );
+			for ( ; i < length; i++ ) {
+				if ( resolveValues[ i ] && $.isFunction( resolveValues[ i ].promise ) ) {
+					resolveValues[ i ].promise()
+						.done( updateFunc( i, resolveContexts, resolveValues,true ) )
+						.fail( updateFunc( i, resolveContexts, resolveValues,false ) )
+						.progress( updateFunc( i, progressContexts, progressValues ) );
+				} else {
+					--remaining;
+				}
+			}
+		}
+		if ( !remaining )
+			fails?deferred.reject():deferred.resolveWith( resolveContexts, resolveValues );
+		return deferred.promise();
+	};
+	//====================end 扩展==========================		
 		
 	/**
 	 * @constructor Plugin
@@ -761,9 +813,7 @@ var $testDM;
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarRefresh+'"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarRefresh+'</span></span>');
 			$el.click(function(){
 				that._tableValues.tableStatus='refresh';
-				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list',function(v){
-					that._showState(v?v:$[_pluginName].regional.eventSuccess);
-				});
+				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
 			});
 			return $el;
 		},
@@ -891,9 +941,9 @@ var $testDM;
 				var $el=$('<div class="kekTable-table-summary"></div>'),
 					cols=this._options.columns;
 				$.each(this._summaryCols, function(i,colName) {
-					$el.append('<h5>'+cols[colName].listTitle+': '+$[_pluginName].regional['total'+cols[colName].colTotalSummary]+'<b></b></h5>');
+					$el.append('<h5 data-col="'+colName+'">'+cols[colName].listTitle+'('+$[_pluginName].regional['total'+cols[colName].colTotalSummary]+'): <b></b></h5>');
 				});
-				return $el;
+				return this._elements.$summary=$el;
 			}
 		},
 		_createCollapse_tableDetail:function(){
@@ -953,7 +1003,7 @@ var $testDM;
 		                pageArr[Math.ceil(intactPages / 2) - 1] = '<li class="active"><span>' + this._currentPageNo + '</span></li>';
 		            }
 		        }
-		        $el.children().append(pageArr.join(''));
+		        $el.children().empty().append(pageArr.join(''));
 		        return $el;
 			}
 		},
@@ -961,13 +1011,13 @@ var $testDM;
 			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="kekTable-loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
 		},
 		_createPlugin_alert:function(el){
-			return this._elements.$alert=$('<div class="modal fade" data-backdrop="static" tabindex="-1"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
+			return this._elements.$alert=$('<div class="modal fade" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
 				$[_pluginName].regional.alertTitle+'</h4></div><div class="modal-body"><p></p></div></div></div></div>');
 		},
 		_createPlugin_search:function(){
 			if(this._hasTool.search){
 				var regional=$[_pluginName].regional;
-				this._elements.search.$dialog=$('<div class="modal fade kekTable-search" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
+				this._elements.search.$dialog=$('<div class="modal fade kekTable-search" style="display:none;" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
 					regional.searchTitle+'</h4></div><div class="modal-body"><ul class="kekTable-search-block"></ul></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
 					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.searchCommit+'</button></div></div></div></div>');
 				$('.modal-body',this._elements.search.$dialog).append(this._createSearch_col())
@@ -1180,6 +1230,7 @@ var $testDM;
 			this._showLoading($[_pluginName].regional.loadData);
 			$.get(this._options.listURL,{
 				act:'List',
+				test:Math.random() ,
 				listPars:JSON.stringify({
 					ColsId:colsId,
 					SortConditions:that._sortConditions,
@@ -1190,33 +1241,42 @@ var $testDM;
 			}).done(function(res){
 				if(!res)
 					d.reject(that._options.isDebug?'后台未返回数据':$[_pluginName].regional.loadDataErr);
-				var obj=$.parseJSON(res);
-				if(!obj.Result)
-					d.reject(that._options.isDebug?'后台未返回Result值': $[_pluginName].regional.loadDataErr);
-				else if(obj.Result.toUpperCase()==='OK'){
-					if(obj.Total==null || obj.Data==null)
-						d.reject(that._options.isDebug?'后台返回数据结构错误':$[_pluginName].regional.loadDataErr);
-					that._tableValues.curPageRecords=obj.Data;
-					that._tableValues.curRecordNum=1;
-					that._createFooter_pagging(obj.Total);
-					if(that._options.rowNum===1)
-						that._listData_single(obj.Data,d);
-					else if(that._options.frozenNum)
-						that._listData_frozen(obj.Data,d);
+				else{
+					var obj=$.parseJSON(res);
+					if(!obj.Result)
+						d.reject(that._options.isDebug?'后台未返回Result值': $[_pluginName].regional.loadDataErr);
+					else if(obj.Result.toUpperCase()==='OK'){
+						if(obj.Total==null || obj.Data==null)
+							d.reject(that._options.isDebug?'后台返回数据结构错误':$[_pluginName].regional.loadDataErr);
+						else if(that._summaryCols.length && (obj.Summary==null || obj.Summary.length != that._summaryCols.length))
+							d.reject(that._options.isDebug?'后台返回Summary值异常': $[_pluginName].regional.loadDataErr);
+						else{
+							that._tableValues.curPageRecords=obj.Data;
+							that._tableValues.curRecordNum=1;
+							that._listSummary(obj.Summary);
+							that._createFooter_pagging(obj.Total);
+							if(that._options.rowNum===1)
+								that._listData_single(obj.Data,d);
+							else if(that._options.frozenNum)
+								that._listData_frozen(obj.Data,d);
+							else
+								that._listData(obj.Data,d);
+						}
+					}
 					else
-						that._listData(obj.Data,d);
+						d.reject(obj.Message || $[_pluginName].regional.loadDataErr);
 				}
-				else
-					d.reject(obj.Message || $[_pluginName].regional.loadDataErr);
 			}).fail(function(){
 				d.reject($[_pluginName].regional.loadDataErr);
 			})
 		},
+		//显示table栏位的值
 		//$el:栏位dom
 		//colData:栏位原始数据
 		//b:栏位beforeList回调函数
-		_listColData:function($el,colData,b,d){
-			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve(colData);});
+		_listColData:function($el,colData,b){
+			var fcFail=function(){$el.text('');}
+			var promise=b?this._eventDefer(b,fcFail):this._eventDefer(function(v,d){d.resolve(colData);},fcFail);
 			promise.done(function(v){
 				$el.html(v);
 			}).fail(function(){
@@ -1224,31 +1284,40 @@ var $testDM;
 			});
 			return promise;
 		},
+		//显示摘要数据
+		//data: 后台返回的Summary数组
+		_listSummary:function(data){
+			if(this._summaryCols.length)
+			{
+				var that=this;
+				$.each(this._summaryCols,function(i,colName){
+					$('h5[data-col="'+colName+'"] b',that._elements.$summary).text(data[i]);
+				});
+			}
+		},
+		//将数据显示到单笔table里面
+		//def:刷新事件的deferred
 		_listData_single:function(data,def){
 			if(data.length){
 				var d=data[0],cols=this._listCols,that=this,
 					$block=$('.kekTable-single-table',this._elements.$tableGroup),
 					defArr=[];
-//				var len=d.length;
-//				var i=0;
-//				
-//				var defLoop=function(i,len)
-//				{
-//					var $col=$('span[data-col="'+cols[i]+'"]');
-//					return that._listColData($col,d[i],that._options.columns[cols[i]].beforeList,d).then(function(){
-//						if(i+1<len){
-//							defLoop(i+1,len);
-//						}
-//					});
-//				}
-				//defLoop(i,len);
 				$.each(d, function(i,val) {
-					//defArr.push(that._listColData($col,val,that._options.columns[cols[i]].beforeList,d))
 					var $col=$('span[data-col="'+cols[i]+'"]');
 					defArr.push(that._listColData($col,val,that._options.columns[cols[i]].beforeList));
 				});
-				$.when.apply($,defArr)
-				  .then(function(){def.resolve()});
+				$.whenAll.apply($,defArr)
+				  .then(function(){
+				  		if(def)
+				  			def.resolve();
+				  		else
+				  			that._hideLoading();
+				  },function(){
+				  		if(def)
+				  			def.resolve();
+				  		else
+				  			that._hideLoading();
+				  });
 			}
 		},
 		//==============end读取资料=============
@@ -1300,7 +1369,7 @@ var $testDM;
 		//显示对话框
 		_showAlert:function(msg){
 			$('.modal-body p',this._elements.$alert).text(msg);
-			this._elements.$alert.show();
+			this._elements.$alert.modal('show');
 		},
 		//显示状态信息
 		_showState:function(msg){
@@ -1321,49 +1390,40 @@ var $testDM;
 					if(a){
 						promise=a?that._eventDefer(a):that._eventDefer(function(v,d){d.resolve()});
 						promise.done(function(v){
-							that._hideLoading(load);
-							fcDone && fcDone(v);
-							//that._showState(v?v:$[_pluginName].regional.eventSuccess);
+							if(fcDone)
+								fcDone(v);
+							else{
+								that._hideLoading(load);
+								that._showState(v?v:$[_pluginName].regional.eventSuccess);
+							}
 						});
 					}
 					else{
-						that._hideLoading(load);
-						fcDone && fcDone(v);
-						//that._showState(v?v:$[_pluginName].regional.eventSuccess);
+						if(fcDone)
+							fcDone(v);
+						else{
+							that._hideLoading(load);
+							that._showState(v?v:$[_pluginName].regional.eventSuccess);
+						}
 					}
 				});
 			});
 			return promise;
 		},
-		//事件组。前，中，后。将改变i的this指向
-		//回调函数必需执行d.resolve()或d.reject()
-		//返回值被显示到画面
-//		_listDataEvent:function(b,i,a,colData){
-//			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve(colData);}),
-//				that=this;
-//			promise.done(function(colData){
-//				promise=that._eventDefer(i.bind(that));
-//				promise.done(function(){
-//					if(a){
-//						promise=a?that._eventDefer(a):that._eventDefer(function(v,d){d.resolve()});
-//						promise.done(function(v){
-//							that._hideLoading();
-//						});
-//					}
-//					else{
-//						that._hideLoading();
-//					}
-//				});
-//			});
-//		},
+		
 		//event所使用的jQuery.deferred
-		_eventDefer:function(f){
+		//fcFail:异常时的操作
+		_eventDefer:function(f,fcFail){
 			var d=$.Deferred(),
 				that=this,
 				p=d.then(f($.extend({},this._tableValues),d));
 			p.fail(function(v){
-				that._hideLoading();
-				that._showAlert(v);
+				if(fcFail)
+					fcFail(v);
+				else{
+					that._hideLoading();
+					that._showAlert(v);
+				}
 			});
 			return p.promise();
 		},

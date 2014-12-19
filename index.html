@@ -657,6 +657,9 @@
 		<input id="datetimepicker" type="text" >
 		<button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="left" title="Tooltip on left">Tooltip on left</button>
 		<button id="ttt" class="tttx btn btn-default">ttt</button>
+		
+		
+		
 		<div id="test1"></div>
 		<div id="test2"></div>
 		<script type="text/javascript">
@@ -664,8 +667,8 @@
 			$('#test1').kekTable({
 				listURL:'testData.txt',
 				isCollapse:true,isDebug:true,
-				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('b');d.resolve('bok');},500) },
-				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('a');d.resolve('aok');},500) },
+				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('beforeRefresh');d.resolve('bok');},500) },
+				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('afterRefresh');d.resolve('aok');},500) },
 				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]],
 				columns:{
 					empNo:{
@@ -676,7 +679,7 @@
 						colTotalSummary:'COUNT',
 						editIndex:0,
 						editTitle:'empNo',
-						beforeList:function(r,d){setTimeout(function(){console.log('empNo');d.resolve('empNo');},3000)}
+						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empNo');d.resolve('empNo');},1000)}
 					},
 					empName:{
 						colId:1,
@@ -687,7 +690,7 @@
 						editIndex:2,
 						editDisplay:'cling',
 						editAttr:'readonly',
-						beforeList:function(r,d){setTimeout(function(){console.log('empName');d.resolve('empName');},3000)}
+						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empName');d.resolve('empName');},3000)}
 					},
 					deptName:{
 						colId:4,
@@ -721,6 +724,8 @@
 //			$('.ttt').click(function(){
 //				$('.ttt').removeClass('btn');
 //			})
+
+
 		</script>
 	</body>
 </html>
