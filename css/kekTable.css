@@ -29,7 +29,9 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .kekTable-table-summary {border-bottom: 1px solid #ddd;}
 .kekTable-table-summary h5{padding: 2px 6px;}
 /*表格-分頁*/
-.kekTable-listPanel .panel-footer{padding:6px 4px;position: relative;}
+.kekTable-listPanel .panel-footer{padding:6px 4px;position: relative;overflow: hidden;}
+.kekTable-listPanel .panel-footer>nav{float: left;}
+.kekTable-listPanel .panel-footer>.alert{float: right;margin-bottom: 0;padding: 6px 4px;display: none;}
 .kekTable-listPanel .panel-footer .pagination{margin: 0;vertical-align: bottom;}
 .kekTable-listPanel .panel-footer .pagination>li>a,.kekTable-listPanel .panel-footer .pagination>li>span {font-size: 14px;}
 /*表格状态*/

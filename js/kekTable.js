@@ -401,6 +401,10 @@ var $testDM;
 			 */
 			$alert:null,
 			/**
+			 * @var {jQuery} _elements#$state - 状态栏
+			 */
+			$state:null,
+			/**
 			 * @var {jQuery} _elements#$pagging - 分页ul
 			 */
 			$pagging:null,
@@ -961,7 +965,7 @@ var $testDM;
 			}
 		},
 		_createCollapse_footer:function(){
-			return $('<div class="panel-footer"></div>').append(this._createFooter_pagging(1));
+			return $('<div class="panel-footer"></div>').append(this._createFooter_pagging(1)).append(this._createFooter_state());
 		},
 		_createFooter_pagging:function(recordCount){
 			if(this._options.showPaging){
@@ -1013,6 +1017,9 @@ var $testDM;
 		        $el.children().empty().append(pageArr.join(''));
 		        return $el;
 			}
+		},
+		_createFooter_state:function(){
+			return this._elements.$state = $('<div class="alert alert-success"></div>');
 		},
 		_createPlugin_loading:function(el){
 			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="kekTable-loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
@@ -1452,10 +1459,13 @@ var $testDM;
 			$('.modal-body p',this._elements.$alert).text(msg);
 			this._elements.$alert.modal('show');
 		},
-		//显示状态信息
-		_showState:function(msg){
-			if(msg)
-				console.log('_showState:'+msg);
+		//显示table-foot状态信息
+		//type:alert样式(alert-danger、alert-success)
+		_showState:function(msg,type){
+			if(msg){
+				this._elements.$state.text(msg).removeClass(type=='alert-danger'?'alert-success':type).addClass(type=='alert-danger'?type:'alert-success');
+				this._elements.$state.show();
+			}
 		},
 		
 		//事件组。前，中，后。将改变i的this指向
