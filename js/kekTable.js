@@ -31,6 +31,10 @@ var $testDM;
 			 */
 			showPaging:true,
 			/**
+			 * @var {?bool} [kekTable~_options#autoLoad=true] - 初始化后是否自动读取数据
+			 */
+			autoLoad:true,
+			/**
 			 * @summary 面板的颜色 - class - bootstrap的panel样式
 			 * @desc 'panel-primary'(深蓝)、'panel-success'(浅绿)、'panel-info'(浅蓝)、'panel-warning'(浅黄)、'panel-danger'(浅灰)、'panel-default'(浅灰)
 			 * @var {?string} [kekTable~_options#panelColor='panel-primary']
@@ -126,7 +130,7 @@ var $testDM;
 			 */
 			tableRelations:null,
 			/**
-			 * @var {?int} [kekTable~options#frozenNum=null] - 冻结前几列,不包含序号列
+			 * @var {?int} [kekTable~options#frozenNum=null] - 冻结前几列,1起始。如果为0则冻结序号列
 			 */
 			frozenNum:null,
 			/**
@@ -493,6 +497,7 @@ var $testDM;
 			if(this._options.isDebug)
 				this._debug();
 			this._createPlugin();
+			this._tableValues.tableStatus='init';
 		},
 		//检核参数配置
 		_debug:function(){
@@ -561,6 +566,8 @@ var $testDM;
 				console.warn('rowNum设置为1代表是单笔显示模式，此模式下没有冻结功能，你可以去掉frozenNum');
 			if(opt.rowNum===1 && opt.showRowNo)
 				console.warn('rowNum设置为1代表是单笔显示模式，此模式下没有序号列，你可以去掉showRowNo');
+			if(!opt.showRowNo && opt.frozenNum===0)
+				console.warn('没有开启showRowNo,如果没有冻结栏位，可以不设置frozenNum');
 			//detailTable
 			if(opt.detailTable){
 				if(!$('#'+opt.detailTable).length)
@@ -876,7 +883,7 @@ var $testDM;
 		_createCollapse_tableGroup:function(){
 			var $el,opt=this._options;
 			this._elements.$tableGroup=$el=$('<div class="kekTable-table-group"></div>');
-			$el.append((opt.rowNum===1 && this._createTable_single()) || (opt.frozenNum && this._createTable_frozen()) || this._createTable());
+			$el.append((opt.rowNum===1 && this._createTable_single()) || (opt.frozenNum !=null && this._createTable_frozen()) || this._createTable());
 			return $el;
 		},
 		_createTable:function(){
@@ -1257,7 +1264,7 @@ var $testDM;
 							that._createFooter_pagging(obj.Total);
 							if(that._options.rowNum===1)
 								that._listData_single(obj.Data,d);
-							else if(that._options.frozenNum)
+							else if(that._options.frozenNum != null)
 								that._listData_frozen(obj.Data,d);
 							else
 								that._listData(obj.Data,d);
@@ -1276,7 +1283,7 @@ var $testDM;
 		//b:栏位beforeList回调函数
 		_listColData:function($el,colData,b){
 			var fcFail=function(){$el.text('');}
-			var promise=b?this._eventDefer(b,fcFail):this._eventDefer(function(v,d){d.resolve(colData);},fcFail);
+			var promise=b?this._eventDefer(b,fcFail):this._eventDefer(function(v,d){d.resolve(colData==null?'':colData);},fcFail);
 			promise.done(function(v){
 				$el.html(v);
 			}).fail(function(){
@@ -1295,30 +1302,104 @@ var $testDM;
 				});
 			}
 		},
-		//将数据显示到单笔table里面
+		//将数据显示到table里面。修改的话要同时修改_listData_frozen
+		//def:刷新事件的deferred
+		_listData:function(data,def){
+			var cols=this._listCols,that=this,
+				$block=$('tbody',this._elements.$tableGroup),
+				defArr=[],$frg=$(document.createDocumentFragment());
+			$.each(data,function(i,d){
+				var $tr=$('<tr />',{'data-index':i});
+				that._options.showRowNo && $tr.append('<td>'+(i+1)+'</td>')
+				$.each(d,function(j,val){
+					var $td=$('<td />');
+					$tr.append($td);
+					defArr.push(that._listColData($td,val,that._options.columns[cols[j]].beforeList));
+				});
+				$frg.append($tr);
+			});
+			$.whenAll.apply($,defArr)
+				.done(function(){
+			  		if(def)
+			  			def.resolve();
+			  		else
+			  			that._hideLoading();
+			  	})
+				.fail(function(){
+			  		if(def)
+			  			def.resolve();
+			  		else
+			  			that._hideLoading();
+			  	})
+				.always(function(){
+					$block.empty().append($frg);
+				});
+		},
+		//将数据显示到frozen-table里面。修改的话要同时修改_listData
+		//def:刷新事件的deferred
+		_listData_frozen:function(data,def){
+			var cols=this._listCols,that=this,
+				defArr=[],$frg=$(document.createDocumentFragment()),
+				$frgF=$(document.createDocumentFragment());
+			$.each(data,function(i,d){
+				var $tr=$('<tr />',{'data-row':i}),
+					$trF=$('<tr />',{'data-row':i});
+				that._options.showRowNo && ($tr.append('<td>'+(i+1)+'</td>') && $trF.append('<td>'+(i+1)+'</td>') );
+				$.each(d,function(j,val){
+					var $td=$('<td />');
+					if(j<that._options.frozenNum){
+						$tr.append('<td />');
+						$trF.append($td);
+					}
+					else
+						$tr.append($td);
+					defArr.push(that._listColData($td,val,that._options.columns[cols[j]].beforeList));
+				});
+				$frg.append($tr);
+				$frgF.append($trF);
+			});
+			$.whenAll.apply($,defArr)
+				.done(function(){
+			  		if(def)
+			  			def.resolve();
+			  		else
+			  			that._hideLoading();
+			  	})
+				.fail(function(){
+			  		if(def)
+			  			def.resolve();
+			  		else
+			  			that._hideLoading();
+			  	})
+				.always(function(){
+					$('table:not(.kekTable-table-frozen) tbody',that._elements.$tableGroup).empty().append($frg);
+					$('.kekTable-table-frozen tbody',that._elements.$tableGroup).empty().append($frgF);
+				});
+		},
+		//将数据显示到single-table里面
 		//def:刷新事件的deferred
 		_listData_single:function(data,def){
-			if(data.length){
-				var d=data[0],cols=this._listCols,that=this,
-					$block=$('.kekTable-single-table',this._elements.$tableGroup),
-					defArr=[];
-				$.each(d, function(i,val) {
-					var $col=$('span[data-col="'+cols[i]+'"]');
-					defArr.push(that._listColData($col,val,that._options.columns[cols[i]].beforeList));
-				});
-				$.whenAll.apply($,defArr)
-				  .then(function(){
-				  		if(def)
-				  			def.resolve();
-				  		else
-				  			that._hideLoading();
-				  },function(){
-				  		if(def)
-				  			def.resolve();
-				  		else
-				  			that._hideLoading();
-				  });
-			}
+			var cols=this._listCols,that=this,
+				d=data.length?data[0]:new Array(cols.length),
+				$block=$('.kekTable-single-table',this._elements.$tableGroup),
+				defArr=[];
+			$.each(d, function(i,val) {
+				var $col=$('span[data-col="'+cols[i]+'"]',$block);
+				defArr.push(that._listColData($col,val,that._options.columns[cols[i]].beforeList));
+			});
+			$.whenAll.apply($,defArr)
+			  	.done(function(){
+			  		if(def)
+			  			def.resolve();
+			  		else
+			  			that._hideLoading();
+			  	})
+			  	.fail(function(){
+			  		if(def)
+			  			def.resolve();
+			  		else
+			  			that._hideLoading();
+			  	});
 		},
 		//==============end读取资料=============
 		/**
@@ -1457,8 +1538,11 @@ var $testDM;
 			var $this=$(this),
 				data=$.data(this,'plugin_'+_pluginName);
 			//第一次调用。初始化
-			if(!data)
-				$.data(this,'plugin_'+_pluginName,new Plugin(this,options));
+			if(!data){
+				var thiData=$.data(this,'plugin_'+_pluginName,new Plugin(this,options));
+				if(thiData._options.autoLoad)
+					thiData._toolbarEvent(thiData._options.beforeRefresh,thiData._refresh,thiData._options.afterRefresh,'list');
+			}
 			//_开头的方法是内部方法，不允许外部调用
 			else if(typeof options ==='string'){
 				if(typeof data[options]=== 'function'){
