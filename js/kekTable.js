@@ -418,6 +418,7 @@ var $testDM;
 			 */
 			search:{
 				$dialog:null,
+				$block:null,
 				$col:null,
 				$operator:null,
 				$bool:null,
@@ -446,7 +447,7 @@ var $testDM;
 		this._pluginName=_pluginName;
 		/**
 		 * @typedef Plugin~_tableValues
-		 * @desc 当年页面上的一系列值。供外部接口（$.extend）
+		 * @desc 当前页面上的一系列值。供外部接口（$.extend）
 		 * @prop {object[]} [curPageRecords=null] - 当前页面上的所有数据库值
 		 * @prop {int} [curRecordNum=null] - 当前选中的行号，1开头
 		 * @prop {string} [tableStatus=null] - 表格狀態，一般為__toolbarIte.id
@@ -1034,8 +1035,9 @@ var $testDM;
 			if(this._hasTool.search){
 				var regional=$[_pluginName].regional;
 				this._elements.search.$dialog=$('<div class="modal fade kekTable-search" style="display:none;" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
-					regional.searchTitle+'</h4></div><div class="modal-body"><ul class="kekTable-search-block"></ul></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
+					regional.searchTitle+'</h4></div><div class="modal-body"></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
 					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.searchCommit+'</button></div></div></div></div>');
+				this._elements.search.$dialog.find('.modal-body').append(this._elements.search.$block=$('<ul class="kekTable-search-block"></ul>'));
 				$('.modal-body',this._elements.search.$dialog).append(this._createSearch_col())
 					.append(this._createSearch_operator())
 					.append(this._createSearch_bool())
@@ -1045,7 +1047,7 @@ var $testDM;
 			}
 		},
 		_createSearch_col:function(){
-			this._elements.search.$col=$('<ul class="dropdown-menu kekTable-dropList" style="display: block;"></ul>');
+			this._elements.search.$col=$('<ul class="dropdown-menu kekTable-dropList"></ul>');
 			var li=[],cols=this._options.columns;
 			$.each(this._dbCols, function(i,colName) {
 				if(cols[colName].canSearch)
@@ -1056,7 +1058,7 @@ var $testDM;
 			return this._elements.search.$col;
 		},
 		_createSearch_operator:function(){
-			this._elements.search.$operator=$('<ul class="dropdown-menu kekTable-dropList" style="display: block;"></ul>');
+			this._elements.search.$operator=$('<ul class="dropdown-menu kekTable-dropList"></ul>');
 			var li=[],regional=$[_pluginName].regional;
 			li.push(
 				'<li data-opt="eq"><span>'+regional.searchOptEq+'</span></li>',
@@ -1075,7 +1077,7 @@ var $testDM;
 			return this._elements.search.$operator;
 		},
 		_createSearch_bool:function(){
-			this._elements.search.$bool=$('<ul class="dropdown-menu kekTable-dropList" style="display: block;"></ul>');
+			this._elements.search.$bool=$('<ul class="dropdown-menu kekTable-dropList"></ul>');
 			var li=[],regional=$[_pluginName].regional;
 			li.push(
 				'<li data-opt="and"><span>'+regional.searchBoolAnd+'</span></li>',
@@ -1085,7 +1087,7 @@ var $testDM;
 			return this._elements.search.$bool;
 		},
 		_createSearch_control:function(){
-			this._elements.search.$control=$('<ul class="dropdown-menu kekTable-dropList" style="display: block;"></ul>');
+			this._elements.search.$control=$('<ul class="dropdown-menu kekTable-dropList"></ul>');
 			var li=[],regional=$[_pluginName].regional;
 			li.push(
 				'<li data-ctrl="pc"><span>'+regional.searchAddPreCond+'</span></li>',
@@ -1203,6 +1205,7 @@ var $testDM;
 			//something...
 		},
 		_search:function(v,d){
+			this._elements.search.$dialog.modal('show');
 			d.resolve('_search');
 			//something...
 		},
@@ -1417,8 +1420,8 @@ var $testDM;
 		//事件
 		_registEvents:function(){
 			var that=this;
-			//点击tr
-			$(this._elements.$tableGroup).on('click','tbody tr',function(){
+			//table tr click
+			this._elements.$tableGroup.on('click','tbody tr',function(){
 				var index = $(this).data('index') - 0;
 				if (index !== that._tableValues.curRecordNum - 1) {
 					that._tableValues.curRecordNum = index+1;
@@ -1429,11 +1432,24 @@ var $testDM;
 			});
 			//frozen hover
 			if(this._options.frozenNum != null && this._options.canRowHover){
-				$(this._elements.$tableGroup).on('mouseover','tbody tr',function(){
+				this._elements.$tableGroup.on('mouseover','tbody tr',function(){
 					$('tbody tr',that._elements.$tableGroup).removeClass('active');
 					$('tbody tr[data-index="'+$(this).data('index')+'"]:not(.info)',that._elements.$tableGroup).addClass('active');
 				});
 			}
+			//pagging click
+			this._elements.$pagging.on('click','li a',function(e){
+				that._tableValues.curRecordNum=1;
+				that._currentPageNo=$(this).text()-0;
+				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
+				e.preventDefault();
+			});
+			//search data-col
+			console.log(this._elements.search.$block);
+			this._elements.search.$block.on('click','button',function(){
+				that._elements.search.$col.show();
+				console.log(1);
+			})
 		},
 		//
 		//选中一行
@@ -1588,9 +1604,9 @@ var $testDM;
 				data=$.data(this,'plugin_'+_pluginName);
 			//第一次调用。初始化
 			if(!data){
-				var thiData=$.data(this,'plugin_'+_pluginName,new Plugin(this,options));
-				if(thiData._options.autoLoad)
-					thiData._toolbarEvent(thiData._options.beforeRefresh,thiData._refresh,thiData._options.afterRefresh,'list');
+				var thisData=$.data(this,'plugin_'+_pluginName,new Plugin(this,options));
+				if(thisData._options.autoLoad)
+					thisData._toolbarEvent(thisData._options.beforeRefresh,thisData._refresh,thisData._options.afterRefresh,'list');
 			}
 			//_开头的方法是内部方法，不允许外部调用
 			else if(typeof options ==='string'){
