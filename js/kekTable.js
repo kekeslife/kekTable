@@ -489,6 +489,8 @@ var $testDM;
 		this._searchConditions=null;
 		
 		this._init();
+		this._registEvents();
+		
 	}
 	/**
 	 * @augments Plugin
@@ -895,7 +897,7 @@ var $testDM;
 				colgroup=[],
 				thead=[],
 				cols=this._options.columns;
-			$el.addClass('table table-bordered table-condensed'+(this._options.canRowHover?' table-hover':''));
+			$el.addClass('table table-bordered table-condensed'+(this._options.canRowHover?(this._options.frozenNum!=null?'':' table-hover'):''));
 			if(this._options.showRowNo){
 				colgroup.push('<col style="width:50px;">');
 				thead.push('<th>#</th>');
@@ -1266,7 +1268,7 @@ var $testDM;
 							d.reject(that._options.isDebug?'后台返回Summary值异常': $[_pluginName].regional.loadDataErr);
 						else{
 							that._tableValues.curPageRecords=obj.Data;
-							that._tableValues.curRecordNum=1;
+							that._tableValues.curRecordNum=that._tableValues.curRecordNum||1;
 							that._listSummary(obj.Summary);
 							that._createFooter_pagging(obj.Total);
 							if(that._options.rowNum===1)
@@ -1340,6 +1342,7 @@ var $testDM;
 			  	})
 				.always(function(){
 					$block.empty().append($frg);
+					that._selectRow(that._tableValues.curRecordNum-1);
 				});
 		},
 		//将数据显示到frozen-table里面。修改的话要同时修改_listData
@@ -1349,8 +1352,8 @@ var $testDM;
 				defArr=[],$frg=$(document.createDocumentFragment()),
 				$frgF=$(document.createDocumentFragment());
 			$.each(data,function(i,d){
-				var $tr=$('<tr />',{'data-row':i}),
-					$trF=$('<tr />',{'data-row':i});
+				var $tr=$('<tr />',{'data-index':i}),
+					$trF=$('<tr />',{'data-index':i});
 				that._options.showRowNo && ($tr.append('<td>'+(i+1)+'</td>') && $trF.append('<td>'+(i+1)+'</td>') );
 				$.each(d,function(j,val){
 					var $td=$('<td />');
@@ -1381,6 +1384,8 @@ var $testDM;
 				.always(function(){
 					$('table:not(.kekTable-table-frozen) tbody',that._elements.$tableGroup).empty().append($frg);
 					$('.kekTable-table-frozen tbody',that._elements.$tableGroup).empty().append($frgF);
+					that._selectRow(that._tableValues.curRecordNum-1);
+					that._selectRowFrozen(that._tableValues.curRecordNum-1);
 				});
 		},
 		//将数据显示到single-table里面
@@ -1409,6 +1414,40 @@ var $testDM;
 			  	});
 		},
 		//==============end读取资料=============
+		//事件
+		_registEvents:function(){
+			var that=this;
+			//点击tr
+			$(this._elements.$tableGroup).on('click','tbody tr',function(){
+				var index = $(this).data('index') - 0;
+				if (index !== that._tableValues.curRecordNum - 1) {
+					that._tableValues.curRecordNum = index+1;
+					that._selectRow(index);
+					if (that._options.frozenNum != null)
+						that._selectRowFrozen(index);
+				}
+			});
+			//frozen hover
+			if(this._options.frozenNum != null && this._options.canRowHover){
+				$(this._elements.$tableGroup).on('mouseover','tbody tr',function(){
+					$('tbody tr',that._elements.$tableGroup).removeClass('active');
+					$('tbody tr[data-index="'+$(this).data('index')+'"]:not(.info)',that._elements.$tableGroup).addClass('active');
+				});
+			}
+		},
+		//
+		//选中一行
+		_selectRow:function(index){
+			var $tbody=$('table:not(".kekTable-table-frozen") tbody',this._elements.$tableGroup);
+			$tbody.children('tr').removeClass('info');
+			$tbody.children('[data-index="'+index+'"]').addClass('info');
+		},
+		//选中frozen表
+		_selectRowFrozen:function(index){
+			var $tbody=$('.kekTable-table-frozen tbody',this._elements.$tableGroup);
+			$tbody.children('tr').removeClass('info');
+			$tbody.children('[data-index="'+index+'"]').addClass('info');
+		},
 		/**
 		 * @function Plugin~_setSearchDialog
 		 * @desc 将排序条件列表数组显示到查询对话框中
@@ -1460,10 +1499,10 @@ var $testDM;
 			this._elements.$alert.modal('show');
 		},
 		//显示table-foot状态信息
-		//type:alert样式(alert-danger、alert-success)
+		//type:alert样式(danger、success)
 		_showState:function(msg,type){
 			if(msg){
-				this._elements.$state.text(msg).removeClass(type=='alert-danger'?'alert-success':type).addClass(type=='alert-danger'?type:'alert-success');
+				this._elements.$state.text(msg).removeClass(type=='danger'?'alert-success':type).addClass(type=='danger'?type:'alert-success');
 				this._elements.$state.show();
 			}
 		},
