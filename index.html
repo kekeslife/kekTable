@@ -657,7 +657,7 @@
 		<input id="datetimepicker" type="text" >
 		<button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="left" title="Tooltip on left">Tooltip on left</button>
 		<button id="ttt" class="tttx btn btn-default">ttt</button>
-		
+		<div id="tttt" style="height: 300px;width: 300px;overflow: scroll;"></div>
 		
 		
 		<div id="test1"></div>
@@ -679,7 +679,7 @@
 						colTotalSummary:'COUNT',
 						editIndex:0,
 						editTitle:'empNo',
-						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empNo');d.resolve('empNo');},1000)}
+						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empNo');d.resolve('empNo');},100)}
 					},
 					empName:{
 						colId:1,
@@ -690,7 +690,7 @@
 						editIndex:2,
 						editDisplay:'cling',
 						editAttr:'readonly',
-						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empName');d.resolve('empName');},3000)}
+						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empName');d.resolve('empName');},1000)}
 					},
 					deptName:{
 						colId:4,
@@ -722,11 +722,22 @@
 				rowNum:10
 			});
 			//$('#test2').kekTable();
-//			$('.ttt').click(function(){
-//				$('.ttt').removeClass('btn');
-//			})
-
-
+//			$('#tttt')[0].onclick=function(){
+//				console.log('click');
+//			};
+//			$('#tttt')[0].onmousedown=function(e){
+//				window.event.cancelBubble = true;
+//				window.event.returnValue=false;
+//				console.log('onmousedown');
+//			}
+$('#tttt').click(function(){
+	console.log('click');
+});
+$('#tttt').mousedown(function(e){
+	console.log('onmousedown');
+	e.stopPropagation();e.preventDefault();
+				return false;
+})
 		</script>
 	</body>
 </html>

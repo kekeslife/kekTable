@@ -226,9 +226,9 @@ var $testDM;
 			 */
 			listInline:false,
 			/**
-			 * @var {?bool} [_column#canSearch=true] - 数据库栏位是否可以被自定义查询
+			 * @var {?bool} [_column#canSearch=null] - 数据库栏位是否可以被自定义查询
 			 */
-			canSearch:true,
+			canSearch:null,
 			/**
 			 * @var {?bool} [_column#canSort=true] - 数据库栏位是否可以被自定义排序
 			 */
@@ -518,6 +518,8 @@ var $testDM;
 			//tableWidth
 			if(!/^(\d+%|\d+px|\d+in|\d+cm|\d+mm|\d+em|\d+ex|\d+pt|\d+pc|auto)$/.test(opt.tableWidth))
 				throw 'tableWidth请使用正确的宽度单位';
+			if(opt.tableWidth=='100%' && opt.frozenNum!=null)
+				console.warn('frozen表格请确保在画面上为固定宽度，否则屏幕过长后会导致非冻结栏位溢出');
 			//editDialogWidth
 			if(!/^(\d+%|\d+px|\d+in|\d+cm|\d+mm|\d+em|\d+ex|\d+pt|\d+pc|auto)$/.test(opt.editDialogWidth))
 				throw 'editDialogWidth请使用正确的宽度单位';
@@ -703,6 +705,8 @@ var $testDM;
 		      			if(that._dbCols[val])
 							throw colName+'有重复的colId';
 						that._dbCols[val]=colName;
+						if(colObj.listIndex!=null && colObj.canSearch==null)
+							colObj.canSearch=true;
 		      		}
 		      		else if((prop==='listWidth' || prop==='editWidth')){
 		      			if(val==null)
@@ -1051,7 +1055,7 @@ var $testDM;
 			var li=[],cols=this._options.columns;
 			$.each(this._dbCols, function(i,colName) {
 				if(cols[colName].canSearch)
-					li.push('<li data-col="'+colName+'"><span>'+cols[colName].listTitle+'</span></li>');
+					li.push('<li data-col="'+colName+'"><span>'+(cols[colName].listTitle || colName)+'</span></li>');
 			});
 			this._elements.search.$col.append(li.join(''));
 			this._setSearchDialog();
@@ -1444,12 +1448,93 @@ var $testDM;
 				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
 				e.preventDefault();
 			});
-			//search data-col
-			console.log(this._elements.search.$block);
-			this._elements.search.$block.on('click','button',function(){
-				that._elements.search.$col.show();
-				console.log(1);
-			})
+			//search col-btn
+			this._elements.search.$block.on('click','button[data-col]',function(){
+				var $btn=$(this),$ul=that._elements.search.$col,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+				$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+				$ul.css('left',$btn.position().left+mgLeft);
+				$ul.data('target',$btn);
+				$ul.show();
+			});
+			this._elements.search.$block.on('blur','button[data-col]',function(){
+				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+				if(!that._elements.search.$col.data('cancelBlur')){
+					that._elements.search.$col.hide();
+					that._elements.search.$col.data('cancelBlur',false);
+				}
+				else
+					$(this).focus();
+			});
+			//search col-ul
+			this._elements.search.$col.mousedown(function(e){
+				e.preventDefault();
+				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+				$(this).data('cancelBlur',true);
+				setTimeout(function(){that._elements.search.$col.data('cancelBlur',false);});
+			});
+			this._elements.search.$col.on('click','li',function(){
+				var $this=$(this),$btn=that._elements.search.$col.data('target');
+				$btn.text($this.text()).attr('data-col',$this.data('col'));
+				that._elements.search.$col.hide();
+			});
+			//search opt-btn
+			this._elements.search.$block.on('click','button[data-opt]',function(){
+				var $btn=$(this),$ul=that._elements.search.$operator,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+				$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+				$ul.css('left',$btn.position().left+mgLeft);
+				$ul.data('target',$btn);
+				$ul.show();
+			});
+			this._elements.search.$block.on('blur','button[data-opt]',function(){
+				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+				if(!that._elements.search.$operator.data('cancelBlur')){
+					that._elements.search.$operator.hide();
+					that._elements.search.$operator.data('cancelBlur',false);
+				}
+				else
+					$(this).focus();
+			});
+			//search opt-ul
+			this._elements.search.$operator.on('mousedown',function(e){
+				e.preventDefault();
+				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+				$(this).data('cancelBlur',true);
+				setTimeout(function(){that._elements.search.$operator.data('cancelBlur',false);});
+			});
+			this._elements.search.$operator.on('click','li',function(){
+				var $this=$(this),$btn=that._elements.search.$operator.data('target');
+				$btn.text($this.text()).attr('data-opt',$this.data('opt'));
+				that._elements.search.$operator.hide();
+			});
+			//search ctrl-btn
+			this._elements.search.$block.on('click','button[data-ctrl]',function(){
+				var $btn=$(this),$ul=that._elements.search.$control,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+				$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+				$ul.css('left',$btn.position().left+mgLeft);
+				$ul.data('target',$btn);
+				$ul.show();
+			});
+			this._elements.search.$block.on('blur','button[data-ctrl]',function(){
+				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+				if(!that._elements.search.$control.data('cancelBlur')){
+					that._elements.search.$control.hide();
+					that._elements.search.$control.data('cancelBlur',false);
+				}
+				else
+					$(this).focus();
+			});
+			//search ctrl-ul
+			this._elements.search.$control.on('mousedown',function(e){
+				e.preventDefault();
+				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+				$(this).data('cancelBlur',true);
+				setTimeout(function(){that._elements.search.$control.data('cancelBlur',false);});
+			});
+			this._elements.search.$control.on('click','li[data-ctrl]',function(){
+				var $this=$(this),$btn=that._elements.search.$control.data('target');
+				//$btn.text($this.text()).attr('data-opt',$this.data('opt'));
+				that._elements.search.$control.hide();
+			});
 		},
 		//
 		//选中一行
@@ -1470,11 +1555,11 @@ var $testDM;
 		 * @param {Plugin~_sortConditions} sortConditions - 排序的条件列表
 		 */
 		_setSearchDialog:function(arr){
-			var $block=$('.kekTable-search-block',this._elements.search.$dialog),
+			var $block=this._elements.search.$block,
 				regional=$[_pluginName].regional;
 			if(!arr || !arr.length)
-				$block.empty().append('<li><button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button" data-col=""><span>'+regional.defaultCol
-									+'</span><span class="caret"></span></button><button class="btn btn-default dropdown-toggle" type="button" data-opt="">=<span class="caret"></span></button><input type="text" class="form-control kekTable-search-itemValue"><button class="btn btn-default dropdown-toggle" type="button"><span class="glyphicon glyphicon-cog"></span></button></li>');
+				$block.empty().append('<li><button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button" data-col="">'+regional.defaultCol
+									+'</button><button class="btn btn-default dropdown-toggle" type="button" data-opt="">=</button><input type="text" class="form-control kekTable-search-itemValue"><button class="btn btn-default dropdown-toggle" type="button" data-ctrl=""><span class="glyphicon glyphicon-cog"></span></button></li>');
 			//something...
 		},
 		
