@@ -664,6 +664,7 @@
 		<div id="test2"></div>
 		<script type="text/javascript">
 			//$('#datetimepicker').datetimepicker();
+			
 			$('#test1').kekTable({
 				listURL:'testData.txt',
 				isCollapse:true,isDebug:true,
@@ -722,22 +723,7 @@
 				rowNum:10
 			});
 			//$('#test2').kekTable();
-//			$('#tttt')[0].onclick=function(){
-//				console.log('click');
-//			};
-//			$('#tttt')[0].onmousedown=function(e){
-//				window.event.cancelBubble = true;
-//				window.event.returnValue=false;
-//				console.log('onmousedown');
-//			}
-$('#tttt').click(function(){
-	console.log('click');
-});
-$('#tttt').mousedown(function(e){
-	console.log('onmousedown');
-	e.stopPropagation();e.preventDefault();
-				return false;
-})
+			
 		</script>
 	</body>
 </html>

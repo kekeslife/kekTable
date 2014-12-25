@@ -1084,8 +1084,8 @@ var $testDM;
 			this._elements.search.$bool=$('<ul class="dropdown-menu kekTable-dropList"></ul>');
 			var li=[],regional=$[_pluginName].regional;
 			li.push(
-				'<li data-opt="and"><span>'+regional.searchBoolAnd+'</span></li>',
-				'<li data-opt="or"><span>'+regional.searchBoolOr+'</span></li>'
+				'<li data-bool="and"><span>'+regional.searchBoolAnd+'</span></li>',
+				'<li data-bool="or"><span>'+regional.searchBoolOr+'</span></li>'
 			);
 			this._elements.search.$bool.append(li.join(''));
 			return this._elements.search.$bool;
@@ -1532,11 +1532,102 @@ var $testDM;
 			});
 			this._elements.search.$control.on('click','li[data-ctrl]',function(){
 				var $this=$(this),$btn=that._elements.search.$control.data('target');
-				//$btn.text($this.text()).attr('data-opt',$this.data('opt'));
+				that['_searchCtrl_'+$this.data('ctrl')]($btn);
 				that._elements.search.$control.hide();
 			});
+			//search bool-btn
+			this._elements.search.$block.on('click','button[data-bool]',function(){
+				var $btn=$(this),$ul=that._elements.search.$bool,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+				$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+				$ul.css('left',$btn.position().left+mgLeft);
+				$ul.data('target',$btn);
+				$ul.show();
+			});
+			this._elements.search.$block.on('blur','button[data-bool]',function(){
+				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+				if(!that._elements.search.$bool.data('cancelBlur')){
+					that._elements.search.$bool.hide();
+					that._elements.search.$bool.data('cancelBlur',false);
+				}
+				else
+					$(this).focus();
+			});
+			//search bool-ul
+			this._elements.search.$bool.on('mousedown',function(e){
+				e.preventDefault();
+				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+				$(this).data('cancelBlur',true);
+				setTimeout(function(){that._elements.search.$bool.data('cancelBlur',false);});
+			});
+			this._elements.search.$bool.on('click','li[data-bool]',function(){
+				var $this=$(this),$btn=that._elements.search.$bool.data('target');
+				$btn.text($this.text()).attr('data-bool',$this.data('bool'));
+				that._elements.search.$bool.hide();
+			});
 		},
-		//
+		//=========================search 添加条件============================
+		//查询添加条件至前
+		//$btn:ctrl按钮
+		_searchCtrl_pc:function($btn){
+			var $li=$btn.parent();
+			if($li.index()===0){
+				$li.before(this._searchAdd_itemFirst());
+				$li.prepend(this._searchAdd_bool());
+			}
+			else
+				$li.before(this._searchAdd_item());
+		},
+		//查询添加条件至后
+		//$btn:ctrl按钮
+		_searchCtrl_nc:function($btn){
+			$btn.parent().after(this._searchAdd_item());
+		},
+		//查询添加条件组至前
+		//$btn:ctrl按钮
+		_searchCtrl_pg:function($btn){
+			var $li=$btn.parent();
+			if($li.index()===0)
+				this._searchCtrl_ng($btn);
+			else
+				$li.before(this._searchAdd_subBlock());
+		},
+		//查询添加条件组至后
+		//$btn:ctrl按钮
+		_searchCtrl_ng:function($btn){
+			$btn.parent().after(this._searchAdd_subBlock());
+		},
+		//查询删除条件
+		//$btn:ctrl按钮
+		_searchCtrl_del:function($btn){
+			var $li=$btn.parent(),index=$li.index();
+			if($li.index()===0)
+				$li.next().children('[data-bool]').remove();
+			$li.remove();
+		},
+		//添加第一个条件
+		_searchAdd_itemFirst:function(){
+			return ('<li><button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button" data-col="">'+$[_pluginName].regional.defaultCol
+									+'</button><button class="btn btn-default dropdown-toggle" type="button" data-opt="">=</button><input type="text" class="form-control kekTable-search-itemValue"><button class="btn btn-default dropdown-toggle" type="button" data-ctrl=""><span class="glyphicon glyphicon-cog"></span></button></li>');
+		},
+		//添加and、or按钮
+		_searchAdd_bool:function(){
+			return ('<button class="btn btn-default dropdown-toggle" type="button" data-bool="">'+$[_pluginName].regional.searchBoolAnd+'</button>');
+		},
+		//添加ctrl按钮
+		_searchAdd_ctrl:function(){
+			return ('<button class="btn btn-default dropdown-toggle" type="button" data-ctrl=""><span class="glyphicon glyphicon-cog"></span></button>');
+		},
+		//添加非第一个条件
+		_searchAdd_item:function(){
+			return $(this._searchAdd_itemFirst()).prepend(this._searchAdd_bool());
+		},
+		//添加条件组
+		_searchAdd_subBlock:function(){
+			var $li=$('<li />');
+			$li.append(this._searchAdd_bool()).append($('<ul class="kekTable-search-block-sub"></ul>').append(this._searchAdd_itemFirst())).append(this._searchAdd_ctrl());
+			return $li;
+		},
+		//=========================end search 添加条件============================
 		//选中一行
 		_selectRow:function(index){
 			var $tbody=$('table:not(".kekTable-table-frozen") tbody',this._elements.$tableGroup);
@@ -1551,18 +1642,24 @@ var $testDM;
 		},
 		/**
 		 * @function Plugin~_setSearchDialog
-		 * @desc 将排序条件列表数组显示到查询对话框中
-		 * @param {Plugin~_sortConditions} sortConditions - 排序的条件列表
+		 * @desc 将查询条件列表数组显示到查询对话框中
+		 * @param {Plugin~_sortConditions} sortConditions - 查询的条件列表
 		 */
 		_setSearchDialog:function(arr){
 			var $block=this._elements.search.$block,
 				regional=$[_pluginName].regional;
 			if(!arr || !arr.length)
-				$block.empty().append('<li><button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button" data-col="">'+regional.defaultCol
-									+'</button><button class="btn btn-default dropdown-toggle" type="button" data-opt="">=</button><input type="text" class="form-control kekTable-search-itemValue"><button class="btn btn-default dropdown-toggle" type="button" data-ctrl=""><span class="glyphicon glyphicon-cog"></span></button></li>');
+				$block.empty().append(this._searchAdd_itemFirst());
 			//something...
 		},
-		
+		/**
+		 * @function Plugin~_getSearchDialog
+		 * @desc 将查询框中的条件转换成查询数组
+		 */
+		_getSearchDialog:function(){
+			
+			//something...
+		},
 		/**
 		 * @function Plugin~_showLoading
 		 * @desc 显示加载遮罩
