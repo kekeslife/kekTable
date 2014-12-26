@@ -486,7 +486,7 @@ var $testDM;
 		this._currentPageNo=1;
 		//排序条件
 		this._sortConditions=null;
-		//排序条件
+		//查询条件
 		this._searchConditions=null;
 		
 		this._init();
@@ -1032,14 +1032,14 @@ var $testDM;
 			return this._elements[el==='edit'?'$editLoading':'$loading']=$('<div class="kekTable-loading" style="display: none;"><div class="bk-opacity"></div><p><span class="alert alert-info">'+$[_pluginName].regional.loadingTxt+'</span></p></div>');
 		},
 		_createPlugin_alert:function(el){
-			return this._elements.$alert=$('<div class="modal fade" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
+			return this._elements.$alert=$('<div class="modal fade" data-backdrop="static" tabindex="-1" style="z-index:2000"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
 				$[_pluginName].regional.alertTitle+'</h4></div><div class="modal-body"><p></p></div></div></div></div>');
 		},
 		_createPlugin_search:function(){
 			if(this._hasTool.search){
 				var regional=$[_pluginName].regional;
 				this._elements.search.$dialog=$('<div class="modal fade kekTable-search" style="display:none;" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
-					regional.searchTitle+'</h4></div><div class="modal-body"></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">'+
+					regional.searchTitle+'</h4></div><div class="modal-body"></div><div class="modal-footer"><div class="alert alert-danger">'+regional.searchErr+'</div><button type="button" class="btn btn-default" data-dismiss="modal">'+
 					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.searchCommit+'</button></div></div></div></div>');
 				this._elements.search.$dialog.find('.modal-body').append(this._elements.search.$block=$('<ul class="kekTable-search-block"></ul>'));
 				$('.modal-body',this._elements.search.$dialog).append(this._createSearch_col())
@@ -1074,8 +1074,8 @@ var $testDM;
 				'<li data-opt="beg"><span>'+regional.searchOptBeg+'</span></li>',
 				'<li data-opt="end"><span>'+regional.searchOptEnd+'</span></li>',
 				'<li data-opt="like"><span>'+regional.searchOptLike+'</span></li>',
-				'<li data-opt="null"><span>'+regional.searchOptNull+'</span></li>',
-				'<li data-opt="nnull"><span>'+regional.searchOptNNull+'</span></li>'
+				'<li data-opt="isnull"><span>'+regional.searchOptNull+'</span></li>',
+				'<li data-opt="notnull"><span>'+regional.searchOptNNull+'</span></li>'
 			);
 			this._elements.search.$operator.append(li.join(''));
 			return this._elements.search.$operator;
@@ -1474,7 +1474,7 @@ var $testDM;
 			});
 			this._elements.search.$col.on('click','li',function(){
 				var $this=$(this),$btn=that._elements.search.$col.data('target');
-				$btn.text($this.text()).attr('data-col',$this.data('col'));
+				$btn.text($this.text()).data('col',$this.data('col'));
 				that._elements.search.$col.hide();
 			});
 			//search opt-btn
@@ -1503,7 +1503,17 @@ var $testDM;
 			});
 			this._elements.search.$operator.on('click','li',function(){
 				var $this=$(this),$btn=that._elements.search.$operator.data('target');
-				$btn.text($this.text()).attr('data-opt',$this.data('opt'));
+				$btn.text($this.text()).data('opt',$this.data('opt'));
+				if($this.data('opt').indexOf('null')!==-1){
+					$btn.next('.kekTable-search-itemValue').attr('readonly','readonly').val('').removeClass('kekTable-number').removeClass('kekTable-date');
+				}
+				else{
+					var colType=that._options.columns[$btn.prev('[data-col]').data('col')].colType;
+					if($.inArray(colType,['number','date'])!==-1)
+						$btn.next('.kekTable-search-itemValue').attr('readonly',null).addClass('kekTable-'+colType);
+					else
+						$btn.next('.kekTable-search-itemValue').attr('readonly',null);
+				}
 				that._elements.search.$operator.hide();
 			});
 			//search ctrl-btn
@@ -1537,9 +1547,9 @@ var $testDM;
 			});
 			//search bool-btn
 			this._elements.search.$block.on('click','button[data-bool]',function(){
-				var $btn=$(this),$ul=that._elements.search.$bool,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+				var $btn=$(this),$ul=that._elements.search.$bool,mgTop=$ul.outerHeight(true)-$ul.outerHeight();
 				$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
-				$ul.css('left',$btn.position().left+mgLeft);
+				$ul.css('left',$btn.position().left);
 				$ul.data('target',$btn);
 				$ul.show();
 			});
@@ -1561,8 +1571,15 @@ var $testDM;
 			});
 			this._elements.search.$bool.on('click','li[data-bool]',function(){
 				var $this=$(this),$btn=that._elements.search.$bool.data('target');
-				$btn.text($this.text()).attr('data-bool',$this.data('bool'));
+				$btn.text($this.text()).data('bool',$this.data('bool'));
 				that._elements.search.$bool.hide();
+			});
+			//search commit
+			this._elements.search.$dialog.on('click','.modal-footer .btn-primary',function(){
+				if(that._getSearchDialog()){
+					that._elements.search.$dialog.find('.modal-footer .alert').hide();
+					console.log(that._searchConditions);
+				}
 			});
 		},
 		//=========================search 添加条件============================
@@ -1607,11 +1624,11 @@ var $testDM;
 		//添加第一个条件
 		_searchAdd_itemFirst:function(){
 			return ('<li><button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button" data-col="">'+$[_pluginName].regional.defaultCol
-									+'</button><button class="btn btn-default dropdown-toggle" type="button" data-opt="">=</button><input type="text" class="form-control kekTable-search-itemValue"><button class="btn btn-default dropdown-toggle" type="button" data-ctrl=""><span class="glyphicon glyphicon-cog"></span></button></li>');
+									+'</button><button class="btn btn-default dropdown-toggle" type="button" data-opt="eq">=</button><input type="text" class="form-control kekTable-search-itemValue"><button class="btn btn-default dropdown-toggle" type="button" data-ctrl=""><span class="glyphicon glyphicon-cog"></span></button></li>');
 		},
 		//添加and、or按钮
 		_searchAdd_bool:function(){
-			return ('<button class="btn btn-default dropdown-toggle" type="button" data-bool="">'+$[_pluginName].regional.searchBoolAnd+'</button>');
+			return ('<button class="btn btn-default dropdown-toggle" type="button" data-bool="and">'+$[_pluginName].regional.searchBoolAnd+'</button>');
 		},
 		//添加ctrl按钮
 		_searchAdd_ctrl:function(){
@@ -1640,6 +1657,7 @@ var $testDM;
 			$tbody.children('tr').removeClass('info');
 			$tbody.children('[data-index="'+index+'"]').addClass('info');
 		},
+		//===========================searchDialog转换======================
 		/**
 		 * @function Plugin~_setSearchDialog
 		 * @desc 将查询条件列表数组显示到查询对话框中
@@ -1657,9 +1675,74 @@ var $testDM;
 		 * @desc 将查询框中的条件转换成查询数组
 		 */
 		_getSearchDialog:function(){
-			
-			//something...
+			var $li=this._elements.search.$block.children('li'),arr=[];
+			for(var i=0,j=$li.length;i<j;i++){
+				var li=this._getSearchDialog_item($($li[i]));
+				if(li===false) {
+					this._elements.search.$dialog.find('.modal-footer .alert').show();
+					return false;
+				}
+				arr.push(li);
+			}
+			this._searchConditions=arr;
+			return true;
 		},
+		//生成查询条件一位数组
+		_getSearchDialog_item: function($li) {
+			var arr = [],col,opt,val,bool,nullOpt,sub,
+				index=$li.index(),
+				$col = $li.children('[data-col]'),
+				$opt = $li.children('[data-opt]'),
+				$val = $li.children('.kekTable-search-itemValue'),
+				$bool=$li.children('[data-bool]'),
+				$sub=$li.children('.kekTable-search-block-sub').children('li');
+			//非子条件组
+			if ($col.length) {
+				col=$col.data('col');
+				opt=$opt.data('opt');
+				val=$val.val();
+				nullOpt=opt.indexOf('null') != -1;
+				//转换opt,val
+				
+				if (!col) {
+					$col.addClass('btn-danger');
+					return false;
+				} else
+					$col.removeClass('btn-danger');
+				if (!opt) {
+					$opt.addClass('btn-danger');
+					return false;
+				} else
+					$opt.removeClass('btn-danger');
+				if (!nullOpt && val === '') {
+					$li.addClass('has-error');
+					$val.focus();
+					return false;
+				} else
+					$li.removeClass('has-error');
+				arr[0] = col;
+				arr[1] = opt;
+				!nullOpt && (arr[2]=val);
+			}
+			else{
+				if(!$sub.length)
+					return false;
+				sub=[];
+				for(var i=0,j=$sub.length;i<j;i++){
+					var subRet=this._getSearchDialog_item($($sub[i]));
+					if(subRet===false) return false;
+					sub.push(subRet);
+				}
+				arr.push(sub);
+			}
+			if(index>0){
+				if(!$bool.length)
+					return false;
+				arr.unshift($bool.data('bool').toUpperCase());
+			}
+			return arr;
+		},
+		//===========================end searchDialog转换======================
 		/**
 		 * @function Plugin~_showLoading
 		 * @desc 显示加载遮罩
@@ -2037,6 +2120,10 @@ var $testDM;
 		 * @var {string} Plugin#regional#loadDataErr - 读取资料异常的文字
 		 */
 		loadDataErr:'讀取資料異常',
+		/**
+		 * @var {string} Plugin#regional#searchErr - 查詢條件異常
+		 */
+		searchErr:'查詢條件異常',
 		/**
 		 * @var {string} Plugin#regional#eventSuccess - 事件操作成功后的状态信息
 		 */

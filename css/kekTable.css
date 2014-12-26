@@ -54,6 +54,7 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 /*編輯框*/
 .modal-dialog{margin:30px auto;}
 .modal-header{padding: 10px 15px 8px 15px;}
+.modal-footer .alert{float: left;padding: 6px 12px;margin-bottom: 0;max-width: 440px;text-align: left;display: none;}
 /*編輯框-查詢*/
 /*.kekTable-search .modal-dialog{width: 600px;}*/
 .kekTable-search .modal-body{padding: 0;}
@@ -75,7 +76,6 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .kekTable-search-itemValue{width: 100px;display: inline-block;border-top-left-radius: 0;border-bottom-left-radius: 0;}
 /*編輯框-修改*/
 .kekTable-edit .modal-body{padding: 15px 0;}
-.kekTable-edit .modal-footer .alert{float: left;padding: 6px 12px;margin-bottom: 0;max-width: 440px;text-align: left;display: none;}
 .kekTable-edit-block{overflow: auto;}
 .kekTable-edit-block li{overflow: hidden;}
 .kekTable-edit-block li .form-group{float: left;margin-left: 15px;}
