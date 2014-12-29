@@ -274,11 +274,11 @@ var $testDM;
 			 */
 			colType:null,
 			/**
-			 * @var {?string} [_column#colFormat=null] - 栏位遮罩(暂只有date类型)
+			 * @var {?string} [_column#colFormat=null] - 栏位遮罩(暂只有date类型，需引用datetimepicker.js),具体参照php date format。("Y/m/d H:i")
 			 */
 			colFormat:null,
 			/**
-			 * @var {?int} [_column#colLength=null] - 栏位的长度，null则为无限制，(3.2代表3位整数，2位小数)
+			 * @var {?int} [_column#colLength=null] - 栏位的长度，null则为无限制，(3.2代表3位整数，2位小数)。
 			 */
 			colLength:null,
 			/**
@@ -708,10 +708,14 @@ var $testDM;
 						if(colObj.listIndex!=null && colObj.canSearch==null)
 							colObj.canSearch=true;
 		      		}
+		      		else if(prop==='colType' && val != null){
+		      			if(colObj[prop]==='date' && colObj.colFormat==null)
+		      				colObj.colFormat='Y/m/d';
+		      		}
 		      		else if((prop==='listWidth' || prop==='editWidth')){
 		      			if(val==null)
 		      				val=100;
-		      			(val-0==val-0) && (val-0) && (colObj[prop]+='px');
+		      			(val-0==val-0) && (val-0) && (colObj[prop]=val+'px');
 		      		}
 		      		else if(prop==='colTotalSummary' && val != null)
 		      			that._summaryCols.push(colName);
@@ -1473,8 +1477,15 @@ var $testDM;
 				setTimeout(function(){that._elements.search.$col.data('cancelBlur',false);});
 			});
 			this._elements.search.$col.on('click','li',function(){
-				var $this=$(this),$btn=that._elements.search.$col.data('target');
+				var $this=$(this),
+					$btn=that._elements.search.$col.data('target');
+					//colType=that._options.columns[$this.data('col')].colType,
+					//$itemValue=$btn.nextAll('.kekTable-search-itemValue');
 				$btn.text($this.text()).data('col',$this.data('col'));
+//				if($.inArray(colType,['number','date'])===-1)
+//					$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
+//				else if($.inArray($btn.nextAll('[data-opt]').data('opt'),['eq','gt','lt','ge','le','ne'])!==-1)
+//					$itemValue.addClass('kekTable-'+colType);
 				that._elements.search.$col.hide();
 			});
 			//search opt-btn
@@ -1502,18 +1513,19 @@ var $testDM;
 				setTimeout(function(){that._elements.search.$operator.data('cancelBlur',false);});
 			});
 			this._elements.search.$operator.on('click','li',function(){
-				var $this=$(this),$btn=that._elements.search.$operator.data('target');
+				var $this=$(this),
+					$btn=that._elements.search.$operator.data('target'),
+					//colType=that._options.columns[$btn.prevAll('[data-col]').data('col')].colType,
+					$itemValue=$btn.nextAll('.kekTable-search-itemValue');
 				$btn.text($this.text()).data('opt',$this.data('opt'));
-				if($this.data('opt').indexOf('null')!==-1){
-					$btn.next('.kekTable-search-itemValue').attr('readonly','readonly').val('').removeClass('kekTable-number').removeClass('kekTable-date');
-				}
-				else{
-					var colType=that._options.columns[$btn.prev('[data-col]').data('col')].colType;
-					if($.inArray(colType,['number','date'])!==-1)
-						$btn.next('.kekTable-search-itemValue').attr('readonly',null).addClass('kekTable-'+colType);
-					else
-						$btn.next('.kekTable-search-itemValue').attr('readonly',null);
-				}
+//				if($.inArray($this.data('opt'),['eq','gt','lt','ge','le','ne'])===-1)
+//					$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
+//				else if($.inArray(colType,['number','date'])!==-1)
+//					$itemValue.addClass('kekTable-'+colType);
+				if($.inArray($this.data('opt'),['isnull','notnull'])===-1)
+					$itemValue.attr('readonly',null);
+				else
+					$itemValue.attr('readonly','readonly').val('');
 				that._elements.search.$operator.hide();
 			});
 			//search ctrl-btn
@@ -1581,6 +1593,19 @@ var $testDM;
 					console.log(that._searchConditions);
 				}
 			});
+			//search itemValue date
+//			this._elements.search.$dialog.on('blur','kekTable-date',function(){
+//				var $this=$(this),
+//					oldVal=new Date($this.val()),
+//					format=this._elements.columns[$this.data('col')].colFormat,
+//					newVal;
+//				if(Date.parseDate(oldVal,format)){
+//					$this.val(new Date(oldVal).dateFormat(format));
+//					$this.parent().removeClass('has-error');
+//				}
+//				else
+//					$this.parent().addClass('has-error');
+//			});
 		},
 		//=========================search 添加条件============================
 		//查询添加条件至前
@@ -1621,7 +1646,7 @@ var $testDM;
 				$li.next().children('[data-bool]').remove();
 			$li.remove();
 		},
-		//添加第一个条件
+		//添加第一个条件 (search-itemValue have data-col)
 		_searchAdd_itemFirst:function(){
 			return ('<li><button class="btn btn-default dropdown-toggle kekTable-search-item-first" type="button" data-col="">'+$[_pluginName].regional.defaultCol
 									+'</button><button class="btn btn-default dropdown-toggle" type="button" data-opt="eq">=</button><input type="text" class="form-control kekTable-search-itemValue"><button class="btn btn-default dropdown-toggle" type="button" data-ctrl=""><span class="glyphicon glyphicon-cog"></span></button></li>');
@@ -1703,7 +1728,6 @@ var $testDM;
 				val=$val.val();
 				nullOpt=opt.indexOf('null') != -1;
 				//转换opt,val
-				
 				if (!col) {
 					$col.addClass('btn-danger');
 					return false;
@@ -1714,12 +1738,24 @@ var $testDM;
 					return false;
 				} else
 					$opt.removeClass('btn-danger');
-				if (!nullOpt && val === '') {
-					$li.addClass('has-error');
-					$val.focus();
-					return false;
-				} else
+				if (!nullOpt) {
+					if(val === ''){
+						$li.addClass('has-error');
+						$val.focus();
+						return false;
+					}
+					//日期格式
+					if(this._options.columns[col].colType==='date'){
+						if(!Date.parseDate(val,this._options.columns[col].colFormat)){
+							$li.addClass('has-error');
+							$val.focus();
+							return false;
+						}
+						val=new Date(val).dateFormat(this._options.columns[col].colFormat);
+					}
 					$li.removeClass('has-error');
+				}
+					
 				arr[0] = col;
 				arr[1] = opt;
 				!nullOpt && (arr[2]=val);
