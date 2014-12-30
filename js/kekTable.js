@@ -269,14 +269,14 @@ var $testDM;
 			 */
 			editPost:null,
 			/**
-			 * @var {?string} [_column#colType=null] - ''(文本)、'number'、'date'
+			 * @var {?string} [_column#colType=null] - ''(文本)、'number'、'date'(YYYY/MM/DD)、'datetime'(YYYY/MM/DD HH24:MI:SS)
 			 * @summary 栏位的数据类型
 			 */
 			colType:null,
 			/**
-			 * @var {?string} [_column#colFormat=null] - 栏位遮罩(暂只有date类型，需引用datetimepicker.js),具体参照php date format。("Y/m/d H:i")
+			 * var {?string} [_column#colFormat=null] - 栏位遮罩(暂只有date类型，需引用datetimepicker.js),具体参照php date format。("Y/m/d H:i")
 			 */
-			colFormat:null,
+			//colFormat:null,
 			/**
 			 * @var {?int} [_column#colLength=null] - 栏位的长度，null则为无限制，(3.2代表3位整数，2位小数)。
 			 */
@@ -708,10 +708,10 @@ var $testDM;
 						if(colObj.listIndex!=null && colObj.canSearch==null)
 							colObj.canSearch=true;
 		      		}
-		      		else if(prop==='colType' && val != null){
-		      			if(colObj[prop]==='date' && colObj.colFormat==null)
-		      				colObj.colFormat='Y/m/d';
-		      		}
+//		      		else if(prop==='colType' && val != null){
+//		      			if(colObj[prop]==='date' && colObj.colFormat==null)
+//		      				colObj.colFormat='Y/m/d';
+//		      		}
 		      		else if((prop==='listWidth' || prop==='editWidth')){
 		      			if(val==null)
 		      				val=100;
@@ -1746,7 +1746,8 @@ var $testDM;
 					}
 					//日期格式
 					if(this._options.columns[col].colType==='date'){
-						if(!Date.parseDate(val,this._options.columns[col].colFormat)){
+						var colFormat=this._options.columns[col].colFormat;
+						if(!Date.parseDate(val,colFormat) || ){
 							$li.addClass('has-error');
 							$val.focus();
 							return false;
@@ -1779,6 +1780,37 @@ var $testDM;
 			return arr;
 		},
 		//===========================end searchDialog转换======================
+		//将字符串转换为date(yyyy/mm/dd)，异常返回false
+		_checkDate:function(str){
+			var match=str.match(/^(\d{4})[\/\-]?(0?[1-9]|1[012])[\/\-]?(0?[1-9]|[12][0-9]|3[01])$/);
+			if(match){
+				var newDate=new Date(match[1],match[2]-1,match[3]);
+				if((newDate.getMonth()!==match[2]-1)||(newDate.getFullYear()!==match[1]-0))
+					return false;
+				if (match[2].length === 1) match[2] = '0' + match[2];
+            	if (match[3].length === 1) match[3] = '0' + match[3];
+            	return match[1] + '/' + match[2] + '/' + match[3];
+			}
+			else
+				return false;
+		},
+		//将字符串转换为datetime(yyyy/mm/dd hh24:mi:ss)，异常返回false
+		_checkDateTime:function(str){
+			var match = str.match(/^(\d{4})[\/\-]?(0?[1-9]|1[012])[\/\-]?(0?[1-9]|[12][0-9]|3[01])\s?([01]?[0-9]|2[0-3])\:?([0-5]?[0-9])\:?([0-5]?[0-9]?)$/);
+			if (match) {
+				var newDate = new Date(match[1], match[2] - 1, match[3], match[4], match[5], match[6]);
+				if ((newDate.getMinutes() !== match[5]-0) || (newDate.getHours() !== match[4]-0) || (newDate.getDate() !== match[3]-0) || (newDate.getMonth() !== match[2] - 1) || (newDate.getFullYear() !== match[1]-0))
+					return false;
+				if (match[2].length === 1) match[2] = '0' + match[2];
+				if (match[3].length === 1) match[3] = '0' + match[3];
+				if (match[4].length === 1) match[4] = '0' + match[4];
+				if (match[5].length === 1) match[5] = '0' + match[5];
+				if (match[6].length === 1) match[6] = '0' + match[6];
+				return match[1] + '/' + match[2] + '/' + match[3] + ' ' + match[4] + ':' + match[5] + ':' + (match[6] === '' ? '00' : match[6]);
+			}
+			else
+				return false;
+		},
 		/**
 		 * @function Plugin~_showLoading
 		 * @desc 显示加载遮罩
