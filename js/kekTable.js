@@ -1588,7 +1588,10 @@ var $testDM;
 			});
 			//search commit
 			this._elements.search.$dialog.on('click','.modal-footer .btn-primary',function(){
-				if(that._getSearchDialog()){
+				var err=that._getSearchDialog();
+				if(err)
+					that._elements.search.$dialog.find('.modal-footer .alert').text(err).show();
+				else{
 					that._elements.search.$dialog.find('.modal-footer .alert').hide();
 					console.log(that._searchConditions);
 				}
@@ -1698,23 +1701,25 @@ var $testDM;
 		/**
 		 * @function Plugin~_getSearchDialog
 		 * @desc 将查询框中的条件转换成查询数组
+		 * @return 异常信息。_searchConditions赋值
 		 */
 		_getSearchDialog:function(){
 			var $li=this._elements.search.$block.children('li'),arr=[];
 			for(var i=0,j=$li.length;i<j;i++){
 				var li=this._getSearchDialog_item($($li[i]));
-				if(li===false) {
-					this._elements.search.$dialog.find('.modal-footer .alert').show();
-					return false;
+				if($.type(li)!=='array') {
+					//this._elements.search.$dialog.find('.modal-footer .alert').show();
+					return li;
 				}
 				arr.push(li);
 			}
 			this._searchConditions=arr;
-			return true;
+			return false;
 		},
 		//生成查询条件一位数组
 		_getSearchDialog_item: function($li) {
 			var arr = [],col,opt,val,bool,nullOpt,sub,
+				regional=$[_pluginName].regional,
 				index=$li.index(),
 				$col = $li.children('[data-col]'),
 				$opt = $li.children('[data-opt]'),
@@ -1730,29 +1735,40 @@ var $testDM;
 				//转换opt,val
 				if (!col) {
 					$col.addClass('btn-danger');
-					return false;
+					return regional.errNull;
 				} else
 					$col.removeClass('btn-danger');
 				if (!opt) {
 					$opt.addClass('btn-danger');
-					return false;
+					return regional.errNull;
 				} else
 					$opt.removeClass('btn-danger');
 				if (!nullOpt) {
 					if(val === ''){
 						$li.addClass('has-error');
 						$val.focus();
-						return false;
+						return regional.errNull;
 					}
 					//日期格式
 					if(this._options.columns[col].colType==='date'){
-						var colFormat=this._options.columns[col].colFormat;
-						if(!Date.parseDate(val,colFormat) || ){
+						var valFormat=this._checkDate(val);
+						if(!valFormat ){
 							$li.addClass('has-error');
 							$val.focus();
-							return false;
+							return regional.errDateFormat;
 						}
-						val=new Date(val).dateFormat(this._options.columns[col].colFormat);
+						$val.val(valFormat);
+						val=valFormat;
+					}
+					else if(this._options.columns[col].colType==='datetime'){
+						var valFormat=this._checkDateTime(val);
+						if(!valFormat ){
+							$li.addClass('has-error');
+							$val.focus();
+							return regional.errDateTimeFormat;
+						}
+						$val.val(valFormat);
+						val=valFormat;
 					}
 					$li.removeClass('has-error');
 				}
@@ -1763,18 +1779,18 @@ var $testDM;
 			}
 			else{
 				if(!$sub.length)
-					return false;
+					return regional.searchErr;
 				sub=[];
 				for(var i=0,j=$sub.length;i<j;i++){
 					var subRet=this._getSearchDialog_item($($sub[i]));
-					if(subRet===false) return false;
+					if($.type(subRet)==='string') return subRet;
 					sub.push(subRet);
 				}
 				arr.push(sub);
 			}
 			if(index>0){
 				if(!$bool.length)
-					return false;
+					return regional.searchErr;
 				arr.unshift($bool.data('bool').toUpperCase());
 			}
 			return arr;
@@ -2008,6 +2024,18 @@ var $testDM;
 		 * @var {string} Plugin#regional#errApiWithout - 没有此API的错误信息
 		 */
 		errApiWithout:'沒有提供此方法:',
+		/**
+		 * @var {string} Plugin#regional#errNull - 不能为空错误信息
+		 */
+		errNull:'不能為空',
+		/**
+		 * @var {string} Plugin#regional#errDateFormat - 日期格式错误信息
+		 */
+		errDateFormat:'日期格式错误(2014/01/01)',
+		/**
+		 * @var {string} Plugin#regional#errDateTimeFormat - 日期格式错误信息
+		 */
+		errDateTimeFormat:'日期格式错误(2014/01/01 23:59:02)',
 		/**
 		 * @var {string} Plugin#regional#searchBoolAnd - 查询框[布尔条件的AND]文字说明
 		 */
