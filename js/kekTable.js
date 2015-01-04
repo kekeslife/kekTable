@@ -417,20 +417,21 @@ var $testDM;
 			 * @prop {jQuery} [$control=null] - 功能项
 			 */
 			search:{
-				$dialog:null,
-				$block:null,
-				$col:null,
-				$operator:null,
-				$bool:null,
-				$control:null
+//				$dialog:null,
+//				$block:null,
+//				$col:null,
+//				$operator:null,
+//				$bool:null,
+//				$control:null
 			},
 			edit:{
-				$dialog:null,
-				$block:null
+//				$dialog:null,
+//				$block:null
 			},
 			sort:{
-				$dialog:null,
-				$block:null
+//				$dialog:null,
+//				$block:null,
+//				$ctrl:null
 			}
 		};
 		/**
@@ -1199,6 +1200,7 @@ var $testDM;
 					'<label class="btn btn-default"><input type="radio" name="sort-type" autocomplete="off" value="DESC" />'+regional.sortDesc+'</label></div>')
 				.append('<div class="btn-group-vertical" data-toggle="buttons"><label class="btn btn-default active"><input type="radio" name="sort-nulls" autocomplete="off" value="NULLS FIRST" checked />'+regional.sortNullsFirst+'</label>'+
 					'<label class="btn btn-default"><input type="radio" name="sort-nulls" autocomplete="off" value="NULLS LAST" />'+regional.sortNullsLast+'</label></div>');
+			this._elements.sort.$ctrl=$el;
 			return $el;
 		},
 		//==========end建立插件==========
@@ -1429,7 +1431,7 @@ var $testDM;
 		_registEvents:function(){
 			var that=this;
 			//table tr click
-			this._elements.$tableGroup.on('click','tbody tr',function(){
+			this._elements.$tableGroup.on('click.'+_pluginName,'tbody tr',function(){
 				var index = $(this).data('index') - 0;
 				if (index !== that._tableValues.curRecordNum - 1) {
 					that._tableValues.curRecordNum = index+1;
@@ -1440,162 +1442,198 @@ var $testDM;
 			});
 			//frozen hover
 			if(this._options.frozenNum != null && this._options.canRowHover){
-				this._elements.$tableGroup.on('mouseover','tbody tr',function(){
+				this._elements.$tableGroup.on('mouseover.'+_pluginName,'tbody tr',function(){
 					$('tbody tr',that._elements.$tableGroup).removeClass('active');
 					$('tbody tr[data-index="'+$(this).data('index')+'"]:not(.info)',that._elements.$tableGroup).addClass('active');
 				});
 			}
 			//pagging click
-			this._elements.$pagging.on('click','li a',function(e){
-				that._tableValues.curRecordNum=1;
-				that._currentPageNo=$(this).text()-0;
-				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
-				e.preventDefault();
-			});
-			//search col-btn
-			this._elements.search.$block.on('click','button[data-col]',function(){
-				var $btn=$(this),$ul=that._elements.search.$col,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
-				$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
-				$ul.css('left',$btn.position().left+mgLeft);
-				$ul.data('target',$btn);
-				$ul.show();
-			});
-			this._elements.search.$block.on('blur','button[data-col]',function(){
-				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
-				if(!that._elements.search.$col.data('cancelBlur')){
+			if(this._elements.$pagging){
+				this._elements.$pagging.on('click.'+_pluginName,'li a',function(e){
+					that._tableValues.curRecordNum=1;
+					that._currentPageNo=$(this).text()-0;
+					that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
+					e.preventDefault();
+				});
+			}
+			//search dialog
+			if(this._hasTool.search){
+				//search col-btn
+				this._elements.search.$block.on('click.'+_pluginName,'button[data-col]',function(){
+					var $btn=$(this),$ul=that._elements.search.$col,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+					$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+					$ul.css('left',$btn.position().left+mgLeft);
+					$ul.data('target',$btn);
+					$ul.show();
+				});
+				this._elements.search.$block.on('blur.'+_pluginName,'button[data-col]',function(){
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					if(!that._elements.search.$col.data('cancelBlur')){
+						that._elements.search.$col.hide();
+						that._elements.search.$col.data('cancelBlur',false);
+					}
+					else
+						$(this).focus();
+				});
+				//search col-ul
+				this._elements.search.$col.mousedown(function(e){
+					e.preventDefault();
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					$(this).data('cancelBlur',true);
+					setTimeout(function(){that._elements.search.$col.data('cancelBlur',false);});
+				});
+				this._elements.search.$col.on('click.'+_pluginName,'li',function(){
+					var $this=$(this),
+						$btn=that._elements.search.$col.data('target');
+						//colType=that._options.columns[$this.data('col')].colType,
+						//$itemValue=$btn.nextAll('.kekTable-search-itemValue');
+					$btn.text($this.text()).data('col',$this.data('col'));
+	//				if($.inArray(colType,['number','date'])===-1)
+	//					$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
+	//				else if($.inArray($btn.nextAll('[data-opt]').data('opt'),['eq','gt','lt','ge','le','ne'])!==-1)
+	//					$itemValue.addClass('kekTable-'+colType);
 					that._elements.search.$col.hide();
-					that._elements.search.$col.data('cancelBlur',false);
-				}
-				else
-					$(this).focus();
-			});
-			//search col-ul
-			this._elements.search.$col.mousedown(function(e){
-				e.preventDefault();
-				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
-				$(this).data('cancelBlur',true);
-				setTimeout(function(){that._elements.search.$col.data('cancelBlur',false);});
-			});
-			this._elements.search.$col.on('click','li',function(){
-				var $this=$(this),
-					$btn=that._elements.search.$col.data('target');
-					//colType=that._options.columns[$this.data('col')].colType,
-					//$itemValue=$btn.nextAll('.kekTable-search-itemValue');
-				$btn.text($this.text()).data('col',$this.data('col'));
-//				if($.inArray(colType,['number','date'])===-1)
-//					$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
-//				else if($.inArray($btn.nextAll('[data-opt]').data('opt'),['eq','gt','lt','ge','le','ne'])!==-1)
-//					$itemValue.addClass('kekTable-'+colType);
-				that._elements.search.$col.hide();
-			});
-			//search opt-btn
-			this._elements.search.$block.on('click','button[data-opt]',function(){
-				var $btn=$(this),$ul=that._elements.search.$operator,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
-				$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
-				$ul.css('left',$btn.position().left+mgLeft);
-				$ul.data('target',$btn);
-				$ul.show();
-			});
-			this._elements.search.$block.on('blur','button[data-opt]',function(){
-				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
-				if(!that._elements.search.$operator.data('cancelBlur')){
+				});
+				//search opt-btn
+				this._elements.search.$block.on('click.'+_pluginName,'button[data-opt]',function(){
+					var $btn=$(this),$ul=that._elements.search.$operator,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+					$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+					$ul.css('left',$btn.position().left+mgLeft);
+					$ul.data('target',$btn);
+					$ul.show();
+				});
+				this._elements.search.$block.on('blur.'+_pluginName,'button[data-opt]',function(){
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					if(!that._elements.search.$operator.data('cancelBlur')){
+						that._elements.search.$operator.hide();
+						that._elements.search.$operator.data('cancelBlur',false);
+					}
+					else
+						$(this).focus();
+				});
+				//search opt-ul
+				this._elements.search.$operator.on('mousedown.'+_pluginName,function(e){
+					e.preventDefault();
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					$(this).data('cancelBlur',true);
+					setTimeout(function(){that._elements.search.$operator.data('cancelBlur',false);});
+				});
+				this._elements.search.$operator.on('click.'+_pluginName,'li',function(){
+					var $this=$(this),
+						$btn=that._elements.search.$operator.data('target'),
+						//colType=that._options.columns[$btn.prevAll('[data-col]').data('col')].colType,
+						$itemValue=$btn.nextAll('.kekTable-search-itemValue');
+					$btn.text($this.text()).data('opt',$this.data('opt'));
+	//				if($.inArray($this.data('opt'),['eq','gt','lt','ge','le','ne'])===-1)
+	//					$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
+	//				else if($.inArray(colType,['number','date'])!==-1)
+	//					$itemValue.addClass('kekTable-'+colType);
+					if($.inArray($this.data('opt'),['isnull','notnull'])===-1)
+						$itemValue.attr('readonly',null);
+					else
+						$itemValue.attr('readonly','readonly').val('');
 					that._elements.search.$operator.hide();
-					that._elements.search.$operator.data('cancelBlur',false);
-				}
-				else
-					$(this).focus();
-			});
-			//search opt-ul
-			this._elements.search.$operator.on('mousedown',function(e){
-				e.preventDefault();
-				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
-				$(this).data('cancelBlur',true);
-				setTimeout(function(){that._elements.search.$operator.data('cancelBlur',false);});
-			});
-			this._elements.search.$operator.on('click','li',function(){
-				var $this=$(this),
-					$btn=that._elements.search.$operator.data('target'),
-					//colType=that._options.columns[$btn.prevAll('[data-col]').data('col')].colType,
-					$itemValue=$btn.nextAll('.kekTable-search-itemValue');
-				$btn.text($this.text()).data('opt',$this.data('opt'));
-//				if($.inArray($this.data('opt'),['eq','gt','lt','ge','le','ne'])===-1)
-//					$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
-//				else if($.inArray(colType,['number','date'])!==-1)
-//					$itemValue.addClass('kekTable-'+colType);
-				if($.inArray($this.data('opt'),['isnull','notnull'])===-1)
-					$itemValue.attr('readonly',null);
-				else
-					$itemValue.attr('readonly','readonly').val('');
-				that._elements.search.$operator.hide();
-			});
-			//search ctrl-btn
-			this._elements.search.$block.on('click','button[data-ctrl]',function(){
-				var $btn=$(this),$ul=that._elements.search.$control,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
-				$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
-				$ul.css('left',$btn.position().left+mgLeft);
-				$ul.data('target',$btn);
-				$ul.show();
-			});
-			this._elements.search.$block.on('blur','button[data-ctrl]',function(){
-				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
-				if(!that._elements.search.$control.data('cancelBlur')){
+				});
+				//search ctrl-btn
+				this._elements.search.$block.on('click.'+_pluginName,'button[data-ctrl]',function(){
+					var $btn=$(this),$ul=that._elements.search.$control,mgTop=$ul.outerHeight(true)-$ul.outerHeight(),mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+					$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+					$ul.css('left',$btn.position().left+mgLeft);
+					$ul.data('target',$btn);
+					$ul.show();
+				});
+				this._elements.search.$block.on('blur.'+_pluginName,'button[data-ctrl]',function(){
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					if(!that._elements.search.$control.data('cancelBlur')){
+						that._elements.search.$control.hide();
+						that._elements.search.$control.data('cancelBlur',false);
+					}
+					else
+						$(this).focus();
+				});
+				//search ctrl-ul
+				this._elements.search.$control.on('mousedown.'+_pluginName,function(e){
+					e.preventDefault();
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					$(this).data('cancelBlur',true);
+					setTimeout(function(){that._elements.search.$control.data('cancelBlur',false);});
+				});
+				this._elements.search.$control.on('click.'+_pluginName,'li[data-ctrl]',function(){
+					var $this=$(this),$btn=that._elements.search.$control.data('target');
+					that['_searchCtrl_'+$this.data('ctrl')]($btn);
 					that._elements.search.$control.hide();
-					that._elements.search.$control.data('cancelBlur',false);
-				}
-				else
-					$(this).focus();
-			});
-			//search ctrl-ul
-			this._elements.search.$control.on('mousedown',function(e){
-				e.preventDefault();
-				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
-				$(this).data('cancelBlur',true);
-				setTimeout(function(){that._elements.search.$control.data('cancelBlur',false);});
-			});
-			this._elements.search.$control.on('click','li[data-ctrl]',function(){
-				var $this=$(this),$btn=that._elements.search.$control.data('target');
-				that['_searchCtrl_'+$this.data('ctrl')]($btn);
-				that._elements.search.$control.hide();
-			});
-			//search bool-btn
-			this._elements.search.$block.on('click','button[data-bool]',function(){
-				var $btn=$(this),$ul=that._elements.search.$bool,mgTop=$ul.outerHeight(true)-$ul.outerHeight();
-				$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
-				$ul.css('left',$btn.position().left);
-				$ul.data('target',$btn);
-				$ul.show();
-			});
-			this._elements.search.$block.on('blur','button[data-bool]',function(){
-				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
-				if(!that._elements.search.$bool.data('cancelBlur')){
+				});
+				//search bool-btn
+				this._elements.search.$block.on('click.'+_pluginName,'button[data-bool]',function(){
+					var $btn=$(this),$ul=that._elements.search.$bool,mgTop=$ul.outerHeight(true)-$ul.outerHeight();
+					$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+					$ul.css('left',$btn.position().left);
+					$ul.data('target',$btn);
+					$ul.show();
+				});
+				this._elements.search.$block.on('blur.'+_pluginName,'button[data-bool]',function(){
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					if(!that._elements.search.$bool.data('cancelBlur')){
+						that._elements.search.$bool.hide();
+						that._elements.search.$bool.data('cancelBlur',false);
+					}
+					else
+						$(this).focus();
+				});
+				//search bool-ul
+				this._elements.search.$bool.on('mousedown.'+_pluginName,function(e){
+					e.preventDefault();
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					$(this).data('cancelBlur',true);
+					setTimeout(function(){that._elements.search.$bool.data('cancelBlur',false);});
+				});
+				this._elements.search.$bool.on('click.'+_pluginName,'li[data-bool]',function(){
+					var $this=$(this),$btn=that._elements.search.$bool.data('target');
+					$btn.text($this.text()).data('bool',$this.data('bool'));
 					that._elements.search.$bool.hide();
-					that._elements.search.$bool.data('cancelBlur',false);
-				}
-				else
-					$(this).focus();
-			});
-			//search bool-ul
-			this._elements.search.$bool.on('mousedown',function(e){
-				e.preventDefault();
-				//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
-				$(this).data('cancelBlur',true);
-				setTimeout(function(){that._elements.search.$bool.data('cancelBlur',false);});
-			});
-			this._elements.search.$bool.on('click','li[data-bool]',function(){
-				var $this=$(this),$btn=that._elements.search.$bool.data('target');
-				$btn.text($this.text()).data('bool',$this.data('bool'));
-				that._elements.search.$bool.hide();
-			});
-			//search commit
-			this._elements.search.$dialog.on('click','.modal-footer .btn-primary',function(){
-				var err=that._getSearchDialog();
-				if(err)
-					that._elements.search.$dialog.find('.modal-footer .alert').text(err).show();
-				else{
-					that._elements.search.$dialog.find('.modal-footer .alert').hide();
-					console.log(that._searchConditions);
-				}
-			});
+				});
+				//search commit
+				this._elements.search.$dialog.on('click.'+_pluginName,'.modal-footer .btn-primary',function(){
+					var err=that._getSearchDialog();
+					if(err)
+						that._elements.search.$dialog.find('.modal-footer .alert').text(err).show();
+					else{
+						that._elements.search.$dialog.find('.modal-footer .alert').hide();
+						console.log(that._searchConditions);
+					}
+				});
+			}
+			//sort dialog
+			if(this._hasTool.sort){
+				//sort addlist
+				this._elements.sort.$ctrl.on('click.'+_pluginName,'.kekTable-dropList li',function(){
+					var col=$(this).data('col'),$li=$('<li class="list-group-item">'+(that._options.columns[col].listTitle||that._options.columns[col].editTitle||col)+'<span class="glyphicon glyphicon-sort-by-attributes pull-right"></span></li>');
+					$li.data('col',col).data('type','ASC').data('nulls','NULLS FIRST');
+					that._elements.sort.$block.append($li);
+				});
+				//sort type
+				this._elements.sort.$ctrl.on('change.'+_pluginName,'[name=sort-type]',function(){
+					var type=$(this).val(),$li=that._elements.sort.$block.children('.active');
+					$li.data('type',type).children('.glyphicon')
+						.removeClass(type==='ASC'?'glyphicon-sort-by-attributes-alt':'glyphicon-sort-by-attributes')
+						.addClass(type==='ASC'?'glyphicon-sort-by-attributes':'glyphicon-sort-by-attributes-alt');
+				});
+				//sort block
+				this._elements.sort.$block.on('click.'+_pluginName,'li',function(){
+					var $this=$(this);
+					that._elements.sort.$block.children('li.active').removeClass('active');
+					$this.addClass('active');
+					//that._elements.sort.$ctrl.find('input[name="sort-type"][value="'+$this.data('type')+'"]').parent().click();
+					that._elements.sort.$ctrl.find('input[name="sort-type"]').each(function(i,el){
+						var $radio=$(el);
+						if($radio.val()===$this.data('type'))
+							$radio.prop('checked',true).parent().addClass('active');
+						else
+							$radio.prop('checked',false).parent().removeClass('active');
+					});
+				});
+			}
+			
 			//search itemValue date
 //			this._elements.search.$dialog.on('blur','kekTable-date',function(){
 //				var $this=$(this),
