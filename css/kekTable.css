@@ -7,6 +7,8 @@ input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .kekTable-dropList .divider{margin: 0;}
 .kekTable-dropList>li>span{padding: 3px 12px;font-weight: 400;color: #333;white-space: nowrap;cursor: pointer;display: block;}
 .kekTable-dropList>li>span:hover{color: #262626;background-color: #f5f5f5;}
+.kekTable-dropList>.disabled>span,.kekTable-dropList>.disabled>span:hover,.kekTable-dropList>.disabled>span:focus {color: #777;}
+.kekTable-dropList>.disabled>span:hover,.kekTable-dropList>.disabled>span:focus {text-decoration: none;cursor: not-allowed;background-color: transparent;background-image: none;filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);}
 /*lov*/
 .kekTable-lov{padding: 5px;width:auto;}
 .kekTable-lov tbody tr{cursor: pointer;}

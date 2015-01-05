@@ -168,6 +168,15 @@ var $testDM;
 			 */
 			defaultSearch:null,
 			/**
+			 * @var {?Array.<object>} [kekTable~options#defaultSort=null] - 默认的排序条件。
+			 * @example 排序条件
+			 * defaultSort = [
+			 * 		['empNo','ASC','NULLS FIRST'],
+			 * 		['empName','DESC','NULLS LAST']
+			 * ]
+			 */
+			defaultSort:null,
+			/**
 			 * @function kekTable~options#beforeRefresh
 			 * @desc 点击刷新按钮前的自定义操作。必需要写d.resolve()或者d.reject()
 			 * @param {Plugin~_tableValues} tableValues
@@ -586,6 +595,8 @@ var $testDM;
 			//defaultSearch
 			if(opt.defaultSearch)
 				this._checkSearchCondition(opt.defaultSearch);
+			if(opt.defaultSort)
+				this._checkSortCondition(opt.defaultSort);
 			//columns
 			if(!opt.columns)
 				throw '必需设置columns';
@@ -669,6 +680,11 @@ var $testDM;
 						throw 'defaultSearch子项的关系符不为IS NULL、IS NOT NULL，必需设置第3个值';
 				}
 			});
+		},
+		//檢核排序條件
+		_checkSortCondition:function(arr){
+			var that=this,opt=this._options;
+			
 		},
 		//初始化时调整参数
 		_adjustOptions:function(){
@@ -1220,6 +1236,7 @@ var $testDM;
 			//something...
 		},
 		_sort:function(v,d){
+			this._setSortDialog(this._sortConditions);
 			this._elements.sort.$dialog.modal('show');
 			d.resolve('_sort');
 			//something...
@@ -1606,10 +1623,29 @@ var $testDM;
 			//sort dialog
 			if(this._hasTool.sort){
 				//sort addlist
-				this._elements.sort.$ctrl.on('click.'+_pluginName,'.kekTable-dropList li',function(){
-					var col=$(this).data('col'),$li=$('<li class="list-group-item">'+(that._options.columns[col].listTitle||that._options.columns[col].editTitle||col)+'<span class="glyphicon glyphicon-sort-by-attributes pull-right"></span></li>');
+				this._elements.sort.$ctrl.on('click.'+_pluginName,'.kekTable-dropList li:not(.disabled)',function(){
+					var $this=$(this),
+						col=$this.data('col'),
+						$li=$('<li class="list-group-item">'+$this.text()+'<span class="glyphicon glyphicon-sort-by-attributes pull-right"></span></li>');
 					$li.data('col',col).data('type','ASC').data('nulls','NULLS FIRST');
 					that._elements.sort.$block.append($li);
+					$this.addClass('disabled');
+				});
+				//sort delete
+				this._elements.sort.$ctrl.on('click.'+_pluginName,'.btn:has(.glyphicon-remove)',function(){
+					var $li=that._elements.sort.$block.children('.active');
+					that._elements.sort.$ctrl.find('.kekTable-dropList li[data-col="'+$li.data('col')+'"]').removeClass('disabled');
+					$li.remove();
+				});
+				//sort up
+				this._elements.sort.$ctrl.on('click.'+_pluginName,'.btn:has(.glyphicon-chevron-up)',function(){
+					var $li=that._elements.sort.$block.children('.active');
+					$li.prev().before($li);
+				});
+				//sort down
+				this._elements.sort.$ctrl.on('click.'+_pluginName,'.btn:has(.glyphicon-chevron-down)',function(){
+					var $li=that._elements.sort.$block.children('.active');
+					$li.next().after($li);
 				});
 				//sort type
 				this._elements.sort.$ctrl.on('change.'+_pluginName,'[name=sort-type]',function(){
@@ -1618,20 +1654,29 @@ var $testDM;
 						.removeClass(type==='ASC'?'glyphicon-sort-by-attributes-alt':'glyphicon-sort-by-attributes')
 						.addClass(type==='ASC'?'glyphicon-sort-by-attributes':'glyphicon-sort-by-attributes-alt');
 				});
+				//sort nulls
+				this._elements.sort.$ctrl.on('change.'+_pluginName,'[name=sort-nulls]',function(){
+					var type=$(this).val(),$li=that._elements.sort.$block.children('.active');
+					$li.data('nulls',type);
+				});
 				//sort block
 				this._elements.sort.$block.on('click.'+_pluginName,'li',function(){
 					var $this=$(this);
 					that._elements.sort.$block.children('li.active').removeClass('active');
 					$this.addClass('active');
-					//that._elements.sort.$ctrl.find('input[name="sort-type"][value="'+$this.data('type')+'"]').parent().click();
-					that._elements.sort.$ctrl.find('input[name="sort-type"]').each(function(i,el){
-						var $radio=$(el);
-						if($radio.val()===$this.data('type'))
-							$radio.prop('checked',true).parent().addClass('active');
-						else
-							$radio.prop('checked',false).parent().removeClass('active');
-					});
+					that._elements.sort.$ctrl.find('input[name="sort-type"][value="'+$this.data('type')+'"]').click();
+					that._elements.sort.$ctrl.find('input[name="sort-nulls"][value="'+$this.data('nulls')+'"]').click();
 				});
+				//sort commit
+				this._elements.sort.$dialog.on('click.'+_pluginName,'.modal-footer .btn-primary',function(){
+					that._sortConditions.length=0;
+					that._elements.sort.$block.children('li').each(function(i,li){
+						var data=$(li).data();
+						that._sortConditions.push([data.col,$.inArray(data.type,['ASC','DESC'])===-1?'ASC':data.type ,$.inArray(data.nulls,['NULLS FIRST','NULLS LAST'])===-1?'NULLS FIRST':data.nulls]);
+					});
+					console.log(that._sortConditions);
+				});
+				
 			}
 			
 			//search itemValue date
@@ -1723,11 +1768,34 @@ var $testDM;
 			$tbody.children('tr').removeClass('info');
 			$tbody.children('[data-index="'+index+'"]').addClass('info');
 		},
+		/**
+		 * @function Plugin~_setSortDialog
+		 * @desc 将排序条件列表数组显示到排序对话框中
+		 * @param {Plugin~_sortConditions} sortConditions - 排序的条件列表
+		 */
+		_setSortDialog:function(arr){
+			var $block=this._elements.sort.$block,
+				regional=$[_pluginName].regional,
+				$df=$(document.createDocumentFragment()),
+				that=this;
+			that._elements.sort.$ctrl.find('.kekTable-dropList li.disabled').removeClass('disabled');
+			$.each(arr, function(i,data) {
+				var $colLi=that._elements.sort.$ctrl.find('.kekTable-dropList li[data-col="'+data[0]+'"]'),
+					$li=$('<li />')
+						.addClass('list-group-item')
+						.text($colLi.text())
+						.data('col',data[0]).data('type',data[1]).data('nulls',data[2])
+						.append('<span class="glyphicon '+(data[1]==='ASC'?'glyphicon-sort-by-attributes':'glyphicon-sort-by-attributes-alt')+' pull-right"></span>');
+				$df.append($li);
+				$colLi.addClass('disabled');
+			});
+			$block.empty().append($df);
+		},
 		//===========================searchDialog转换======================
 		/**
 		 * @function Plugin~_setSearchDialog
 		 * @desc 将查询条件列表数组显示到查询对话框中
-		 * @param {Plugin~_sortConditions} sortConditions - 查询的条件列表
+		 * @param {Plugin~_searchtConditions} searchConditions - 查询的条件列表
 		 */
 		_setSearchDialog:function(arr){
 			var $block=this._elements.search.$block,
