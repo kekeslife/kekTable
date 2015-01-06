@@ -158,11 +158,11 @@ var $testDM;
 			 * @var {?Array.<object>} [kekTable~options#defaultSearch=null] - 默认的过滤条件。
 			 * @example 过滤条件
 			 * defaultSearch = [
-			 * 		['empNo','=','14563'],
-			 * 		['AND','state','IS NOT NULL'],
-			 * 		['AND',[
-			 * 			['deptNo','=','D02'],
-			 * 			['OR','deptNo','=','D03']
+			 * 		['empNo','eq','14563'],
+			 * 		['and','state','isnull'],
+			 * 		['and',[
+			 * 			['deptNo','eq','D02'],
+			 * 			['or','deptNo','eq','D03']
 			 * 		]]
 			 * ]
 			 */
@@ -190,7 +190,7 @@ var $testDM;
 			 * @example nomal
 			 * beforeRefresh:function(v,d){
 			 *  if(curRecordNum){
-			 * 		if(v.curPageRecords(curRecordNum).empNo='14623')
+			 * 		if(v.curPageRecords[curRecordNum].empNo='14623')
 			 * 			d.resolve('成功');
 			 * 		else
 			 * 			d.reject('失败');
@@ -458,7 +458,7 @@ var $testDM;
 		/**
 		 * @typedef Plugin~_tableValues
 		 * @desc 当前页面上的一系列值。供外部接口（$.extend）
-		 * @prop {object[]} [curPageRecords=null] - 当前页面上的所有数据库值
+		 * @prop {object[]} [curPageRecords=null] - 当前页面上的所有数据库值,已转换为colEntity类
 		 * @prop {int} [curRecordNum=null] - 当前选中的行号，1开头
 		 * @prop {string} [tableStatus=null] - 表格狀態，一般為__toolbarIte.id
 		 */
@@ -467,6 +467,11 @@ var $testDM;
 			curRecordNum:null,
 			tableStatus:null
 		};
+		/**
+		 * @name Plugin~_colEntity
+		 * @desc 字段实体类(curPageRecords[0]=new _colEntity())
+		 */
+		this._colEntity=null;
 		/**
 		 * @typedef Plugin~_hasTool
 		 * @desc 是否开启内建功能
@@ -641,50 +646,67 @@ var $testDM;
 		//检核查询条件
 		_checkSearchCondition:function(arr){
 			var that=this,opt=this._options;
-			if($.type(arr)!=='array' || !arr.length)
-				throw 'defaultSearch项必需是有内容的数组';
+			if($.type(arr)!=='array')
+				throw '_searchConditions项必需是数组';
 			$.each(arr, function(i,condition) {
 				if($.type(condition)!=='array')
-					throw 'defaultSearch子项必需是数组';
+					throw '_searchConditions子项必需是数组';
 				var len=condition.length;
 				if(i){
-					if($.inArray(condition[0],['AND','OR'])===-1)
-						throw 'defaultSearch非第一个子项的第一个值必须是AND，OR';
+					if($.inArray(condition[0],['and','or'])===-1)
+						throw '_searchConditions非第一个子项的第一个值必须是and、or';
 					if($.inArray(len,[2,3,4])===-1)
-						throw 'defaultSearch非第一个子项只能有2，3，4个值';
+						throw '_searchConditions非第一个子项只能有2，3，4个值';
 					//['AND',[]]
 					if(len===2)
 						that._checkSearchCondition(condition[1]);
 					//['AND','empNo','IS NOT NULL']
 					else{
 						if(opt.columns[condition[1]]==null || opt.columns[condition[1]].colId==null)
-							throw 'columns设置中没有'+condition[1]+'栏位，或没有设置colId';
-						if($.inArray(condition[2],['IS NULL','IS NOT NULL','=','LIKE','>','>=','<','<=','!='])===-1)
-							throw '3,4个值的defaultSearch子项的第三个值必需是IS NULL、IS NOT NULL、=、LIKE、>、>=、<、<=、!=';
-						if($.inArray(condition[2],['IS NULL','IS NOT NULL'])!==-1 && condition[3] != null)
-							throw 'defaultSearch子项的关系符为IS NULL、IS NOT NULL，不用设置第四个值';
-						else if($.inArray(condition[2],['IS NULL','IS NOT NULL'])===-1 && condition[3] == null)
-							throw 'defaultSearch子项的关系符不为IS NULL、IS NOT NULL，必需设置第四个值';
+							throw '_searchConditions:columns设置中没有'+condition[1]+'栏位，或没有设置colId';
+						if($.inArray(condition[2],['eq','gt','lt','ge','le','ne','beg','end','like','isnull','notnull'])===-1)
+							throw '3,4个值的_searchConditions子项的第三个值必需是eq、gt、lt、ge、le、ne、beg、end、like、isnull、notnull';
+						if($.inArray(condition[2],['isnull','notnull'])!==-1 && condition[3] != null)
+							throw '_searchConditions子项的关系符为isnull、notnull，不用设置第四个值';
+						else if($.inArray(condition[2],['isnull','notnull'])===-1 && condition[3] == null)
+							throw '_searchConditions子项的关系符不为isnull、notnull，必需设置第四个值';
 					}
 				}
 				else{
 					if($.inArray(len,[2,3])===-1)
-						throw 'defaultSearch第一个子项只能有2，3个值';
+						throw '_searchConditions第一个子项只能有2，3个值';
 					if(opt.columns[condition[0]]==null || opt.columns[condition[0]].colId==null)
-						throw 'columns设置中没有'+condition[0]+'栏位，或没有设置colId';
-					if($.inArray(condition[1],['IS NULL','IS NOT NULL','=','LIKE','>','>=','<','<=','!='])===-1)
-						throw 'defaultSearch子项的第2个值必需是IS NULL、IS NOT NULL、=、LIKE、>、>=、<、<=、!=';
-					if($.inArray(condition[1],['IS NULL','IS NOT NULL'])!==-1 && condition[2] != null)
-						throw 'defaultSearch子项的关系符为IS NULL、IS NOT NULL，不用设置第3个值';
-					else if($.inArray(condition[1],['IS NULL','IS NOT NULL'])===-1 && condition[2] == null)
-						throw 'defaultSearch子项的关系符不为IS NULL、IS NOT NULL，必需设置第3个值';
+						throw '_searchConditions:columns设置中没有'+condition[0]+'栏位，或没有设置colId';
+					if($.inArray(condition[1],['eq','gt','lt','ge','le','ne','beg','end','like','isnull','notnull'])===-1)
+						throw '_searchConditions子项的第2个值必需是eq、gt、lt、ge、le、ne、beg、end、like、isnull、notnull';
+					if($.inArray(condition[1],['isnull','notnull'])!==-1 && condition[2] != null)
+						throw '_searchConditions子项的关系符为isnull、notnull，不用设置第3个值';
+					else if($.inArray(condition[1],['isnull','notnull'])===-1 && condition[2] == null)
+						throw '_searchConditions子项的关系符不为isnull、notnull，必需设置第3个值';
 				}
 			});
 		},
 		//檢核排序條件
 		_checkSortCondition:function(arr){
 			var that=this,opt=this._options;
-			
+			if($.type(arr)!=='array')
+				throw '_sortConditions项必需是数组';
+			$.each(arr, function(i,condition) {
+				if($.type(condition)!=='array')
+					throw '_sortConditions子项必需是数组';
+				if(condition.length!==3)
+					throw '_sortConditions子项数组长度必需是3';
+				if(opt.columns[condition[0]]==null)
+					throw '_sortConditions无此栏位'+condition[0];
+				if(opt.columns[condition[0]].colId==null)
+					throw '_sortConditions非数据库栏位'+condition[0];
+				if(!opt.columns[condition[0]].canSort)
+					throw '_sortConditions非排序栏位'+condition[0];
+				if($.inArray(condition[1],['ASC','DESC'])===-1)
+					throw '_sortConditions第二个值必需是ASC，DESC';
+				if($.inArray(condition[2],['NULLS FIRST','NULLS LAST'])===-1)
+					throw '_sortConditions第三个值必需是NULLS FIRST，NULLS LAST';
+			});
 		},
 		//初始化时调整参数
 		_adjustOptions:function(){
@@ -697,6 +719,13 @@ var $testDM;
 						that._hasTool[obj.id]=true;
 				});
 			});
+			//产生col实体类
+			eval((function(){
+					var str='that._colEntity=function(){';
+					$.each(opt.columns, function(colName,colObj) {
+						str=str+'this.'+colName+'=null;';
+					});
+					return str+'}'})());
 			//columns
 			$.each(opt.columns,function(colName,colObj){
 				colObj=$.extend({},_column, colObj);
@@ -1231,6 +1260,7 @@ var $testDM;
 			//something...
 		},
 		_search:function(v,d){
+			this._setSearchDialog(this._searchConditions);
 			this._elements.search.$dialog.modal('show');
 			d.resolve('_search');
 			//something...
@@ -1262,6 +1292,19 @@ var $testDM;
 		},
 		//==========end工具栏内置功能==========
 		//===============读取资料===============
+		//将后台返回的数组数据转换为类,供回调函数使用
+		_recordToEntity:function(arr){
+			var newArr=[],that=this;
+			$.each(arr, function(i,record) {
+				var r=new that._colEntity();
+				$.each(record, function(j,val) {
+					r[that._dbCols[j]]=val;
+				});
+				newArr.push(r);
+			});
+			return newArr;
+		},
+		
 		/**
 		 * @function Plugin~_loadData
 		 * @desc 后台数据格式 { Result="OK" , Total=100 , Data=[['a1','b1','c1'],['a2','b2','c2']]}
@@ -1297,7 +1340,7 @@ var $testDM;
 						else if(that._summaryCols.length && (obj.Summary==null || obj.Summary.length != that._summaryCols.length))
 							d.reject(that._options.isDebug?'后台返回Summary值异常': $[_pluginName].regional.loadDataErr);
 						else{
-							that._tableValues.curPageRecords=obj.Data;
+							that._tableValues.curPageRecords=that._recordToEntity(obj.Data);
 							that._tableValues.curRecordNum=that._tableValues.curRecordNum||1;
 							that._listSummary(obj.Summary);
 							that._createFooter_pagging(obj.Total);
@@ -1349,9 +1392,11 @@ var $testDM;
 				defArr=[],$frg=$(document.createDocumentFragment());
 			$.each(data,function(i,d){
 				var $tr=$('<tr />',{'data-index':i});
-				that._options.showRowNo && $tr.append('<td>'+(i+1)+'</td>')
-				$.each(d,function(j,val){
-					var $td=$('<td />');
+				that._options.showRowNo && $tr.append('<td>'+(i+1)+'</td>');
+				$.each(cols, function(j,colName) {
+					var dbIndex=$.inArray(colName,dbCols),
+						val=dbIndex===-1?'':d[dbIndex],
+						$td=$('<td />');
 					$tr.append($td);
 					defArr.push(that._listColData($td,val,that._options.columns[cols[j]].beforeList));
 				});
@@ -1378,15 +1423,17 @@ var $testDM;
 		//将数据显示到frozen-table里面。修改的话要同时修改_listData
 		//def:刷新事件的deferred
 		_listData_frozen:function(data,def){
-			var cols=this._listCols,that=this,
+			var cols=this._listCols,that=this,dbCols=this._dbCols,
 				defArr=[],$frg=$(document.createDocumentFragment()),
 				$frgF=$(document.createDocumentFragment());
 			$.each(data,function(i,d){
 				var $tr=$('<tr />',{'data-index':i}),
 					$trF=$('<tr />',{'data-index':i});
 				that._options.showRowNo && ($tr.append('<td>'+(i+1)+'</td>') && $trF.append('<td>'+(i+1)+'</td>') );
-				$.each(d,function(j,val){
-					var $td=$('<td />');
+				$.each(cols, function(j,colName) {
+					var dbIndex=$.inArray(colName,dbCols),
+						val=dbIndex===-1?'':d[dbIndex],
+						$td=$('<td />');
 					if(j<that._options.frozenNum){
 						$tr.append('<td />');
 						$trF.append($td);
@@ -1425,6 +1472,11 @@ var $testDM;
 				d=data.length?data[0]:new Array(cols.length),
 				$block=$('.kekTable-single-table',this._elements.$tableGroup),
 				defArr=[];
+				
+				
+				
+				
+				
 			$.each(d, function(i,val) {
 				var $col=$('span[data-col="'+cols[i]+'"]',$block);
 				defArr.push(that._listColData($col,val,that._options.columns[cols[i]].beforeList));
@@ -1799,10 +1851,47 @@ var $testDM;
 		 */
 		_setSearchDialog:function(arr){
 			var $block=this._elements.search.$block,
-				regional=$[_pluginName].regional;
+				regional=$[_pluginName].regional,
+				that=this,
+				$df=$(document.createDocumentFragment());
 			if(!arr || !arr.length)
 				$block.empty().append(this._searchAdd_itemFirst());
-			//something...
+			else{
+				$.each(arr, function(i,condition) {
+					var $li=that._setSearchDialog_item(i,condition);
+					$df.append($li);
+				});
+				$block.empty().append($df);
+			}
+		},
+		_setSearchDialog_item:function(i,arr){
+			var j=i?1:0,$li=$('<li></li>'),that=this;
+			if($.type(arr[0+j])==='array'){
+				var $ul=$('<ul class="kekTable-search-block-sub"></ul>');
+				$.each(arr[0+j], function(index,condition) {
+					$ul.append(that._setSearchDialog_item(index,condition))
+				});
+				$li.append($ul);
+			}
+			else{
+				$li=$(this._searchAdd_itemFirst());
+				//col
+				$li.children('[data-col]').data('col',arr[j]).text(this._elements.search.$col.children('li[data-col="'+arr[j]+'"]').text());
+				//opt
+				$li.children('[data-opt]').data('opt',arr[j+1]).text(this._elements.search.$operator.children('li[data-opt="'+arr[j+1]+'"]').text());
+				//val
+				if($.inArray(arr[j+1],['isnull','notnull'])===-1)
+					$li.children('.kekTable-search-itemValue').val(arr[j+2]);
+				else
+					$li.children('.kekTable-search-itemValue').attr('readonly','readonly');
+			}
+			//bool
+			if(j){
+				var $bool=$(this._searchAdd_bool());
+				$bool.data('bool',arr[0]).text(this._elements.search.$bool.children('li[data-bool="'+arr[0]+'"]').text());
+				$li.prepend($bool);
+			}
+			return $li;
 		},
 		/**
 		 * @function Plugin~_getSearchDialog
@@ -1855,30 +1944,31 @@ var $testDM;
 						$val.focus();
 						return regional.errNull;
 					}
-					//日期格式
-					if(this._options.columns[col].colType==='date'){
-						var valFormat=this._checkDate(val);
-						if(!valFormat ){
-							$li.addClass('has-error');
-							$val.focus();
-							return regional.errDateFormat;
+					if($.inArray(opt,['beg','end','like'])===-1){
+						//日期格式
+						if(this._options.columns[col].colType==='date'){
+							var valFormat=this._checkDate(val);
+							if(!valFormat ){
+								$li.addClass('has-error');
+								$val.focus();
+								return regional.errDateFormat;
+							}
+							$val.val(valFormat);
+							val=valFormat;
 						}
-						$val.val(valFormat);
-						val=valFormat;
-					}
-					else if(this._options.columns[col].colType==='datetime'){
-						var valFormat=this._checkDateTime(val);
-						if(!valFormat ){
-							$li.addClass('has-error');
-							$val.focus();
-							return regional.errDateTimeFormat;
+						else if(this._options.columns[col].colType==='datetime'){
+							var valFormat=this._checkDateTime(val);
+							if(!valFormat ){
+								$li.addClass('has-error');
+								$val.focus();
+								return regional.errDateTimeFormat;
+							}
+							$val.val(valFormat);
+							val=valFormat;
 						}
-						$val.val(valFormat);
-						val=valFormat;
 					}
 					$li.removeClass('has-error');
 				}
-					
 				arr[0] = col;
 				arr[1] = opt;
 				!nullOpt && (arr[2]=val);
@@ -1897,7 +1987,7 @@ var $testDM;
 			if(index>0){
 				if(!$bool.length)
 					return regional.searchErr;
-				arr.unshift($bool.data('bool').toUpperCase());
+				arr.unshift($bool.data('bool'));
 			}
 			return arr;
 		},

@@ -669,7 +669,7 @@
 				listURL:'testData.txt',
 				isCollapse:true,isDebug:true,
 				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('beforeRefresh');d.resolve('bok');},500) },
-				afterRefresh:function(v,d){$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('afterRefresh');d.resolve('aok');},500) },
+				afterRefresh:function(v,d){console.log(v);$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('afterRefresh');d.resolve('aok');},500) },
 				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]],
 				columns:{
 					empNo:{
@@ -722,6 +722,11 @@
 						listIndex:5,
 						listTitle:'tranDate',
 						colType:'datetime'
+					},
+					dept:{
+						listIndex:7,
+						listTitle:'部门',
+						beforeList:function(r,d){var rec=r.curPageRecords[r.curRecordNum]; d.resolve(rec.deptNo+'-'+rec.deptName);}
 					}
 				},
 				showRowNo:true,
