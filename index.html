@@ -726,7 +726,7 @@
 					dept:{
 						listIndex:7,
 						listTitle:'部门',
-						beforeList:function(r,d){var rec=r.curPageRecords[r.curRecordNum]; d.resolve(rec.deptNo+'-'+rec.deptName);}
+						beforeList:function(r,d){console.log(r);d.resolve('<b>'+r.curRecord.deptNo+'-'+r.curRecord.deptName+'</b>');}
 					}
 				},
 				showRowNo:true,
