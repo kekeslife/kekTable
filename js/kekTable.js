@@ -469,11 +469,16 @@ var $testDM;
 		 * @prop {object <colEntity>} [curPageRecords=null] - 当前页面上的所有数据库值,已转换为colEntity类
 		 * @prop {string} [tableStatus=null] - 表格狀態，一般為__toolbarIte.id
 		 */
-		this._tableValues=function(){
-			return {
-				curRecord:this._curPageRecords?this._curPageRecords[this._curRecordNum]:null,
-				tableStatus:this._tableStatus
-			}
+//		this._tableValues=function(){
+//			return {
+//				curRecord:this._curPageRecords?this._curPageRecords[this._curRecordNum-1]:null,
+//				tableStatus:this._tableStatus
+//			}
+//		};
+		this._tableValues={
+			curRecord:null,//this._curPageRecords?this._curPageRecords[this._curRecordNum-1]:null,
+			tableStatus:null,
+			editRecord:null
 		};
 		/**
 		 * @name Plugin~_colEntity
@@ -894,7 +899,7 @@ var $testDM;
 		_createTool_refresh:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarRefresh+'"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarRefresh+'</span></span>');
 			$el.click(function(){
-				that._tableStatus='refresh';
+				that._tableValues.tableStatus='refresh';
 				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
 			});
 			return $el;
@@ -902,7 +907,7 @@ var $testDM;
 		_createTool_search:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSearch+'"><span class="glyphicon glyphicon-search"></span><span>'+$[_pluginName].regional.toolbarSearch+'</span></span>');
 			$el.click(function(){
-				that._tableStatus='search';
+				that._tableValues.tableStatus='search';
 				that._toolbarEvent(that._options.beforeSearch,that._search,that._options.afterSearch);
 			});
 			return $el;
@@ -910,7 +915,7 @@ var $testDM;
 		_createTool_sort:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSort+'"><span class="glyphicon glyphicon-sort"></span><span>'+$[_pluginName].regional.toolbarSort+'</span></span>');
 			$el.click(function(){
-				that._tableStatus='sort';
+				that._tableValues.tableStatus='sort';
 				that._toolbarEvent(that._options.beforeSort,that._sort,that._options.afterSort);
 			});
 			return $el;
@@ -918,7 +923,8 @@ var $testDM;
 		_createTool_add:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarAdd+'"><span class="glyphicon glyphicon-plus"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
 			$el.click(function(){
-				that._tableStatus='add';
+				that._tableValues.tableStatus='add';
+				that._tableValues.editRecord={};
 				that._toolbarEvent(that._options.beforeAdd,that._add,that._options.afterAdd);
 			});
 			return $el;
@@ -926,7 +932,13 @@ var $testDM;
 		_createTool_edit:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarEdit+'"><span class="glyphicon glyphicon-edit"></span><span>'+$[_pluginName].regional.toolbarEdit+'</span></span>');
 			$el.click(function(){
-				that._tableStatus='edit';
+				that._tableValues.tableStatus='edit';
+				//init editRecord
+				var curRec=that._tableValues.curRecord;
+				that._tableValues.editRecord={};
+				$.each(that._editCols, function(i,colName) {
+					that._tableValues.editRecord[colName]=curRec[colName];
+				});
 				that._toolbarEvent(that._options.beforeEdit,that._edit,that._options.afterEdit);
 			});
 			return $el;
@@ -934,7 +946,7 @@ var $testDM;
 		_createTool_delete:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarDelete+'"><span class="glyphicon glyphicon-minus"></span><span>'+$[_pluginName].regional.toolbarDelete+'</span></span>');
 			$el.click(function(){
-				that._tableStatus='delete';
+				that._tableValues.tableStatus='delete';
 				that._toolbarEvent(that._options.beforeDelete,that._delete,that._options.afterDelete);
 			});
 			return $el;
@@ -942,7 +954,7 @@ var $testDM;
 		_createTool_export:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarExport+'"><span class="glyphicon glyphicon-export"></span><span>'+$[_pluginName].regional.toolbarExport+'</span></span>');
 			$el.click(function(){
-				that._tableStatus='export';
+				that._tableValues.tableStatus='export';
 				that._toolbarEvent(that._options.beforeExport,that._export,that._options.afterExport);
 			});
 			return $el;
@@ -950,8 +962,8 @@ var $testDM;
 		_createTool_custom:function(btn){
 			var that=this, $el=$('<span class="btn btn-default" title="'+(btn.title || btn.label || btn.id)+'"><span class="glyphicon '+(btn.icon || '')+'"></span><span>'+(btn.label || '')+'</span></span>');
 			$el.click(function(){
-				that._tableStatus=btn.id;
-				btn.action(that._tableValues());
+				that._tableValues.tableStatus=btn.id;
+				btn.action($.extend(true, {}, that._tableValues));
 			});
 			return $el;
 		},
@@ -1356,6 +1368,7 @@ var $testDM;
 						else{
 							that._curPageRecords=that._recordToEntity(obj.Data);
 							that._curRecordNum=that._curRecordNum||1;
+							that._selectRow(that._curRecordNum-1);
 							that._listSummary(obj.Summary);
 							that._createFooter_pagging(obj.Total);
 							if(that._options.rowNum===1)
@@ -1533,6 +1546,7 @@ var $testDM;
 			if(this._elements.$pagging){
 				this._elements.$pagging.on('click.'+_pluginName,'li a',function(e){
 					that._curRecordNum=1;
+					that._selectRow(0);
 					that._currentPageNo=$(this).text()-0;
 					that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
 					e.preventDefault();
@@ -1743,6 +1757,32 @@ var $testDM;
 				});
 				
 			}
+			//edit dialog
+			if(this._hasTool.add || this._hasTool.edit){
+				//edit item
+				this._elements.edit.$block.on('change','[data-col]',function(){
+					var deferreds=[],$this=$(this);
+					that._editItemChange($this.data('col'),$this.val(),deferreds);
+					$.whenAll.apply($,deferreds)
+							 .always(function(){
+								that._hideLoading('edit');
+								console.log('editItemChangeTriggered',that._tableValues);
+							 });
+					
+				});
+				//date
+				this._elements.edit.$block.on('keypress','.kekTable-date,.kekTable-datetime',function(e){
+					var c=e.which;
+					if (!((c >= 47 && c <= 58) || c == 45|| c == 92|| c == 32))
+                    	e.preventDefault();
+				});
+				//number
+				this._elements.edit.$block.on('keypress','.kekTable-numbere',function(e){
+					var c = e.which;
+	                if (!((c >= 48 && c <= 57) || (c == 46)))
+	                    e.preventDefault();
+				});
+			}
 			
 			//search itemValue date
 //			this._elements.search.$dialog.on('blur','kekTable-date',function(){
@@ -1822,16 +1862,58 @@ var $testDM;
 		},
 		//=========================end search 添加条件============================
 		//=========================edit trigger============================
-		_editItemChange:function(){
-			
+		//改变值之后。检核值，afterChange()，_setEditItemValue()
+		_editItemChange:function(colName,val,deferreds,itemTriggered){
+			this._showLoading('','edit');
+			this._tableValues.editRecord[colName]=val;
+			if(!itemTriggered)
+				itemTriggered=[];
+			if($.inArray(colName,itemTriggered)!==-1){
+				this._showAlert(regional.processErr);
+				throw 'afterChange有循环引用'+colName;
+			}
+			var regional=$[_pluginName].regional,
+				def,setItems,
+				that=this;
+			if(this._checkEditItemValue(colName,val)){
+				if(that._options.columns[colName].afterChange){
+					def=this._eventDefer(function(v,d){
+						setItems=that._options.columns[colName].afterChange(v,d);
+					});
+					def.done(function(v){
+						if(v!=null){
+							that._elements.edit.$block.find('[data-col="'+colName+'"]').val(v);
+							that._tableValues.editRecord[colName]=v;
+						}
+					});
+					deferreds.push(def);
+					itemTriggered.push(colName);
+					if(setItems){
+						if($.type(setItems)!=='array'){
+							this._showAlert(regional.processErr);
+							throw 'afterChange的返回值必需是二维数组';
+						}
+						$.each(setItems, function(i,item) {
+							that._elements.edit.$block.find('[data-col="'+item[0]+'"]').val(item[1]);
+							that._editItemChange(item[0],item[1],deferreds,itemTriggered);
+						});
+					}
+				}
+			}
+		},
+		//检核输入的值
+		//成功返回true
+		_checkEditItemValue:function(colName,val){
+			return true;
 		},
 		//=========================end edit trigger============================
 		
-		//选中一行
+		//选中一行,起始0
 		_selectRow:function(index){
 			var $tbody=$('table:not(".kekTable-table-frozen") tbody',this._elements.$tableGroup);
 			$tbody.children('tr').removeClass('info');
 			$tbody.children('[data-index="'+index+'"]').addClass('info');
+			this._tableValues.curRecord=this._curPageRecords[this._curRecordNum];
 		},
 		//选中frozen表
 		_selectRowFrozen:function(index){
@@ -2013,7 +2095,7 @@ var $testDM;
 		//===========================end searchDialog转换======================
 		//将字符串转换为date(yyyy/mm/dd)，异常返回false
 		_checkDate:function(str){
-			var match=str.match(/^(\d{4})[\/\-]?(0?[1-9]|1[012])[\/\-]?(0?[1-9]|[12][0-9]|3[01])$/);
+			var match=str.match(/^(\d{4})[\/\\\-]?(0?[1-9]|1[012])[\/\\\-]?(0?[1-9]|[12][0-9]|3[01])$/);
 			if(match){
 				var newDate=new Date(match[1],match[2]-1,match[3]);
 				if((newDate.getMonth()!==match[2]-1)||(newDate.getFullYear()!==match[1]-0))
@@ -2027,7 +2109,7 @@ var $testDM;
 		},
 		//将字符串转换为datetime(yyyy/mm/dd hh24:mi:ss)，异常返回false
 		_checkDateTime:function(str){
-			var match = str.match(/^(\d{4})[\/\-]?(0?[1-9]|1[012])[\/\-]?(0?[1-9]|[12][0-9]|3[01])\s?([01]?[0-9]|2[0-3])\:?([0-5]?[0-9])\:?([0-5]?[0-9]?)$/);
+			var match = str.match(/^(\d{4})[\/\\\-]?(0?[1-9]|1[012])[\/\\\-]?(0?[1-9]|[12][0-9]|3[01])\s?([01]?[0-9]|2[0-3])\:?([0-5]?[0-9])\:?([0-5]?[0-9]?)$/);
 			if (match) {
 				var newDate = new Date(match[1], match[2] - 1, match[3], match[4], match[5], match[6]);
 				if ((newDate.getMinutes() !== match[5]-0) || (newDate.getHours() !== match[4]-0) || (newDate.getDate() !== match[3]-0) || (newDate.getMonth() !== match[2] - 1) || (newDate.getFullYear() !== match[1]-0))
@@ -2094,6 +2176,7 @@ var $testDM;
 		_toolbarEvent:function(b,i,a,load,fcDone){
 			var promise=b?this._eventDefer(b):this._eventDefer(function(v,d){d.resolve();});
 			var that=this;
+			this._showLoading('',load);
 			promise.done(function(){
 				promise=that._eventDefer(i.bind(that));
 				promise.done(function(v){
@@ -2126,7 +2209,7 @@ var $testDM;
 		_eventDefer:function(f,fcFail){
 			var d=$.Deferred(),
 				that=this,
-				p=d.then(f(this._tableValues(),d));
+				p=d.then(f($.extend(true, {}, that._tableValues),d));
 			p.fail(function(v){
 				if(fcFail)
 					fcFail(v);
@@ -2443,6 +2526,10 @@ var $testDM;
 		 * @var {string} Plugin#regional#eventFail - 事件操作异常后的状态信息
 		 */
 		eventFail:'操作失敗',
+		/**
+		 * @var {string} Plugin#regional#processErr - 二次开发异常信息
+		 */
+		processErr:'程式異常',
 	};
 	
 })(jQuery,window,document);

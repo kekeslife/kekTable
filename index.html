@@ -680,7 +680,8 @@
 						colTotalSummary:'COUNT',
 						editIndex:0,
 						editTitle:'empNo',
-						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empNo');d.resolve('empNo');},100)}
+						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empNo');d.resolve('empNo');},100)},
+						afterChange:function(r,d){d.resolve();return [['empName','xxxxx']];}
 					},
 					empName:{
 						colId:1,
@@ -709,7 +710,8 @@
 						listWidth:100,
 						listTitle:'deptNo',
 						editIndex:3,
-						editDisplay:'inline'
+						editDisplay:'inline',
+						afterChange:function(r,d){console.log(r);setTimeout(function(){d.resolve('YPC-'+r.editRecord.deptNo);},1000)}
 					},
 					rowid:{
 						colId:5,
@@ -726,7 +728,7 @@
 					dept:{
 						listIndex:7,
 						listTitle:'部门',
-						beforeList:function(r,d){console.log(r);d.resolve('<b>'+r.curRecord.deptNo+'-'+r.curRecord.deptName+'</b>');}
+						beforeList:function(r,d){d.resolve('<b>'+r.curRecord.deptNo+'-'+r.curRecord.deptName+'</b>');}
 					}
 				},
 				showRowNo:true,
