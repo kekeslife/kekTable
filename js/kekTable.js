@@ -178,7 +178,7 @@ var $testDM;
 			defaultSort:null,
 			/**
 			 * @function kekTable~options#beforeRefresh
-			 * @desc 点击刷新按钮前的自定义操作。必需要写d.resolve()或者d.reject()
+			 * @desc 刷新前的自定义操作。必需要写d.resolve()或者d.reject()
 			 * @param {Plugin~_tableValues} tableValues
 			 * @param {$.Deferred} defer - deferred对象,d.reject()将停止事件,d.resolve()将继续执行。
 			 * //@return {$.Deferred} 
@@ -204,6 +204,11 @@ var $testDM;
 			 * @desc 成功刷新之后 用法同beforeRefresh
 			 */
 			afterRefresh:null,
+			/**
+			 * @function kekTable~options#beforeEdit
+			 * @desc 点击编辑、新增按钮后，数据填入编辑框之前。可以在这里改变editRecord的值，用法同beforeRefresh
+			 */
+			beforeEdit:null
 		},
 		/**
 		 * @namespace _column
@@ -269,14 +274,21 @@ var $testDM;
 			 */
 			editType:null,
 			/**
-			 * @var {?string} [_column#editAttr=null] - ''(正常)、'readonly'(只读)、'hidden'(隐藏)
+			 * @var {?string} [_column#editAttr=null] - ''(正常)、'readonly'(只读，回传)、'hidden'(隐藏)、'disabled'(只读，不回传)
 			 * @summary 编辑框栏位的特性
 			 */
 			editAttr:null,
 			/**
-			 * @var {?bool} [_column#editPost=true] - 编辑框栏位是否更新至数据库
+			 * @function _column#editList
+			 * @desc list类型的值列表。必需要写d.resolve('返回的值列表数组[[值,文字],[值,文字],[值,文字]]')或者d.reject('错误框文字')
+			 * @param {object <colEntity>} tableValues - 该行的数据
+			 * @param {$.Deferred} defer - deferred对象,d.reject()将停止事件,d.resolve()将继续执行。
 			 */
-			editPost:null,
+			editList:null,
+//			/**
+//			 * @var {?bool} [_column#editPost=true] - 编辑框栏位是否更新至数据库
+//			 */
+//			editPost:null,
 			/**
 			 * @var {?string} [_column#colType=null] - ''(文本)、'number'、'date'(YYYY/MM/DD)、'datetime'(YYYY/MM/DD HH24:MI:SS)
 			 * @summary 栏位的数据类型
@@ -308,20 +320,20 @@ var $testDM;
 			 */
 			detailKeyId:null,
 			/**
-			 * @function _column#beforeList
-			 * @desc 栏位显示数据之前的自定义操作。必需要写d.resolve('将要显示的文字或HTML')或者d.reject('将会产生提示框')
+			 * @function _column#beforeGetValue
+			 * @desc 栏位读取(显示)数据之前的自定义操作。必需要写d.resolve('将要显示的文字或HTML，curPageRecords将保存text')或者d.reject('将会产生提示框')
 			 * @param {object <colEntity>} tableValues - 该行的数据
 			 * @param {$.Deferred} defer - deferred对象,d.reject()将停止事件,d.resolve()将继续执行。
 			 * @example ajax
-			 * beforeList:function(v,d){
+			 * beforeGetValue:function(v,d){
 			 * 	var xx=$.ajax('test.html').done(function(res){d.resolve(res.EmpName);}).fail(function(){d.reject('失败');});
 			 * }
 			 * @example nomal
-			 * beforeList:function(v,d){
+			 * beforeGetValue:function(v,d){
 	 		 * 		d.resolve(v.curRecord.empNo+' - '+r.curRecord.empName);
 			 * }
 			 */
-			beforeList:null,
+			beforeGetValue:null,
 			/**
 			 * @function _column#afterChange
 			 * @desc 栏位改变值以后。必需要写d.resolve('将要填入的值')或者d.reject('错误框文字')
@@ -330,6 +342,7 @@ var $testDM;
 			 * @return [['empNo','11111'],['empName','xxxxx']] - 将要连动更改的栏位和值。
 			 */
 			afterChange:null,
+			
 		};
 	
 	//=======================扩展==========================
@@ -456,7 +469,7 @@ var $testDM;
 		 * @desc 插件的配置参数
 		 * @type {kekTable~_options}
 		 */
-		this._options=$.extend({}, _options,options);
+		this._options=$.extend(true,{}, _options,options);
 		/**
 		 * @name Plugin~_pluginName
 		 * @desc 插件名称
@@ -747,7 +760,7 @@ var $testDM;
 					return str+'}'})());
 			//columns
 			$.each(opt.columns,function(colName,colObj){
-				colObj=$.extend({},_column, colObj);
+				colObj=$.extend(true,{},_column, colObj);
 				$.each(colObj, function(prop,val) {
 		      		if(prop==='listIndex' && val != null){
 		      			if(that._listCols[val])
@@ -763,7 +776,7 @@ var $testDM;
 		      					colObj.editTitle='&nbsp;';
 		      			}
 		      			else
-		      				colObj.editTitle=colObj.listTitle;
+		      				colObj.editTitle=colObj.listTitle || '&nbsp;';
 		      			colObj.editDisplay || (colObj.editDisplay='block');
 		      		}
 		      		else if(prop==='colId' && val != null){
@@ -777,15 +790,15 @@ var $testDM;
 //		      			if(colObj[prop]==='date' && colObj.colFormat==null)
 //		      				colObj.colFormat='Y/m/d';
 //		      		}
-		      		else if((prop==='listWidth' || prop==='editWidth')){
+		      		else if(((prop==='listWidth' && colObj.listIndex!=null ) || (prop==='editWidth' && colObj.editIndex!=null))){
 		      			if(val==null)
 		      				val=100;
 		      			(val-0==val-0) && (val-0) && (colObj[prop]=val+'px');
 		      		}
 		      		else if(prop==='colTotalSummary' && val != null)
 		      			that._summaryCols.push(colName);
-		      		else if(prop==='editPost' && colObj.colId !=null && colObj.editIndex !=null && val != null)
-		      			colObj[prop]=true;
+//		      		else if(prop==='editPost' && colObj.colId !=null && colObj.editIndex !=null && val != null)
+//		      			colObj[prop]=true;
 		      		else if(prop==='canSort'){
 		      			if(that._hasTool.sort && val==null){
 		      				if(colObj.colId != null && colObj.listIndex != null)
@@ -1227,13 +1240,22 @@ var $testDM;
 				$el=$('<input type="text" />');
 			$el.attr('data-col',colName).addClass('form-control').css('width',col.editWidth);
 			//hidden,readonly
-			(col.editAttr==='hidden' && $el.css('display','none')) || (col.editAttr==='readonly' && $el.attr('readonly',''));
+			(col.editAttr==='hidden' && $el.css('display','none')) || ($el.attr(col.editAttr,true));
 			//number,date
 			col.colType && $el.addClass('kekTable-'+col.colType);
 			col.editPlaceholder && $el.attr('placeholder',col.editPlaceholder);
-			//lov
-			if(!col.editAttr && col.editType==='lov')
-				$el.addClass('kekTable-lov-input').attr('data-toggle','dropdown').attr('aria-expanded',false);
+			//list
+			if(!col.editAttr && col.editType==='list'){
+				var $input=$el,
+					$lov=$('<ul class="dropdown-menu kekTable-dropList" data-for="'+colName+'"></ul>');
+				$input.addClass('kekTable-list-input').attr({
+					'data-toggle':'dropdown',
+					'aria-expanded':false,
+					readonly:'readonly'
+				});
+				$el=$(document.createDocumentFragment());
+				$el.append($input,$lov);
+			}
 			return $el;
 		},
 		_createPlugin_sort:function(){
@@ -1304,6 +1326,13 @@ var $testDM;
 			d.resolve('_add');
 		},
 		_edit:function(v,d){
+			var $block=this._elements.edit.$block,
+				editRecord=this._tableValues.editRecord;
+			$('.modal-title',this._elements.edit.$dialog).text($[_pluginName].regional.editTitle);
+			$.each(this._editCols, function(i,colName) {
+				$('[data-col="'+colName+'"]',$block).val(editRecord[colName]);
+			});
+			this._elements.edit.$dialog.modal('show');
 			d.resolve('_edit');
 			//something...
 		},
@@ -1395,6 +1424,7 @@ var $testDM;
 				promise=b?this._eventDefer(b,fcFail):this._eventDefer(function(v,d){d.resolve(colData==null?'':colData);},fcFail),
 				that=this;
 			promise.done(function(v){
+				v==null && (v=colData);
 				$el.html(v);
 				that._curPageRecords[recIndex][colName]=$el.text();
 			}).fail(function(){
@@ -1416,20 +1446,22 @@ var $testDM;
 		//将数据显示到table里面。修改的话要同时修改_listData_frozen
 		//def:刷新事件的deferred
 		_listData:function(data,def){
-			var cols=this._listCols,that=this,dbCols=this._dbCols,
+			var cols=this._options.columns,that=this,dbCols=this._dbCols,listCols=this._listCols,
 				$block=$('tbody',this._elements.$tableGroup),
 				defArr=[],$frg=$(document.createDocumentFragment());
 			$.each(data,function(i,d){
-				var $tr=$('<tr />',{'data-index':i});
-				that._options.showRowNo && $tr.append('<td>'+(i+1)+'</td>');
-				$.each(cols, function(j,colName) {
+				var $tr=$('<tr />',{'data-index':i}),tr=[];
+				$.each(cols, function(colName,colObj) {
 					var dbIndex=$.inArray(colName,dbCols),
+						listIndex=$.inArray(colName,listCols),
 						val=dbIndex===-1?'':d[dbIndex],
 						$td=$('<td />');
-					$tr.append($td);
-					defArr.push(that._listColData($td,colName,i,val,that._options.columns[cols[j]].beforeList));
+					if(listIndex!==-1)
+						tr[listIndex]=$td;
+					defArr.push(that._listColData($td,colName,i,val,colObj.beforeGetValue));
 				});
-				$frg.append($tr);
+				that._options.showRowNo && tr.unshift($('<td>'+(i+1)+'</td>'));
+				$frg.append($tr.append(tr));
 			});
 			$.whenAll.apply($,defArr)
 				.done(function(){
@@ -1452,27 +1484,28 @@ var $testDM;
 		//将数据显示到frozen-table里面。修改的话要同时修改_listData
 		//def:刷新事件的deferred
 		_listData_frozen:function(data,def){
-			var cols=this._listCols,that=this,dbCols=this._dbCols,
+			var cols=this._options.columns,that=this,dbCols=this._dbCols,listCols=this._listCols,
 				defArr=[],$frg=$(document.createDocumentFragment()),
 				$frgF=$(document.createDocumentFragment());
 			$.each(data,function(i,d){
 				var $tr=$('<tr />',{'data-index':i}),
-					$trF=$('<tr />',{'data-index':i});
-				that._options.showRowNo && ($tr.append('<td>'+(i+1)+'</td>') && $trF.append('<td>'+(i+1)+'</td>') );
-				$.each(cols, function(j,colName) {
+					$trF=$('<tr />',{'data-index':i}),
+					tr=[],trF=[];
+				$.each(cols, function(colName,colObj) {
 					var dbIndex=$.inArray(colName,dbCols),
+						listIndex=$.inArray(colName,listCols),
 						val=dbIndex===-1?'':d[dbIndex],
 						$td=$('<td />');
-					if(j<that._options.frozenNum){
-						$tr.append('<td />');
-						$trF.append($td);
+					if(listIndex!==-1){
+						tr[listIndex]=$td;
+						if(listIndex<that._options.frozenNum)
+							trF[listIndex]=$td;
 					}
-					else
-						$tr.append($td);
-					defArr.push(that._listColData($td,colName,i,val,that._options.columns[cols[j]].beforeList));
+					defArr.push(that._listColData($td,colName,i,val,colObj.beforeGetValue));
 				});
-				$frg.append($tr);
-				$frgF.append($trF);
+				that._options.showRowNo && (tr.unshift($('<td>'+(i+1)+'</td>')) && trF.unshift($('<td>'+(i+1)+'</td>')) );
+				$frg.append($tr.append(tr));
+				$frgF.append($trF.append(trF));
 			});
 			$.whenAll.apply($,defArr)
 				.done(function(){
@@ -1497,29 +1530,30 @@ var $testDM;
 		//将数据显示到single-table里面
 		//def:刷新事件的deferred
 		_listData_single:function(data,def){
-			var cols=this._listCols,that=this,dbCols=this._dbCols,
+			var cols=this._options.columns,that=this,dbCols=this._dbCols,listCols=this._listCols,
 				d=data.length?data[0]:new Array(cols.length),
 				$block=$('.kekTable-single-table',this._elements.$tableGroup),
 				defArr=[];
-			$.each(cols, function(j,colName) {
+			$.each(cols, function(colName,colObj) {
 				var dbIndex=$.inArray(colName,dbCols),
+					listIndex=$.inArray(colName,listCols),
 					val=dbIndex===-1?'':d[dbIndex],
-					$col=$('span[data-col="'+colName+'"]',$block);
-				defArr.push(that._listColData($col,colName,i,val,that._options.columns[cols[j]].beforeList));
-			});
-			$.whenAll.apply($,defArr)
-			  	.done(function(){
-			  		if(def)
-			  			def.resolve();
-			  		else
-			  			that._hideLoading();
-			  	})
-			  	.fail(function(){
-			  		if(def)
-			  			def.resolve();
-			  		else
-			  			that._hideLoading();
-			  	});
+					$col=listIndex===-1?$('<span/>'):$('span[data-col="'+colName+'"]',$block);
+				defArr.push(that._listColData($col,colName,0,val,colObj.beforeGetValue));
+			});	
+			$.whenAll.apply($, defArr)
+					.done(function() {
+						if (def)
+							def.resolve();
+						else
+							that._hideLoading();
+					})
+					.fail(function() {
+						if (def)
+							def.resolve();
+						else
+							that._hideLoading();
+					});
 		},
 		//==============end读取资料=============
 		//事件
@@ -1540,6 +1574,9 @@ var $testDM;
 				this._elements.$tableGroup.on('mouseover.'+_pluginName,'tbody tr',function(){
 					$('tbody tr',that._elements.$tableGroup).removeClass('active');
 					$('tbody tr[data-index="'+$(this).data('index')+'"]:not(.info)',that._elements.$tableGroup).addClass('active');
+				});
+				this._elements.$tableGroup.on('mouseleave.'+_pluginName,'tbody tr',function(){
+					$('tbody tr[data-index="'+$(this).data('index')+'"]:not(.info)',that._elements.$tableGroup).removeClass('active');
 				});
 			}
 			//pagging click
@@ -1760,7 +1797,7 @@ var $testDM;
 			//edit dialog
 			if(this._hasTool.add || this._hasTool.edit){
 				//edit item
-				this._elements.edit.$block.on('change','[data-col]',function(){
+				this._elements.edit.$block.on('change.'+_pluginName,'[data-col]',function(){
 					var deferreds=[],$this=$(this);
 					that._editItemChange($this.data('col'),$this.val(),deferreds);
 					$.whenAll.apply($,deferreds)
@@ -1771,16 +1808,27 @@ var $testDM;
 					
 				});
 				//date
-				this._elements.edit.$block.on('keypress','.kekTable-date,.kekTable-datetime',function(e){
+				this._elements.edit.$block.on('keypress.'+_pluginName,'.kekTable-date,.kekTable-datetime',function(e){
 					var c=e.which;
 					if (!((c >= 47 && c <= 58) || c == 45|| c == 92|| c == 32))
                     	e.preventDefault();
 				});
 				//number
-				this._elements.edit.$block.on('keypress','.kekTable-numbere',function(e){
+				this._elements.edit.$block.on('keypress.'+_pluginName,'.kekTable-numbere',function(e){
 					var c = e.which;
 	                if (!((c >= 48 && c <= 57) || (c == 46)))
 	                    e.preventDefault();
+				});
+				//list type input
+				this._elements.edit.$block.on('click.'+_pluginName,'.kekTable-list-input',function(){
+					var colName=$(this).data('col'),li=[],
+						def=that._eventDefer(that._options.columns[colName].editList);
+					def.done(function(v){
+						$.each(v, function(i,liItem) {
+							li.push($('<li />').data('val',liItem[0]).append($('<span />').text(liItem[1])));
+						});
+						$('[data-for="'+colName+'"]',that._elements.edit.$block).empty().append(li);
+					});
 				});
 			}
 			
@@ -1913,7 +1961,7 @@ var $testDM;
 			var $tbody=$('table:not(".kekTable-table-frozen") tbody',this._elements.$tableGroup);
 			$tbody.children('tr').removeClass('info');
 			$tbody.children('[data-index="'+index+'"]').addClass('info');
-			this._tableValues.curRecord=this._curPageRecords[this._curRecordNum];
+			this._tableValues.curRecord=this._curPageRecords[this._curRecordNum-1];
 		},
 		//选中frozen表
 		_selectRowFrozen:function(index){

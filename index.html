@@ -680,7 +680,7 @@
 						colTotalSummary:'COUNT',
 						editIndex:0,
 						editTitle:'empNo',
-						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empNo');d.resolve('empNo');},100)},
+						beforeGetValue:function(r,d){setTimeout(function(){console.log('beforeGetValue:empNo');d.resolve();},100)},
 						afterChange:function(r,d){d.resolve();return [['empName','xxxxx']];}
 					},
 					empName:{
@@ -692,7 +692,7 @@
 						editIndex:2,
 						editDisplay:'cling',
 						editAttr:'readonly',
-						beforeList:function(r,d){setTimeout(function(){console.log('beforeList:empName');d.resolve('empName');},1000)}
+						beforeGetValue:function(r,d){setTimeout(function(){console.log('beforeGetValue:empName');d.resolve('empName');},1000)}
 					},
 					deptName:{
 						colId:4,
@@ -702,7 +702,7 @@
 						listInline:true,
 						editIndex:4,
 						editDisplay:'cling',
-						editAttr:'readonly'
+						editAttr:'disabled'
 					},
 					deptNo:{
 						colId:2,
@@ -716,8 +716,8 @@
 					rowid:{
 						colId:5,
 						editIndex:5,
-						editAttr:'hidden'
-						
+						editType:'list',
+						editList:function(r,d){setTimeout(function(){d.resolve([[0,'a'],[1,'b'],[2,'c']]);},2000)}
 					},
 					tranDate:{
 						colId:6,
@@ -728,11 +728,14 @@
 					dept:{
 						listIndex:7,
 						listTitle:'部门',
-						beforeList:function(r,d){d.resolve('<b>'+r.curRecord.deptNo+'-'+r.curRecord.deptName+'</b>');}
+						beforeGetValue:function(r,d){d.resolve('<b>'+r.curRecord.deptNo+'-'+r.curRecord.deptName+'</b>');}
+					},
+					temp:{
+						beforeGetValue:function(r,d){d.resolve(r.curRecord.empNo==='14623'?'Y':'N');}
 					}
 				},
 				showRowNo:true,
-				frozenNum:0,
+				//frozenNum:0,
 				rowNum:10
 			});
 			//$('#test2').kekTable();
