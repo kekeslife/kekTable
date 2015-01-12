@@ -456,7 +456,9 @@ var $testDM;
 			},
 			edit:{
 //				$dialog:null,
-//				$block:null
+//				$block:null,
+//				$list:null,
+//				$lov:null
 			},
 			sort:{
 //				$dialog:null,
@@ -1200,11 +1202,19 @@ var $testDM;
 				this._elements.edit.$dialog=$('<div class="modal fade kekTable-edit" data-backdrop="static" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
 					regional.editTitle+'</h4></div><div class="modal-body"></div><div class="modal-footer"><div class="alert alert-danger"></div><button type="button" class="btn btn-default" data-dismiss="modal">'+
 					regional.buttonCancel+'</button><button type="button" class="btn btn-primary">'+regional.editCommit+'</button></div></div></div></div>');
-				$('.modal-body',this._elements.edit.$dialog).append(this._createEdit_block());
+				$('.modal-body',this._elements.edit.$dialog).append(this._createEdit_block(),this._createEdit_list(),this._createEdit_lov());
 				$('.modal-dialog',this._elements.edit.$dialog).append(this._elements.$editLoading=this._createPlugin_loading('edit'));
 				$('.modal-dialog',this._elements.edit.$dialog).css('width',this._options.editDialogWidth);
 				return this._elements.edit.$dialog;
 			}
+		},
+		//editType list
+		_createEdit_list:function(){
+			return this._elements.edit.$list=$('<ul class="dropdown-menu kekTable-dropList"></ul>');
+		},
+		//editType lov
+		_createEdit_lov:function(){
+			return this._elements.edit.$lov=$('<table class="dropdown-menu table table-hover table-condensed kekTable-lov"><thead></thead><tbody></tbody></table>');
 		},
 		_createEdit_block:function(){
 			var $el=$('<ul class="kekTable-edit-block"></ul>'), li=[],that=this,cols=this._options.columns,that=this,$l,$filed,atr;
@@ -1245,17 +1255,20 @@ var $testDM;
 			col.colType && $el.addClass('kekTable-'+col.colType);
 			col.editPlaceholder && $el.attr('placeholder',col.editPlaceholder);
 			//list
-			if(!col.editAttr && col.editType==='list'){
-				var $input=$el,
-					$lov=$('<ul class="dropdown-menu kekTable-dropList" data-for="'+colName+'"></ul>');
-				$input.addClass('kekTable-list-input').attr({
-					'data-toggle':'dropdown',
-					'aria-expanded':false,
-					readonly:'readonly'
-				});
-				$el=$(document.createDocumentFragment());
-				$el.append($input,$lov);
+			if(col.editType==='list'){
+				$el.addClass('kekTable-list-input').attr('readonly','readonly');
 			}
+//			if(!col.editAttr && col.editType==='list'){
+//				var $input=$el,
+//					$lov=$('<ul class="dropdown-menu kekTable-dropList" data-for="'+colName+'"></ul>');
+//				$input.addClass('kekTable-list-input').attr({
+//					'data-toggle':'dropdown',
+//					'aria-expanded':false,
+//					readonly:'readonly'
+//				});
+//				$el=$(document.createDocumentFragment());
+//				$el.append($input,$lov);
+//			}
 			return $el;
 		},
 		_createPlugin_sort:function(){
@@ -1821,14 +1834,45 @@ var $testDM;
 				});
 				//list type input
 				this._elements.edit.$block.on('click.'+_pluginName,'.kekTable-list-input',function(){
-					var colName=$(this).data('col'),li=[],
+					var li=[],$this=$(this),colName=$this.data('col'),
 						def=that._eventDefer(that._options.columns[colName].editList);
+					that._showLoading($[_pluginName].regional.loadList,'edit');
 					def.done(function(v){
 						$.each(v, function(i,liItem) {
 							li.push($('<li />').data('val',liItem[0]).append($('<span />').text(liItem[1])));
 						});
-						$('[data-for="'+colName+'"]',that._elements.edit.$block).empty().append(li);
+					}).always(function(){
+						var $ul=that._elements.edit.$list,
+							$btn=$this.parents('.form-group'),
+							mgTop=$ul.outerHeight(true)-$ul.outerHeight(),
+							mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+						$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+						$ul.css('left',$btn.position().left+mgLeft);
+						$ul.data('target',colName);
+						$ul.empty().append(li).show();
+						that._hideLoading('edit');
 					});
+				});
+				this._elements.edit.$block.on('blur.'+_pluginName,'.kekTable-list-input',function(){
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					if(!that._elements.edit.$list.data('cancelBlur')){
+						that._elements.edit.$list.hide();
+						that._elements.edit.$list.data('cancelBlur',false);
+					}
+					else
+						$(this).focus();
+				});
+				this._elements.edit.$list.on('mousedown.'+_pluginName,function(e){
+					e.preventDefault();
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					$(this).data('cancelBlur',true);
+					setTimeout(function(){that._elements.edit.$list.data('cancelBlur',false);});
+				});
+				this._elements.edit.$list.on('click.'+_pluginName,'li',function(){
+					var $this=$(this),
+						$btn=$('[data-col="'+that._elements.edit.$list.data('target')+'"]',that._elements.edit.$block);
+					$btn.val($this.data('val'));
+					that._elements.edit.$list.hide();
 				});
 			}
 			
@@ -2558,6 +2602,10 @@ var $testDM;
 		 * @var {string} Plugin#regional#loadData - 读取资料的遮罩显示文字
 		 */
 		loadData:'正在讀取資料...',
+		/**
+		 * @var {string} Plugin#regional#loadList - list,lov遮罩显示文字
+		 */
+		loadList:'正在刷新列表...',
 		/**
 		 * @var {string} Plugin#regional#loadDataErr - 读取资料异常的文字
 		 */
