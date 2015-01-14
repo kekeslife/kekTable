@@ -717,7 +717,15 @@
 						colId:5,
 						editIndex:5,
 						editType:'list',
-						editList:function(r,d){setTimeout(function(){d.resolve([[0,'a'],[1,'b'],[2,'c']]);},2000)}
+						editList:function(r,d){setTimeout(function(){d.resolve([[0,'a'],[1,'b'],[2,'c']]);},2000)},
+						afterChange:function(r,d){d.resolve(r.editRecord.rowid+'@');return [['empName','bbb']];}
+					},
+					lot:{
+						editIndex:6,
+						editTitle:'倉別',
+						editType:'lov',
+						editList:function(r,d){setTimeout(function(){d.resolve([['s0','s00000'],['s1','s11111'],['s2','s22222']]);},2000)},
+						lovCols:['lot','仓别名称']
 					},
 					tranDate:{
 						colId:6,

@@ -274,6 +274,12 @@ var $testDM;
 			 */
 			editType:null,
 			/**
+			 * @var {?string} [_column#lovCols=null] - 编辑框editType为lov栏位的标题(.kekTable-lov下的thead)
+			 * @example
+			 * lovCols:['empNo','员工姓名'] //empNo为columns.empNo,选取后会写入editRecord.empNo。'员工姓名'只是普通的显示，不会写入editRecord
+			 */
+			lovCols:null,
+			/**
 			 * @var {?string} [_column#editAttr=null] - ''(正常)、'readonly'(只读，回传)、'hidden'(隐藏)、'disabled'(只读，不回传)
 			 * @summary 编辑框栏位的特性
 			 */
@@ -1254,9 +1260,9 @@ var $testDM;
 			//number,date
 			col.colType && $el.addClass('kekTable-'+col.colType);
 			col.editPlaceholder && $el.attr('placeholder',col.editPlaceholder);
-			//list
-			if(col.editType==='list'){
-				$el.addClass('kekTable-list-input').attr('readonly','readonly');
+			//list、lov
+			if(col.editType==='list' || col.editType==='lov'){
+				$el.addClass('kekTable-'+col.editType+'-input').attr('readonly','readonly');
 			}
 //			if(!col.editAttr && col.editType==='list'){
 //				var $input=$el,
@@ -1872,7 +1878,38 @@ var $testDM;
 					var $this=$(this),
 						$btn=$('[data-col="'+that._elements.edit.$list.data('target')+'"]',that._elements.edit.$block);
 					$btn.val($this.data('val'));
+					$btn.change();
 					that._elements.edit.$list.hide();
+				});
+				//lov type input
+				this._elements.edit.$block.on('click.'+_pluginName,'.kekTable-lov-input',function(){
+					var thead=[],tbody=[],$this=$(this),colName=$this.data('col'),
+						cols=that._options.columns,
+						def=that._eventDefer(that._options.columns[colName].editList);
+					that._showLoading($[_pluginName].regional.loadList,'edit');
+					$.each(cols[colName].lovCols, function(i,col) {
+						thead.push('<td>'+(cols[col]?cols[col].editTitle:col)+'</td>');
+					});
+					def.done(function(v){
+						$.each(v, function(i,record) {
+							var tr=[];
+							for(var j=0,k=cols[colName].lovCols.length;j<k;j++)
+								tr.push('<td>'+record[j]+'</td>');
+							tbody.push('<tr>'+tr.join('')+'</tr>');
+						});
+					}).always(function(){
+						var $ul=that._elements.edit.$lov,
+							$btn=$this.parents('.form-group'),
+							mgTop=$ul.outerHeight(true)-$ul.outerHeight(),
+							mgLeft=$btn.outerWidth(true)-$btn.outerWidth();
+						$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
+						$ul.css('left',$btn.position().left+mgLeft);
+						$ul.data('target',colName);
+						$ul.empty().append('<thead>'+thead.join('')+'</thead><tbody>'+tbody.join('')+'</tbody>').show();
+						that._hideLoading('edit');
+					});
+					
+					
 				});
 			}
 			
