@@ -35,6 +35,10 @@ var $testDM;
 			 */
 			autoLoad:true,
 			/**
+			 * @var {?number} [kekTable~_options#loadingDelay=500] - 延时时间
+			 */
+			loadingDelay:500,
+			/**
 			 * @summary 面板的颜色 - class - bootstrap的panel样式
 			 * @desc 'panel-primary'(深蓝)、'panel-success'(浅绿)、'panel-info'(浅蓝)、'panel-warning'(浅黄)、'panel-danger'(浅灰)、'panel-default'(浅灰)
 			 * @var {?string} [kekTable~_options#panelColor='panel-primary']
@@ -1220,14 +1224,14 @@ var $testDM;
 		},
 		//editType lov
 		_createEdit_lov:function(){
-			return this._elements.edit.$lov=$('<table class="dropdown-menu table table-hover table-condensed kekTable-lov"><thead></thead><tbody></tbody></table>');
+			return this._elements.edit.$lov=$('<div class="dropdown-menu kekTable-lov"><table class="table table-hover table-condensed"><thead></thead><tbody></tbody></table></div>');
 		},
 		_createEdit_block:function(){
 			var $el=$('<ul class="kekTable-edit-block"></ul>'), li=[],that=this,cols=this._options.columns,that=this,$l,$filed,atr;
 			$.each(this._editCols, function(i,colName) {
 				if(cols[colName].editDisplay==='block'){
 					$l && $el.append($l);
-					$l=$('<li><div class="form-group has-feedback"><label>'+cols[colName].editTitle+'</label></div></li>');
+					$l=$('<li><div class="form-group"><label class="control-label">'+cols[colName].editTitle+'</label></div></li>');
 					$filed=$('.form-group',$l);
 					$($filed).append(that._createEdit_item(colName));
 				}
@@ -1339,9 +1343,12 @@ var $testDM;
 			//something...
 		},
 		_add:function(v,d){
+			var $block=this._elements.edit.$block;
 			$('.modal-title',this._elements.edit.$dialog).text($[_pluginName].regional.addTitle);
+			$.each(this._editCols, function(i,colName) {
+				$('[data-col="'+colName+'"]',$block).val('');
+			});
 			this._elements.edit.$dialog.modal('show');
-			//something...
 			d.resolve('_add');
 		},
 		_edit:function(v,d){
@@ -1353,7 +1360,6 @@ var $testDM;
 			});
 			this._elements.edit.$dialog.modal('show');
 			d.resolve('_edit');
-			//something...
 		},
 		_delete:function(v,d){
 			this._elements.$editLoading.show();
@@ -1824,7 +1830,11 @@ var $testDM;
 								that._hideLoading('edit');
 								console.log('editItemChangeTriggered',that._tableValues);
 							 });
-					
+				});
+				this._elements.edit.$block.on('focus.'+_pluginName,'[data-col]',function(){
+					var $group=$(this).parents('.form-group');
+					if($group.hasClass('has-error'))
+						that._elements.edit.$dialog.find('.modal-footer .alert').text($group.attr('title')).show();
 				});
 				//date
 				this._elements.edit.$block.on('keypress.'+_pluginName,'.kekTable-date,.kekTable-datetime',function(e){
@@ -1856,6 +1866,7 @@ var $testDM;
 						$ul.css('left',$btn.position().left+mgLeft);
 						$ul.data('target',colName);
 						$ul.empty().append(li).show();
+						$this.focus();
 						that._hideLoading('edit');
 					});
 				});
@@ -1868,6 +1879,7 @@ var $testDM;
 					else
 						$(this).focus();
 				});
+				//$list
 				this._elements.edit.$list.on('mousedown.'+_pluginName,function(e){
 					e.preventDefault();
 					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
@@ -1905,12 +1917,65 @@ var $testDM;
 						$ul.css('top',$btn.position().top+$btn.outerHeight()-mgTop);
 						$ul.css('left',$btn.position().left+mgLeft);
 						$ul.data('target',colName);
-						$ul.empty().append('<thead>'+thead.join('')+'</thead><tbody>'+tbody.join('')+'</tbody>').show();
+						$ul.children('table').empty().append('<thead>'+thead.join('')+'</thead><tbody>'+tbody.join('')+'</tbody>');
+						$ul.show();
+						$this.focus();
 						that._hideLoading('edit');
 					});
-					
-					
 				});
+				this._elements.edit.$block.on('blur.'+_pluginName,'.kekTable-lov-input',function(){
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					if(!that._elements.edit.$lov.data('cancelBlur')){
+						that._elements.edit.$lov.hide();
+						that._elements.edit.$lov.data('cancelBlur',false);
+					}
+					else
+						$(this).focus();
+				});
+				//$lov
+				this._elements.edit.$lov.on('mousedown.'+_pluginName,function(e){
+					e.preventDefault();
+					//ie在mousedown滚动条的时候e.preventDefault无效，会触发blur
+					$(this).data('cancelBlur',true);
+					setTimeout(function(){that._elements.edit.$lov.data('cancelBlur',false);});
+				});
+				this._elements.edit.$lov.on('click.'+_pluginName,'tr',function(){
+					var $tds=$('td',$(this)),
+						deferreds=[],
+						colName=that._elements.edit.$lov.data('target'),
+						cols=that._options.columns,
+						lovCols=cols[colName].lovCols;
+					that._elements.edit.$lov.hide();
+					that._showLoading('edit');
+					$tds.each(function(i) {
+						var col=cols[lovCols[i]];
+						if(col){
+							var defs=[],
+								d=$.Deferred();
+							deferreds.push(d);
+							console.log(lovCols[i],$(this).text());
+							that._editItemChange(lovCols[i],$(this).text(),defs);
+							$.whenAll.apply($,defs)
+								 .always(function(){
+									d.resolve();
+								 });
+						}
+					});
+					$.whenAll.apply($,deferreds)
+						 .always(function(){
+							that._hideLoading('edit');
+						 });
+				});
+				//edit commit
+				this._elements.edit.$dialog.on('click.'+_pluginName,'.modal-footer .btn-primary',function(){
+					var errs=that._elements.edit.$block.find('.has-error');
+					if(errs.length)
+						that._elements.edit.$dialog.find('.modal-footer .alert').text(errs.attr('title')).show();
+					else{
+						console.log(that._tableValues.editRecord);
+						that._elements.edit.$dialog.modal('hide');
+					}
+				})
 			}
 			
 			//search itemValue date
@@ -2003,17 +2068,24 @@ var $testDM;
 			}
 			var regional=$[_pluginName].regional,
 				def,setItems,
-				that=this;
-			if(this._checkEditItemValue(colName,val)){
+				that=this,
+				valPassed=this._checkEditItemValue(colName,val);
+			if(valPassed){
+				this._tableValues.editRecord[colName]=valPassed;
 				if(that._options.columns[colName].afterChange){
-					def=this._eventDefer(function(v,d){
-						setItems=that._options.columns[colName].afterChange(v,d);
-					});
+					def=this._eventDefer(function(v,d){setItems=that._options.columns[colName].afterChange(v,d);},
+						//error function
+						function(v){
+							var errMsg=(that._options.columns[colName].editTitle||colName)+':'+v;
+							that._elements.edit.$block.find('[data-col="'+colName+'"]').val(val).parents('.form-group').addClass('has-error').attr('title',errMsg);
+							that._elements.edit.$dialog.find('.modal-footer .alert').text(errMsg).show();
+						});
 					def.done(function(v){
 						if(v!=null){
-							that._elements.edit.$block.find('[data-col="'+colName+'"]').val(v);
+							that._elements.edit.$block.find('[data-col="'+colName+'"]').val(v).parents('.form-group').removeClass('has-error').attr('title',null);
 							that._tableValues.editRecord[colName]=v;
 						}
+						that._elements.edit.$dialog.find('.modal-footer .alert').text('').hide();
 					});
 					deferreds.push(def);
 					itemTriggered.push(colName);
@@ -2028,12 +2100,27 @@ var $testDM;
 						});
 					}
 				}
+				else{
+					that._elements.edit.$block.find('[data-col="'+colName+'"]').val(val);
+				}
+			}
+			else{
+				var errMsg=(that._options.columns[colName].editTitle||colName)+':';
+				that._elements.edit.$block.find('[data-col="'+colName+'"]').val(val).parents('.form-group').addClass('has-error').attr('title',errMsg);
+				that._elements.edit.$dialog.find('.modal-footer .alert').text(errMsg).show();
 			}
 		},
 		//检核输入的值
-		//成功返回true
+		//错误返回false，成功返回格式化后的字符
 		_checkEditItemValue:function(colName,val){
-			return true;
+			switch (this._options.columns[colName].colType){
+				case 'date':
+					return this._checkDate(val);
+				case 'datetime':
+					return this._checkDateTime(val);
+				default:
+					return val;
+			}
 		},
 		//=========================end edit trigger============================
 		
@@ -2266,7 +2353,7 @@ var $testDM;
 			$('.alert',$el).text(msg||$[_pluginName].regional.loadingTxt);
 			if(el!==this._curLoading){
 				this._hideLoading(this._curLoading);
-				delay=delay||this._options._loadingDelay;
+				delay=delay||this._options.loadingDelay;
 				this._loadingDelay || (this._loadingDelay=setTimeout(function(){$el.show();},delay));
 			}
 			this._curLoading=el;
