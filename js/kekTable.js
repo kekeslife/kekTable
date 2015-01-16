@@ -2069,9 +2069,9 @@ var $testDM;
 			var regional=$[_pluginName].regional,
 				def,setItems,
 				that=this,
-				valPassed=this._checkEditItemValue(colName,val);
-			if(valPassed){
-				this._tableValues.editRecord[colName]=valPassed;
+				valFormat=this._checkEditItemValue(colName,val);
+			if(valFormat.result){
+				this._tableValues.editRecord[colName]=valFormat.val;
 				if(that._options.columns[colName].afterChange){
 					def=this._eventDefer(function(v,d){setItems=that._options.columns[colName].afterChange(v,d);},
 						//error function
@@ -2105,21 +2105,26 @@ var $testDM;
 				}
 			}
 			else{
-				var errMsg=(that._options.columns[colName].editTitle||colName)+':';
+				var errMsg=(that._options.columns[colName].editTitle||colName)+':'+valFormat.val;
 				that._elements.edit.$block.find('[data-col="'+colName+'"]').val(val).parents('.form-group').addClass('has-error').attr('title',errMsg);
 				that._elements.edit.$dialog.find('.modal-footer .alert').text(errMsg).show();
 			}
 		},
 		//检核输入的值
-		//错误返回false，成功返回格式化后的字符
+		//返回{result:true or false,val:'formatValue or errMsg'}
 		_checkEditItemValue:function(colName,val){
+			var res={result:true,val:val},regional=$[_pluginName].regional;
 			switch (this._options.columns[colName].colType){
 				case 'date':
-					return this._checkDate(val);
+					res.val=this._checkDate(val);
+					res.val==false && (res.result=false) || (res.val=regional.errDateFormat);
+					return res;
 				case 'datetime':
-					return this._checkDateTime(val);
+					res.val=this._checkDateTime(val);
+					res.val==false && (res.result=false) || (res.val=regional.errDateTimeFormat);
+					return res;
 				default:
-					return val;
+					return res;
 			}
 		},
 		//=========================end edit trigger============================
