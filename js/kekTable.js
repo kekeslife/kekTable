@@ -527,6 +527,7 @@ var $testDM;
 		this._loadingDelay=null;
 		//当前画面上显示的是哪个遮罩'list'、'edit'
 		this._curLoading=null;
+		this._tablesId=[];
 		//显示栏位['empNo','empName']
 		this._listCols=[];
 		//编辑栏位
@@ -595,7 +596,7 @@ var $testDM;
 				console.warn('未开启isCollapse，不用设置collapseExpanded');
 			//toolbar
 			if(!opt.toolbar || opt.toolbar.length===0)
-				console.log('未开启工具栏');
+				console.warn('未开启工具栏');
 			else{
 				if($.type(opt.toolbar)!=='array')
 					throw 'toolbar必需是数组';
@@ -779,6 +780,10 @@ var $testDM;
 							throw colName+'有重复的listIndex';
 		      			that._listCols[val]=colName;
 		      		}
+		      		else if(prop==='tableId' && val != null){
+		      			if($.inArray(that._tablesId,val)===-1)
+							that._tablesId.push(val);
+		      		}
 		      		else if(prop==='editIndex' && val != null){
 		      			if(that._editCols[val])
 							throw colName+'有重复的editIndex';
@@ -849,6 +854,7 @@ var $testDM;
 		 *         Pagging
 		 *   Loading
 		 * 	 Alert
+		 * 	 Confirm
 		 * 	 Search
 		 * 	 Edit
 		 * 	 Sort
@@ -858,6 +864,7 @@ var $testDM;
 			$frag.append(this._createPlugin_panel())
 				 .append(this._createPlugin_loading())
 				 .append(this._createPlugin_alert())
+				 .append(this._createPlugin_confirm())
 				 .append(this._createPlugin_search())
 				 .append(this._createPlugin_edit())
 				 .append(this._createPlugin_sort());
@@ -1136,6 +1143,11 @@ var $testDM;
 			return this._elements.$alert=$('<div class="modal fade" data-backdrop="static" tabindex="-1" style="z-index:2000"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
 				$[_pluginName].regional.alertTitle+'</h4></div><div class="modal-body"><p></p></div></div></div></div>');
 		},
+		_createPlugin_confirm:function(el){
+			var regional=$[_pluginName].regional;
+			return this._elements.$confirm=$('<div class="modal fade" data-backdrop="static" tabindex="-1" style="z-index:2000"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button><h4 class="modal-title">'+
+				$[_pluginName].regional.alertTitle+'</h4></div><div class="modal-body"><p>'+regional.deleteConfirm+'</p></div><div class="modal-footer"><button class="btn btn-primary">'+regional.buttonOk+'</button><button class="btn btn-default" data-dismiss="modal">'+regional.buttonCancel+'</button></div></div></div></div>');
+		},
 		_createPlugin_search:function(){
 			if(this._hasTool.search){
 				var regional=$[_pluginName].regional;
@@ -1362,9 +1374,16 @@ var $testDM;
 			d.resolve('_edit');
 		},
 		_delete:function(v,d){
-			this._elements.$editLoading.show();
-			d.resolve('_delete');
-			//something...
+			var that=this;
+			if(!this._curRecordNum)
+				d.reject($[_pluginName].regional.errSelected);
+			else{
+				this._elements.$confirm.off('click.'+_pluginName,'.modal-footer .btn-primary');
+				this._elements.$confirm.off('click.'+_pluginName,'.modal-footer .btn-default');
+				this._elements.$confirm.on('click.'+_pluginName,'.modal-footer .btn-primary',function(){that._deleteRecord(d)});
+				this._elements.$confirm.on('click.'+_pluginName,'.modal-footer .btn-default',function(){d.resolve()});
+				this._elements.$confirm.modal('show');
+			}
 		},
 		_export:function(v,d){
 			d.resolve('_export');
@@ -1391,19 +1410,27 @@ var $testDM;
 		 * @summary 读取数据
 		 */
 		_loadData:function(d){
-			var colsId=[],that=this,cols=this._options.columns;
+			var colsId=[],that=this,cols=this._options.columns,sorts=[],search=[];
+			this._showLoading($[_pluginName].regional.loadData);
 			//colsId
 			$.each(this._dbCols, function(i,colName) {
-				colsId.push(cols[colName].ColsId);
+				colsId.push(cols[colName].colId);
 			});
-			this._showLoading($[_pluginName].regional.loadData);
+			//sortConditions
+			$.each(this._sortConditions, function(i,cond) {
+				sorts.push([cols[cond[0]].colId,cond[1],cond[2]]);
+			});
+			//searchConditions
+			search=$.extend(true,{},that._searchConditions);
+			search=$.map(search,function(c){return [c];});
 			$.get(this._options.listURL,{
 				act:'List',
 				test:Math.random() ,
 				listPars:JSON.stringify({
 					ColsId:colsId,
-					SortConditions:that._sortConditions,
-					SearchConditions:that._searchConditions,
+					TablesId:that._tablesId,
+					SortConditions:sorts,
+					SearchConditions:that._toSearchPost(search),
 					Range:[(that._currentPageNo - 1) * that._options.rowNum,that._currentPageNo* that._options.rowNum],
 					Relations:that._options.tableRelations
 				})
@@ -1581,6 +1608,13 @@ var $testDM;
 					});
 		},
 		//==============end读取资料=============
+		//删除记录
+		_deleteRecord:function(d){
+			var that=this;
+			this._elements.$confirm.modal('hide');
+			setTimeout(function(){d.reject();},2000);
+		},
+		
 		//事件
 		_registEvents:function(){
 			var that=this;
@@ -1757,7 +1791,6 @@ var $testDM;
 						that._elements.search.$dialog.find('.modal-footer .alert').text(err).show();
 					else{
 						that._elements.search.$dialog.find('.modal-footer .alert').hide();
-						console.log(that._searchConditions);
 					}
 				});
 			}
@@ -1815,7 +1848,6 @@ var $testDM;
 						var data=$(li).data();
 						that._sortConditions.push([data.col,$.inArray(data.type,['ASC','DESC'])===-1?'ASC':data.type ,$.inArray(data.nulls,['NULLS FIRST','NULLS LAST'])===-1?'NULLS FIRST':data.nulls]);
 					});
-					console.log(that._sortConditions);
 				});
 				
 			}
@@ -1828,7 +1860,6 @@ var $testDM;
 					$.whenAll.apply($,deferreds)
 							 .always(function(){
 								that._hideLoading('edit');
-								console.log('editItemChangeTriggered',that._tableValues);
 							 });
 				});
 				this._elements.edit.$block.on('focus.'+_pluginName,'[data-col]',function(){
@@ -1953,7 +1984,6 @@ var $testDM;
 							var defs=[],
 								d=$.Deferred();
 							deferreds.push(d);
-							console.log(lovCols[i],$(this).text());
 							that._editItemChange(lovCols[i],$(this).text(),defs);
 							$.whenAll.apply($,defs)
 								 .always(function(){
@@ -1972,11 +2002,13 @@ var $testDM;
 					if(errs.length)
 						that._elements.edit.$dialog.find('.modal-footer .alert').text(errs.attr('title')).show();
 					else{
-						console.log(that._tableValues.editRecord);
 						that._elements.edit.$dialog.modal('hide');
 					}
 				})
 			}
+			//confirm
+			
+			
 			
 			//search itemValue date
 //			this._elements.search.$dialog.on('blur','kekTable-date',function(){
@@ -2188,9 +2220,9 @@ var $testDM;
 		},
 		_setSearchDialog_item:function(i,arr){
 			var j=i?1:0,$li=$('<li></li>'),that=this;
-			if($.type(arr[0+j])==='array'){
+			if(arr.child){
 				var $ul=$('<ul class="kekTable-search-block-sub"></ul>');
-				$.each(arr[0+j], function(index,condition) {
+				$.each(arr.child, function(index,condition) {
 					$ul.append(that._setSearchDialog_item(index,condition))
 				});
 				$li.append($ul);
@@ -2198,19 +2230,19 @@ var $testDM;
 			else{
 				$li=$(this._searchAdd_itemFirst());
 				//col
-				$li.children('[data-col]').data('col',arr[j]).text(this._elements.search.$col.children('li[data-col="'+arr[j]+'"]').text());
+				$li.children('[data-col]').data('col',arr.col).text(this._elements.search.$col.children('li[data-col="'+arr.col+'"]').text());
 				//opt
-				$li.children('[data-opt]').data('opt',arr[j+1]).text(this._elements.search.$operator.children('li[data-opt="'+arr[j+1]+'"]').text());
+				$li.children('[data-opt]').data('opt',arr.opt).text(this._elements.search.$operator.children('li[data-opt="'+arr.opt+'"]').text());
 				//val
-				if($.inArray(arr[j+1],['isnull','notnull'])===-1)
-					$li.children('.kekTable-search-itemValue').val(arr[j+2]);
+				if($.inArray(arr.opt,['isnull','notnull'])===-1)
+					$li.children('.kekTable-search-itemValue').val(arr.val);
 				else
 					$li.children('.kekTable-search-itemValue').attr('readonly','readonly');
 			}
 			//bool
 			if(j){
 				var $bool=$(this._searchAdd_bool());
-				$bool.data('bool',arr[0]).text(this._elements.search.$bool.children('li[data-bool="'+arr[0]+'"]').text());
+				$bool.data('bool',arr.bool).text(this._elements.search.$bool.children('li[data-bool="'+arr.bool+'"]').text());
 				$li.prepend($bool);
 			}
 			return $li;
@@ -2224,18 +2256,19 @@ var $testDM;
 			var $li=this._elements.search.$block.children('li'),arr=[];
 			for(var i=0,j=$li.length;i<j;i++){
 				var li=this._getSearchDialog_item($($li[i]));
-				if($.type(li)!=='array') {
+				if($.type(li)!=='object') {
 					//this._elements.search.$dialog.find('.modal-footer .alert').show();
 					return li;
 				}
 				arr.push(li);
 			}
 			this._searchConditions=arr;
+			console.log(arr);
 			return false;
 		},
 		//生成查询条件一位数组
 		_getSearchDialog_item: function($li) {
-			var arr = [],col,opt,val,bool,nullOpt,sub,
+			var arr = {},col,opt,val,bool,nullOpt,sub,
 				regional=$[_pluginName].regional,
 				index=$li.index(),
 				$col = $li.children('[data-col]'),
@@ -2291,9 +2324,9 @@ var $testDM;
 					}
 					$li.removeClass('has-error');
 				}
-				arr[0] = col;
-				arr[1] = opt;
-				!nullOpt && (arr[2]=val);
+				arr.col = col;
+				arr.opt = opt;
+				!nullOpt && (arr.val=val);
 			}
 			else{
 				if(!$sub.length)
@@ -2304,14 +2337,39 @@ var $testDM;
 					if($.type(subRet)==='string') return subRet;
 					sub.push(subRet);
 				}
-				arr.push(sub);
+				arr.child=sub;
 			}
 			if(index>0){
 				if(!$bool.length)
 					return regional.searchErr;
-				arr.unshift($bool.data('bool'));
+				arr.bool=$bool.data('bool');
 			}
 			return arr;
+		},
+		//将_searchCondigions转换为供ajax的参数(将colName转成colId)
+		_toSearchPost:function(conditions){
+			var that=this;
+			$.each(conditions, function(i,condition) {
+				that._toSearchPostItem(i,condition);
+			});
+			return conditions;
+		},
+		//将_searchCondigion转换为供ajax的参数(将colName转成colId)
+		//i:searchConditions下标
+		//condition:searchConditions中的项
+		_toSearchPostItem:function(i,condition){
+			var colIndex=i?1:0;
+			if($.type(condition[colIndex])==='array')
+				this._toSearchPost(condition[colIndex]);
+			else{
+				var col=this._options.columns[condition[colIndex]];
+				if(col)
+					condition[colIndex]=col.colId;
+				else{
+					this._showAlert($[_pluginName].regional.processErr);
+					throw '_toSearchPostItem:'+condition[colIndex];
+				}
+			}
 		},
 		//===========================end searchDialog转换======================
 		//将字符串转换为date(yyyy/mm/dd)，异常返回false
@@ -2556,6 +2614,10 @@ var $testDM;
 		 */
 		errDateTimeFormat:'日期格式错误(2014/01/01 23:59:02)',
 		/**
+		 * @var {string} Plugin#regional#errSelected - 必须要选择一行
+		 */
+		errSelected:'請先選取一行',
+		/**
 		 * @var {string} Plugin#regional#searchBoolAnd - 查询框[布尔条件的AND]文字说明
 		 */
 		searchBoolAnd:'且',
@@ -2652,6 +2714,10 @@ var $testDM;
 		 */
 		buttonCancel:'取消',
 		/**
+		 * @var {string} Plugin#regional#buttonOk - 确定按钮文字
+		 */
+		buttonOk:'確定',
+		/**
 		 * @var {string} Plugin#regional#totalSum - 总计公式[SUM]的文字
 		 */
 		totalSUM:'总和',
@@ -2735,6 +2801,10 @@ var $testDM;
 		 * @var {string} Plugin#regional#loadList - list,lov遮罩显示文字
 		 */
 		loadList:'正在刷新列表...',
+		/**
+		 * @var {string} Plugin#regional#deleteConfirm - 删除提示
+		 */
+		deleteConfirm:'確定刪除？',
 		/**
 		 * @var {string} Plugin#regional#loadDataErr - 读取资料异常的文字
 		 */
