@@ -1418,11 +1418,11 @@ var $testDM;
 			});
 			//sortConditions
 			$.each(this._sortConditions, function(i,cond) {
-				sorts.push([cols[cond[0]].colId,cond[1],cond[2]]);
+				sorts.push($.extend(true, {}, cond,{col:cols[cond.col].colId}));
 			});
-			//searchConditions
-			search=$.extend(true,{},that._searchConditions);
-			search=$.map(search,function(c){return [c];});
+//			//searchConditions
+//			search=$.extend(true,{},that._searchConditions);
+//			search=$.map(search,function(c){return [c];});
 			$.get(this._options.listURL,{
 				act:'List',
 				test:Math.random() ,
@@ -1430,7 +1430,8 @@ var $testDM;
 					ColsId:colsId,
 					TablesId:that._tablesId,
 					SortConditions:sorts,
-					SearchConditions:that._toSearchPost(search),
+					//SearchConditions:that._toSearchPost(search),
+					SearchConditions:that._searchConditions,
 					Range:[(that._currentPageNo - 1) * that._options.rowNum,that._currentPageNo* that._options.rowNum],
 					Relations:that._options.tableRelations
 				})
@@ -1677,13 +1678,13 @@ var $testDM;
 				this._elements.search.$col.on('click.'+_pluginName,'li',function(){
 					var $this=$(this),
 						$btn=that._elements.search.$col.data('target');
-						//colType=that._options.columns[$this.data('col')].colType,
-						//$itemValue=$btn.nextAll('.kekTable-search-itemValue');
+//						colType=that._options.columns[$this.data('col')].colType,
+//						$itemValue=$btn.nextAll('.kekTable-search-itemValue');
 					$btn.text($this.text()).data('col',$this.data('col'));
-	//				if($.inArray(colType,['number','date'])===-1)
-	//					$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
-	//				else if($.inArray($btn.nextAll('[data-opt]').data('opt'),['eq','gt','lt','ge','le','ne'])!==-1)
-	//					$itemValue.addClass('kekTable-'+colType);
+//					if($.inArray(colType,['number','date'])===-1)
+//						$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
+//					else if($.inArray($btn.nextAll('[data-opt]').data('opt'),['eq','gt','lt','ge','le','ne'])!==-1)
+//						$itemValue.addClass('kekTable-'+colType);
 					that._elements.search.$col.hide();
 				});
 				//search opt-btn
@@ -1716,10 +1717,10 @@ var $testDM;
 						//colType=that._options.columns[$btn.prevAll('[data-col]').data('col')].colType,
 						$itemValue=$btn.nextAll('.kekTable-search-itemValue');
 					$btn.text($this.text()).data('opt',$this.data('opt'));
-	//				if($.inArray($this.data('opt'),['eq','gt','lt','ge','le','ne'])===-1)
-	//					$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
-	//				else if($.inArray(colType,['number','date'])!==-1)
-	//					$itemValue.addClass('kekTable-'+colType);
+//					if($.inArray($this.data('opt'),['eq','gt','lt','ge','le','ne'])===-1)
+//						$itemValue.removeClass('kekTable-number').removeClass('kekTable-date');
+//					else if($.inArray(colType,['number','date'])!==-1)
+//						$itemValue.addClass('kekTable-'+colType);
 					if($.inArray($this.data('opt'),['isnull','notnull'])===-1)
 						$itemValue.attr('readonly',null);
 					else
@@ -1784,6 +1785,27 @@ var $testDM;
 					$btn.text($this.text()).data('bool',$this.data('bool'));
 					that._elements.search.$bool.hide();
 				});
+				//search value
+				this._elements.search.$block.on('blur.'+_pluginName,'.kekTable-search-itemValue',function(){
+					var $this=$(this),$opt=$this.prevAll('[data-opt]'),$col=$this.prevAll('[data-col]');
+					if($.inArray($opt.data('opt'),['eq','gt','lt','ge','le','ne'])!==-1){
+						var format=that._checkEditItemValue($col.data('col'),$this.val());
+						if(format.result){
+							$this.val(format.val);
+							$this.parent().removeClass('has-error');
+							that._elements.search.$dialog.find('.modal-footer .alert').hide();
+						}
+						else{
+							$this.parent().addClass('has-error');
+							$this.focus();
+							that._elements.search.$dialog.find('.modal-footer .alert').text(format.val).show();
+						}
+					}
+					else{
+						$this.parent().removeClass('has-error');
+						that._elements.search.$dialog.find('.modal-footer .alert').hide();
+					}
+				});
 				//search commit
 				this._elements.search.$dialog.on('click.'+_pluginName,'.modal-footer .btn-primary',function(){
 					var err=that._getSearchDialog();
@@ -1846,7 +1868,7 @@ var $testDM;
 					that._sortConditions.length=0;
 					that._elements.sort.$block.children('li').each(function(i,li){
 						var data=$(li).data();
-						that._sortConditions.push([data.col,$.inArray(data.type,['ASC','DESC'])===-1?'ASC':data.type ,$.inArray(data.nulls,['NULLS FIRST','NULLS LAST'])===-1?'NULLS FIRST':data.nulls]);
+						that._sortConditions.push({Col:data.col,Type:$.inArray(data.type,['ASC','DESC'])===-1?'ASC':data.type ,Nulls:$.inArray(data.nulls,['NULLS FIRST','NULLS LAST'])===-1?'NULLS FIRST':data.nulls});
 					});
 				});
 				
@@ -2058,10 +2080,14 @@ var $testDM;
 		//查询删除条件
 		//$btn:ctrl按钮
 		_searchCtrl_del:function($btn){
-			var $li=$btn.parent(),index=$li.index();
-			if($li.index()===0)
-				$li.next().children('[data-bool]').remove();
-			$li.remove();
+			var $li=$btn.parent(),$ul=$li.parent(),index=$li.index();
+			if($ul.hasClass('kekTable-search-block-sub') && $ul.children().length==1)
+				$ul.parent().remove();
+			else{
+				if($li.index()===0)
+					$li.next().children('[data-bool]').remove();
+				$li.remove();
+			}
 		},
 		//添加第一个条件 (search-itemValue have data-col)
 		_searchAdd_itemFirst:function(){
@@ -2149,11 +2175,11 @@ var $testDM;
 			switch (this._options.columns[colName].colType){
 				case 'date':
 					res.val=this._checkDate(val);
-					res.val==false && (res.result=false) || (res.val=regional.errDateFormat);
+					res.val===false && ((res.result=false) || (res.val=regional.errDateFormat));
 					return res;
 				case 'datetime':
 					res.val=this._checkDateTime(val);
-					res.val==false && (res.result=false) || (res.val=regional.errDateTimeFormat);
+					res.val===false && ((res.result=false) || (res.val=regional.errDateTimeFormat));
 					return res;
 				default:
 					return res;
@@ -2186,12 +2212,12 @@ var $testDM;
 				that=this;
 			that._elements.sort.$ctrl.find('.kekTable-dropList li.disabled').removeClass('disabled');
 			$.each(arr, function(i,data) {
-				var $colLi=that._elements.sort.$ctrl.find('.kekTable-dropList li[data-col="'+data[0]+'"]'),
+				var $colLi=that._elements.sort.$ctrl.find('.kekTable-dropList li[data-col="'+data.Col+'"]'),
 					$li=$('<li />')
 						.addClass('list-group-item')
 						.text($colLi.text())
-						.data('col',data[0]).data('type',data[1]).data('nulls',data[2])
-						.append('<span class="glyphicon '+(data[1]==='ASC'?'glyphicon-sort-by-attributes':'glyphicon-sort-by-attributes-alt')+' pull-right"></span>');
+						.data('col',data.Col).data('type',data.Type).data('nulls',data.Nulls)
+						.append('<span class="glyphicon '+(data.Type==='ASC'?'glyphicon-sort-by-attributes':'glyphicon-sort-by-attributes-alt')+' pull-right"></span>');
 				$df.append($li);
 				$colLi.addClass('disabled');
 			});
@@ -2220,29 +2246,29 @@ var $testDM;
 		},
 		_setSearchDialog_item:function(i,arr){
 			var j=i?1:0,$li=$('<li></li>'),that=this;
-			if(arr.child){
+			if(arr.Child){
 				var $ul=$('<ul class="kekTable-search-block-sub"></ul>');
-				$.each(arr.child, function(index,condition) {
+				$.each(arr.Child, function(index,condition) {
 					$ul.append(that._setSearchDialog_item(index,condition))
 				});
-				$li.append($ul);
+				$li.append($ul).append(this._searchAdd_ctrl());
 			}
 			else{
 				$li=$(this._searchAdd_itemFirst());
 				//col
-				$li.children('[data-col]').data('col',arr.col).text(this._elements.search.$col.children('li[data-col="'+arr.col+'"]').text());
+				$li.children('[data-col]').data('col',arr.Col).text(this._elements.search.$col.children('li[data-col="'+arr.Col+'"]').text());
 				//opt
-				$li.children('[data-opt]').data('opt',arr.opt).text(this._elements.search.$operator.children('li[data-opt="'+arr.opt+'"]').text());
+				$li.children('[data-opt]').data('opt',arr.Opt).text(this._elements.search.$operator.children('li[data-opt="'+arr.Opt+'"]').text());
 				//val
-				if($.inArray(arr.opt,['isnull','notnull'])===-1)
-					$li.children('.kekTable-search-itemValue').val(arr.val);
+				if($.inArray(arr.Opt,['isnull','notnull'])===-1)
+					$li.children('.kekTable-search-itemValue').val(arr.Val);
 				else
 					$li.children('.kekTable-search-itemValue').attr('readonly','readonly');
 			}
 			//bool
 			if(j){
 				var $bool=$(this._searchAdd_bool());
-				$bool.data('bool',arr.bool).text(this._elements.search.$bool.children('li[data-bool="'+arr.bool+'"]').text());
+				$bool.data('bool',arr.Bool).text(this._elements.search.$bool.children('li[data-bool="'+arr.Bool+'"]').text());
 				$li.prepend($bool);
 			}
 			return $li;
@@ -2263,7 +2289,6 @@ var $testDM;
 				arr.push(li);
 			}
 			this._searchConditions=arr;
-			console.log(arr);
 			return false;
 		},
 		//生成查询条件一位数组
@@ -2300,33 +2325,41 @@ var $testDM;
 						return regional.errNull;
 					}
 					if($.inArray(opt,['beg','end','like'])===-1){
-						//日期格式
-						if(this._options.columns[col].colType==='date'){
-							var valFormat=this._checkDate(val);
-							if(!valFormat ){
-								$li.addClass('has-error');
-								$val.focus();
-								return regional.errDateFormat;
-							}
-							$val.val(valFormat);
-							val=valFormat;
+						var valFormat=this._checkEditItemValue(col,val);
+						if(!valFormat.result){
+							$li.addClass('has-error');
+							$val.focus();
+							return valFormat.val;
 						}
-						else if(this._options.columns[col].colType==='datetime'){
-							var valFormat=this._checkDateTime(val);
-							if(!valFormat ){
-								$li.addClass('has-error');
-								$val.focus();
-								return regional.errDateTimeFormat;
-							}
-							$val.val(valFormat);
-							val=valFormat;
-						}
+						$val.val(valFormat.val);
+						val=valFormat.val;
+//						//日期格式
+//						if(this._options.columns[col].colType==='date'){
+//							var valFormat=this._checkDate(val);
+//							if(!valFormat ){
+//								$li.addClass('has-error');
+//								$val.focus();
+//								return regional.errDateFormat;
+//							}
+//							$val.val(valFormat);
+//							val=valFormat;
+//						}
+//						else if(this._options.columns[col].colType==='datetime'){
+//							var valFormat=this._checkDateTime(val);
+//							if(!valFormat ){
+//								$li.addClass('has-error');
+//								$val.focus();
+//								return regional.errDateTimeFormat;
+//							}
+//							$val.val(valFormat);
+//							val=valFormat;
+//						}
 					}
 					$li.removeClass('has-error');
 				}
-				arr.col = col;
-				arr.opt = opt;
-				!nullOpt && (arr.val=val);
+				arr.Col = col;
+				arr.Opt = opt;
+				!nullOpt && (arr.Val=val);
 			}
 			else{
 				if(!$sub.length)
@@ -2337,12 +2370,12 @@ var $testDM;
 					if($.type(subRet)==='string') return subRet;
 					sub.push(subRet);
 				}
-				arr.child=sub;
+				arr.Child=sub;
 			}
 			if(index>0){
 				if(!$bool.length)
 					return regional.searchErr;
-				arr.bool=$bool.data('bool');
+				arr.Bool=$bool.data('bool');
 			}
 			return arr;
 		},
@@ -2358,16 +2391,59 @@ var $testDM;
 		//i:searchConditions下标
 		//condition:searchConditions中的项
 		_toSearchPostItem:function(i,condition){
-			var colIndex=i?1:0;
-			if($.type(condition[colIndex])==='array')
-				this._toSearchPost(condition[colIndex]);
+			if(condition.Child)
+				this._toSearchPost(condition.Child);
 			else{
-				var col=this._options.columns[condition[colIndex]];
+				var col=this._options.columns[condition.Col];
+				//col
 				if(col)
-					condition[colIndex]=col.colId;
+					condition.Col=col.colId;
 				else{
 					this._showAlert($[_pluginName].regional.processErr);
-					throw '_toSearchPostItem:'+condition[colIndex];
+					throw '_toSearchPostItem:'+condition.Col;
+				}
+				//opt val
+				switch (condition.Opt){
+					case 'eq':
+						condition.Opt='=';
+						break;
+					case 'gt':
+						condition.Opt='>';
+						break;
+					case 'lt':
+						condition.Opt='<';
+						break;
+					case 'ge':
+						condition.Opt='>=';
+						break;
+					case 'le':
+						condition.Opt='<=';
+						break;
+					case 'ne':
+						condition.Opt='<>';
+						break;
+					case 'beg':
+						condition.Opt='LIKE';
+						condition.Val+='%';
+						break;
+					case 'end':
+						condition.Opt='LIKE';
+						condition.Val='%'+condition.Val;
+						break;
+					case 'like':
+						condition.Opt='LIKE';
+						condition.Val='%'+condition.Val+'%';
+						break;
+					case 'isnull':
+						condition.Opt='IS NULL';
+						break;
+					case 'notnull':
+						condition.Opt='IS NOT NULL';
+						break;
+					default:
+						this._showAlert($[_pluginName].regional.processErr);
+						throw '_toSearchPostItem:无此符号 '+condition.Opt;
+						break;
 				}
 			}
 		},
