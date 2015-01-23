@@ -1410,7 +1410,7 @@ var $testDM;
 		 * @summary 读取数据
 		 */
 		_loadData:function(d){
-			var colsId=[],that=this,cols=this._options.columns,sorts=[],search=[];
+			var colsId=[],that=this,cols=this._options.columns,sorts=[],search=[],summary=[];
 			this._showLoading($[_pluginName].regional.loadData);
 			//colsId
 			$.each(this._dbCols, function(i,colName) {
@@ -1421,8 +1421,13 @@ var $testDM;
 				sorts.push($.extend(true, {}, cond,{col:cols[cond.col].colId}));
 			});
 //			//searchConditions
-//			search=$.extend(true,{},that._searchConditions);
-//			search=$.map(search,function(c){return [c];});
+			search=$.extend(true,{},that._searchConditions);
+			search=$.map(search,function(c){return [c];});
+			//summaryCols
+			$.each(this._summaryCols, function(i,colName) {
+				var col=that._options.columns[colName];
+				summary.push({Col:col.colId,Mode:col.colTotalSummary,IsAll:col.colTotalAll});
+			});
 			$.get(this._options.listURL,{
 				act:'List',
 				test:Math.random() ,
@@ -1430,8 +1435,8 @@ var $testDM;
 					ColsId:colsId,
 					TablesId:that._tablesId,
 					SortConditions:sorts,
-					//SearchConditions:that._toSearchPost(search),
-					SearchConditions:that._searchConditions,
+					SearchConditions:that._toSearchPost(search),
+					Summary:summary,
 					Range:[(that._currentPageNo - 1) * that._options.rowNum,that._currentPageNo* that._options.rowNum],
 					Relations:that._options.tableRelations
 				})
