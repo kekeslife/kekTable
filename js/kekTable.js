@@ -6,9 +6,9 @@
  * @description 表格插件 
  * @namespace kekTable
  */
-var $testDM;
 (function($,window,document,undefined){
 	'use strict';
+    //region   ====================默认配置====================
 	/**
 	 * @var {string} kekTable~_pluginName
 	 * @default 'kekTable'
@@ -331,7 +331,7 @@ var $testDM;
 			detailKeyId:null,
 			/**
 			 * @function _column#beforeGetValue
-			 * @desc 栏位读取(显示)数据之前的自定义操作。必需要写d.resolve('将要显示的文字或HTML，curPageRecords将保存text')或者d.reject('将会产生提示框')
+			 * @desc 栏位读取(显示)数据之前的自定义操作。必需要写d.resolve('将要显示的文字或HTML，非数据库栏位的curPageRecords将保存text')或者d.reject('将会产生提示框')
 			 * @param {object <colEntity>} tableValues - 该行的数据
 			 * @param {$.Deferred} defer - deferred对象,d.reject()将停止事件,d.resolve()将继续执行。
 			 * @example ajax
@@ -354,8 +354,8 @@ var $testDM;
 			afterChange:null,
 			
 		};
-	
-	//=======================扩展==========================
+	//endregion====================默认配置====================
+	//region   =====================JS扩展=====================
 	//ie bind
 	if (!Function.prototype.bind) {
         Function.prototype.bind = function (obj) {
@@ -405,8 +405,8 @@ var $testDM;
 			fails?deferred.reject():deferred.resolveWith( resolveContexts, resolveValues );
 		return deferred.promise();
 	};
-	//====================end 扩展==========================		
-		
+	//endregion=====================JS扩展=====================
+	//region   ====================构造函数====================
 	/**
 	 * @constructor Plugin
 	 * @param {jQuery} element - jQUery对象
@@ -481,7 +481,7 @@ var $testDM;
 		 * @desc 插件的配置参数
 		 * @type {kekTable~_options}
 		 */
-		this._options=$.extend(true,{}, _options,options);
+		this._options=$.extend({}, _options,options);
 		/**
 		 * @name Plugin~_pluginName
 		 * @desc 插件名称
@@ -500,11 +500,11 @@ var $testDM;
 //				tableStatus:this._tableStatus
 //			}
 //		};
-		this._tableValues={
-			curRecord:null,//this._curPageRecords?this._curPageRecords[this._curRecordNum-1]:null,
-			tableStatus:null,
-			editRecord:null
-		};
+//		this._tableValues={
+//			curRecord:null,//this._curPageRecords?this._curPageRecords[this._curRecordNum-1]:null,
+//			tableStatus:null,
+//			editRecord:null
+//		};
 		/**
 		 * @name Plugin~_colEntity
 		 * @desc 字段实体类(curPageRecords[0]=new _colEntity())
@@ -544,6 +544,8 @@ var $testDM;
 		this._curRecordNum=null;
 		//表格狀態，一般為__toolbarIte.id
 		this._tableStatus=null;
+        //新增、修改的数据
+        this._editRecord=null;
 		//排序条件
 		this._sortConditions=null;
 		//查询条件
@@ -553,17 +555,33 @@ var $testDM;
 		this._registEvents();
 		
 	}
-	/**
+    //endregion====================构造函数====================
+    //region   ======================原型======================
+    /**
 	 * @augments Plugin
 	 */
 	Plugin.prototype={
 		//内部方法
+        //region   =====================初始化=====================
 		//插件初始化 this=Plugin
 		_init:function(){
+            var that=this;
 			this._adjustOptions();
 			if(this._options.isDebug)
 				this._debug();
 			this._createPlugin();
+            if(this._options.autoLoad){
+                this._deferredsFlow(
+                    [this._createDeferred(this._loadData,null)],
+                    null,
+                    function(v){
+                        that._showState(v?v:$[_pluginName].regional.toolbarRefresh + $[_pluginName].regional.eventFail,'danger');
+                    },
+                    function(v){
+                        that._hideLoading();
+                    }
+                );
+            }
 			this._tableStatus='init';
 		},
 		//检核参数配置
@@ -771,6 +789,7 @@ var $testDM;
 						str=str+'this.'+colName+'=null;';
 					});
 					return str+'}'})());
+            this._curPageRecords=[];
 			//columns
 			$.each(opt.columns,function(colName,colObj){
 				colObj=$.extend(true,{},_column, colObj);
@@ -781,7 +800,7 @@ var $testDM;
 		      			that._listCols[val]=colName;
 		      		}
 		      		else if(prop==='tableId' && val != null){
-		      			if($.inArray(that._tablesId,val)===-1)
+		      			if($.inArray(val,that._tablesId)===-1)
 							that._tablesId.push(val);
 		      		}
 		      		else if(prop==='editIndex' && val != null){
@@ -839,8 +858,9 @@ var $testDM;
 			this._searchConditions=opt.defaultSearch || [];
 			//something...
 		},
-		/**==========建立插件==========
-		 * Plugin
+        //endregion=====================初始化=====================
+		//region   ====================建立插件====================
+		/** Plugin
 		 *   Panel
 		 *     Head
 		 * 		 H3
@@ -930,72 +950,70 @@ var $testDM;
 		},
 		_createTool_refresh:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarRefresh+'"><span class="glyphicon glyphicon-refresh"></span><span>'+$[_pluginName].regional.toolbarRefresh+'</span></span>');
-			$el.click(function(){
-				that._tableValues.tableStatus='refresh';
-				that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
-			});
+			$el.click(function(){that._refresh()});
 			return $el;
 		},
 		_createTool_search:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSearch+'"><span class="glyphicon glyphicon-search"></span><span>'+$[_pluginName].regional.toolbarSearch+'</span></span>');
 			$el.click(function(){
-				that._tableValues.tableStatus='search';
-				that._toolbarEvent(that._options.beforeSearch,that._search,that._options.afterSearch);
+				that._search();
 			});
 			return $el;
 		},
 		_createTool_sort:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarSort+'"><span class="glyphicon glyphicon-sort"></span><span>'+$[_pluginName].regional.toolbarSort+'</span></span>');
 			$el.click(function(){
-				that._tableValues.tableStatus='sort';
-				that._toolbarEvent(that._options.beforeSort,that._sort,that._options.afterSort);
+				that._sort();
 			});
 			return $el;
 		},
 		_createTool_add:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarAdd+'"><span class="glyphicon glyphicon-plus"></span><span>'+$[_pluginName].regional.toolbarAdd+'</span></span>');
 			$el.click(function(){
-				that._tableValues.tableStatus='add';
-				that._tableValues.editRecord={};
-				that._toolbarEvent(that._options.beforeAdd,that._add,that._options.afterAdd);
+				that._add();
 			});
 			return $el;
 		},
 		_createTool_edit:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarEdit+'"><span class="glyphicon glyphicon-edit"></span><span>'+$[_pluginName].regional.toolbarEdit+'</span></span>');
 			$el.click(function(){
-				that._tableValues.tableStatus='edit';
-				//init editRecord
-				var curRec=that._tableValues.curRecord;
-				that._tableValues.editRecord={};
-				$.each(that._editCols, function(i,colName) {
-					that._tableValues.editRecord[colName]=curRec[colName];
-				});
-				that._toolbarEvent(that._options.beforeEdit,that._edit,that._options.afterEdit);
+				that._edit();
 			});
 			return $el;
 		},
 		_createTool_delete:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarDelete+'"><span class="glyphicon glyphicon-minus"></span><span>'+$[_pluginName].regional.toolbarDelete+'</span></span>');
 			$el.click(function(){
-				that._tableValues.tableStatus='delete';
-				that._toolbarEvent(that._options.beforeDelete,that._delete,that._options.afterDelete);
+				that._delete();
 			});
 			return $el;
 		},
 		_createTool_export:function(){
 			var that=this, $el=$('<span class="btn btn-default" title="'+$[_pluginName].regional.toolbarExport+'"><span class="glyphicon glyphicon-export"></span><span>'+$[_pluginName].regional.toolbarExport+'</span></span>');
 			$el.click(function(){
-				that._tableValues.tableStatus='export';
-				that._toolbarEvent(that._options.beforeExport,that._export,that._options.afterExport);
+				that._export();
 			});
 			return $el;
 		},
 		_createTool_custom:function(btn){
 			var that=this, $el=$('<span class="btn btn-default" title="'+(btn.title || btn.label || btn.id)+'"><span class="glyphicon '+(btn.icon || '')+'"></span><span>'+(btn.label || '')+'</span></span>');
 			$el.click(function(){
-				that._tableValues.tableStatus=btn.id;
-				btn.action($.extend(true, {}, that._tableValues));
+				that._tableStatus=btn.id;
+                that._showLoading();
+                that._deferredsFlow(
+                    [
+                        that._createDeferred(that._options['before'+btn.id],that._normalDeferredObject()),
+                        that._createDeferred(btn.action,that._normalDeferredObject()),
+                        that._createDeferred(that._options['after'+btn.id],that._normalDeferredObject())
+                    ],
+                    null,
+                    function(v){
+                        that._showState(v?v:btn.label + $[_pluginName].regional.eventFail,'danger');
+                    },
+                    function(v){
+                        that._hideLoading();
+                    }
+                );
 			});
 			return $el;
 		},
@@ -1331,66 +1349,214 @@ var $testDM;
 			this._elements.sort.$ctrl=$el;
 			return $el;
 		},
-		//==========end建立插件==========
+		//endregion====================建立插件====================
 		
-		//==========工具栏内置功能==========
-		_refresh:function(v,d){
-			this._loadData(d);
-//			ajax.fail(function(){
-//				d.reject()
-//			})
-			//d.resolve('_refresh');
+		//region   ===================工具栏方法===================
+		_refresh:function(){
+            var that=this;
+            this._tableStatus='refresh';
+            this._showLoading();
+            this._deferredsFlow(
+                [
+                    this._createDeferred(this._options.beforeRefresh,null),
+                    this._createDeferred(this._loadData,null),
+                    this._createDeferred(this._options.afterRefresh, $.extend(true,{},{pageRecords:this._curPageRecords,pageNo:this._currentPageNo}))
+                ],
+                function(){
+                    that._showState($[_pluginName].regional.toolbarRefresh + $[_pluginName].regional.eventSuccess);
+                },
+                function(v){
+                    that._showState(v?v:$[_pluginName].regional.toolbarRefresh + $[_pluginName].regional.eventFail,'danger');
+                },
+                function(v){
+                    that._hideLoading();
+                }
+            );
+		},
+		_search:function(){
+            var that=this;
+            this._tableStatus='search';
+            this._showLoading();
+            this._deferredsFlow(
+                [
+                    this._createDeferred(this._options.beforeSearch,null),
+                    this._createDeferred(function(o,d){
+                        try {
+                            that._setSearchDialog(that._searchConditions);
+                            d.resolve();
+                        }
+                        catch(ex){
+                            d.reject();
+                            console.log('searchError',ex);
+                        }
+                    },null),
+                    this._createDeferred(this._options.afterSearch,null),
+                    this._createDeferred(function(o,d){
+                        that._elements.search.$dialog.modal('show');
+                        d.resolve();
+                    },null)
+                ],
+                null,
+                function(v){
+                    that._showState(v?v:$[_pluginName].regional.toolbarSearch + $[_pluginName].regional.eventFail,'danger');
+                },
+                function(v){
+                    that._hideLoading();
+                }
+            );
+		},
+		_sort:function(){
+            var that=this;
+            this._tableStatus='sort';
+            this._showLoading();
+            this._deferredsFlow(
+                [
+                    this._createDeferred(this._options.beforeSort,null),
+                    this._createDeferred(function(o,d){
+                        try {
+                            that._setSortDialog(that._sortConditions);
+                            d.resolve();
+                        }
+                        catch(ex){
+                            d.reject();
+                            console.log('sortError',ex);
+                        }
+                    },null),
+                    this._createDeferred(this._options.afterSort,null),
+                    this._createDeferred(function(o,d){
+                        that._elements.sort.$dialog.modal('show');
+                        d.resolve();
+                    },null)
+                ],
+                null,
+                function(v){
+                    that._showState(v?v:$[_pluginName].regional.toolbarSort + $[_pluginName].regional.eventFail,'danger');
+                },
+                function(v){
+                    that._hideLoading();
+                }
+            );
+		},
+		_add:function(){
+            var that=this;
+            this._tableStatus='add';
+            this._showLoading();
+            this._deferredsFlow(
+                [
+                    this._createDeferred(this._options.beforeAdd,null),
+                    this._createDeferred(function(o,d){
+                        try {
+                            var $block=that._elements.edit.$block;
+                            that._editRecord={};
+                            $('.modal-title',that._elements.edit.$dialog).text($[_pluginName].regional.addTitle);
+                            $.each(that._editCols, function(i,colName) {
+                                $('[data-col="'+colName+'"]',$block).val('');
+                            });
+                            d.resolve();
+                        }
+                        catch(ex){
+                            d.reject();
+                            console.log('addError',ex);
+                        }
+                    },null),
+                    this._createDeferred(this._options.afterAdd,null),
+                    this._createDeferred(function(o,d){
+                        that._elements.edit.$dialog.modal('show');
+                        d.resolve();
+                    },null)
+                ],
+                null,
+                function(v){
+                    that._showState(v?v:$[_pluginName].regional.toolbarAdd + $[_pluginName].regional.eventFail,'danger');
+                },
+                function(v){
+                    that._hideLoading();
+                }
+            );
+		},
+		_edit:function(){
+            var that=this;
+            this._tableStatus='edit';
+            this._showLoading();
+            this._deferredsFlow(
+                [
+                    this._createDeferred(this._options.beforeEdit, this._normalDeferredObject()),
+                    this._createDeferred(function(o,d){
+                        try {
+                            var $block=that._elements.edit.$block,
+                                editRecord=that._editRecord,
+                                curRec=that._curPageRecords[that._curRecordNum];
+                            editRecord={};
+                            $.each(that._editCols, function(i,colName) {
+                                editRecord[colName]=curRec[colName];
+                            });
+                            $('.modal-title',that._elements.edit.$dialog).text($[_pluginName].regional.editTitle);
+                            $.each(that._editCols, function(i,colName) {
+                                $('[data-col="'+colName+'"]',$block).val(editRecord[colName]);
+                            });
+                            d.resolve();
+                        }
+                        catch(ex){
+                            d.reject();
+                            console.log('editError',ex);
+                        }
+                    },null),
+                    this._createDeferred(this._options.afterEdit,this._normalDeferredObject()),
+                    this._createDeferred(function(o,d){
+                        that._elements.edit.$dialog.modal('show');
+                        d.resolve();
+                    },null)
+                ],
+                null,
+                function(v){
+                    that._showState(v?v:$[_pluginName].regional.toolbarEdit + $[_pluginName].regional.eventFail,'danger');
+                },
+                function(v){
+                    that._hideLoading();
+                }
+            );
+		},
+		_delete:function(){
+            var that=this;
+            this._tableStatus='delete';
+            this._showLoading();
+            this._deferredsFlow(
+                [
+                    this._createDeferred(this._options.beforeDelete, this._normalDeferredObject()),
+                    this._createDeferred(function(o,d){
+                        try {
+                            if(!that._curRecordNum)
+                                d.reject($[_pluginName].regional.errSelected);
+                            else{
+                                that._elements.$confirm.off('click.'+_pluginName,'.modal-footer .btn-primary');
+                                that._elements.$confirm.off('click.'+_pluginName,'.modal-footer .btn-default');
+                                that._elements.$confirm.on('click.'+_pluginName,'.modal-footer .btn-primary',function(){that._deleteRecord(d)});
+                                that._elements.$confirm.on('click.'+_pluginName,'.modal-footer .btn-default',function(){d.resolve()});
+                                that._elements.$confirm.modal('show');
+                            }
+                        }
+                        catch(ex){
+                            d.reject();
+                            console.log('deleteError',ex);
+                        }
+                    },null),
+                    this._createDeferred(this._options.afterDelete,this._normalDeferredObject()),
+                ],
+                null,
+                function(v){
+                    that._showState(v?v:$[_pluginName].regional.toolbarDelete + $[_pluginName].regional.eventFail,'danger');
+                },
+                function(v){
+                    that._hideLoading();
+                }
+            );
+		},
+		_export:function(){
+            this._tableStatus='export';
 			//something...
 		},
-		_search:function(v,d){
-			this._setSearchDialog(this._searchConditions);
-			this._elements.search.$dialog.modal('show');
-			d.resolve('_search');
-			//something...
-		},
-		_sort:function(v,d){
-			this._setSortDialog(this._sortConditions);
-			this._elements.sort.$dialog.modal('show');
-			d.resolve('_sort');
-			//something...
-		},
-		_add:function(v,d){
-			var $block=this._elements.edit.$block;
-			$('.modal-title',this._elements.edit.$dialog).text($[_pluginName].regional.addTitle);
-			$.each(this._editCols, function(i,colName) {
-				$('[data-col="'+colName+'"]',$block).val('');
-			});
-			this._elements.edit.$dialog.modal('show');
-			d.resolve('_add');
-		},
-		_edit:function(v,d){
-			var $block=this._elements.edit.$block,
-				editRecord=this._tableValues.editRecord;
-			$('.modal-title',this._elements.edit.$dialog).text($[_pluginName].regional.editTitle);
-			$.each(this._editCols, function(i,colName) {
-				$('[data-col="'+colName+'"]',$block).val(editRecord[colName]);
-			});
-			this._elements.edit.$dialog.modal('show');
-			d.resolve('_edit');
-		},
-		_delete:function(v,d){
-			var that=this;
-			if(!this._curRecordNum)
-				d.reject($[_pluginName].regional.errSelected);
-			else{
-				this._elements.$confirm.off('click.'+_pluginName,'.modal-footer .btn-primary');
-				this._elements.$confirm.off('click.'+_pluginName,'.modal-footer .btn-default');
-				this._elements.$confirm.on('click.'+_pluginName,'.modal-footer .btn-primary',function(){that._deleteRecord(d)});
-				this._elements.$confirm.on('click.'+_pluginName,'.modal-footer .btn-default',function(){d.resolve()});
-				this._elements.$confirm.modal('show');
-			}
-		},
-		_export:function(v,d){
-			d.resolve('_export');
-			//something...
-		},
-		//==========end工具栏内置功能==========
-		//===============读取资料===============
+		//endregion===================工具栏方法===================
+		//region   ==================读取后台数据==================
 		//将后台返回的数组数据转换为类,供回调函数使用
 		_recordToEntity:function(arr){
 			var newArr=[],that=this;
@@ -1409,7 +1575,7 @@ var $testDM;
 		 * @desc 后台数据格式 { Result="OK" , Total=100 , Data=[['a1','b1','c1'],['a2','b2','c2']]}
 		 * @summary 读取数据
 		 */
-		_loadData:function(d){
+		_loadData:function(handlerData,d){
 			var colsId=[],that=this,cols=this._options.columns,sorts=[],search=[],summary=[];
 			this._showLoading($[_pluginName].regional.loadData);
 			//colsId
@@ -1418,9 +1584,9 @@ var $testDM;
 			});
 			//sortConditions
 			$.each(this._sortConditions, function(i,cond) {
-				sorts.push($.extend(true, {}, cond,{col:cols[cond.col].colId}));
+				sorts.push($.extend(true, {}, cond,{Col:cols[cond.Col].colId}));
 			});
-//			//searchConditions
+			//searchConditions
 			search=$.extend(true,{},that._searchConditions);
 			search=$.map(search,function(c){return [c];});
 			//summaryCols
@@ -1429,15 +1595,15 @@ var $testDM;
 				summary.push({Col:col.colId,Mode:col.colTotalSummary,IsAll:col.colTotalAll});
 			});
 			$.get(this._options.listURL,{
-				act:'List',
+				act:'Search',
 				test:Math.random() ,
-				listPars:JSON.stringify({
+				searchPars:JSON.stringify({
 					ColsId:colsId,
 					TablesId:that._tablesId,
 					SortConditions:sorts,
 					SearchConditions:that._toSearchPost(search),
-					Summary:summary,
-					Range:[(that._currentPageNo - 1) * that._options.rowNum,that._currentPageNo* that._options.rowNum],
+					SummaryConditions:summary,
+					Range:that._options.showPaging?[(that._currentPageNo - 1) * that._options.rowNum,that._currentPageNo* that._options.rowNum]:null,
 					Relations:that._options.tableRelations
 				})
 			}).done(function(res){
@@ -1445,25 +1611,24 @@ var $testDM;
 					d.reject(that._options.isDebug?'后台未返回数据':$[_pluginName].regional.loadDataErr);
 				else{
 					var obj=$.parseJSON(res);
-					if(!obj.Result)
-						d.reject(that._options.isDebug?'后台未返回Result值': $[_pluginName].regional.loadDataErr);
-					else if(obj.Result.toUpperCase()==='OK'){
-						if(obj.Total==null || obj.Data==null)
+					if(obj.Success==undefined)
+						d.reject(that._options.isDebug?'后台未返回Success值': $[_pluginName].regional.loadDataErr);
+					else if(obj.Success){
+						if(obj.Total==null || obj.Records==null)
 							d.reject(that._options.isDebug?'后台返回数据结构错误':$[_pluginName].regional.loadDataErr);
 						else if(that._summaryCols.length && (obj.Summary==null || obj.Summary.length != that._summaryCols.length))
 							d.reject(that._options.isDebug?'后台返回Summary值异常': $[_pluginName].regional.loadDataErr);
 						else{
-							that._curPageRecords=that._recordToEntity(obj.Data);
-							that._curRecordNum=that._curRecordNum||1;
-							that._selectRow(that._curRecordNum-1);
+							that._curPageRecords=that._recordToEntity(obj.Records);
 							that._listSummary(obj.Summary);
 							that._createFooter_pagging(obj.Total);
 							if(that._options.rowNum===1)
-								that._listData_single(obj.Data,d);
+								that._listData_single(obj.Records,d);
 							else if(that._options.frozenNum != null)
-								that._listData_frozen(obj.Data,d);
+								that._listData_frozen(obj.Records,d);
 							else
-								that._listData(obj.Data,d);
+								that._listData(obj.Records,d);
+							that._selectRow(that._curRecordNum||1);
 						}
 					}
 					else
@@ -1478,17 +1643,29 @@ var $testDM;
 		//colData:栏位原始数据
 		//b:栏位beforeList回调函数
 		_listColData:function($el,colName,recIndex,colData,b){
-			var fcFail=function(){$el.text('');},
-				promise=b?this._eventDefer(b,fcFail):this._eventDefer(function(v,d){d.resolve(colData==null?'':colData);},fcFail),
-				that=this;
-			promise.done(function(v){
-				v==null && (v=colData);
-				$el.html(v);
-				that._curPageRecords[recIndex][colName]=$el.text();
-			}).fail(function(){
-				$el.text('');
-			});
-			return promise;
+			//var fcFail=function(){$el.text('');},
+			//	promise=b?this._eventDefer(b,fcFail):this._eventDefer(function(v,d){d.resolve(colData==null?'':colData);},fcFail),
+			//	that=this;
+			//promise.done(function(v){
+			//	v==null && (v=colData);
+			//	$el.html(v);
+			//	if(that._options.columns[colName].colId==null)
+			//		that._curPageRecords[recIndex][colName]=$el.text();
+			//}).fail(function(){
+			//	$el.text('');
+			//});
+			//return promise;
+            var def=this._createDeferred(b, this._normalDeferredObject())(),
+                that=this;
+            def.done(function(v){
+                v==null && (v=colData);
+                $el.html(v);
+                if(that._options.columns[colName].colId==null)
+                    that._curPageRecords[recIndex][colName]=$el.text();
+            }).fail(function () {
+                $el.text('');
+            });
+            return def.promise();
 		},
 		//显示摘要数据
 		//data: 后台返回的Summary数组
@@ -1509,6 +1686,7 @@ var $testDM;
 				defArr=[],$frg=$(document.createDocumentFragment());
 			$.each(data,function(i,d){
 				var $tr=$('<tr />',{'data-index':i}),tr=[];
+				that._selectRow(i+1);
 				$.each(cols, function(colName,colObj) {
 					var dbIndex=$.inArray(colName,dbCols),
 						listIndex=$.inArray(colName,listCols),
@@ -1530,13 +1708,13 @@ var $testDM;
 			  	})
 				.fail(function(){
 			  		if(def)
-			  			def.resolve();
+			  			def.resolve($[_pluginName].regional.loadDataErr);
 			  		else
 			  			that._hideLoading();
 			  	})
 				.always(function(){
 					$block.empty().append($frg);
-					that._selectRow(that._curRecordNum-1);
+					that._selectRow(that._curRecordNum);
 				});
 		},
 		//将数据显示到frozen-table里面。修改的话要同时修改_listData
@@ -1549,6 +1727,7 @@ var $testDM;
 				var $tr=$('<tr />',{'data-index':i}),
 					$trF=$('<tr />',{'data-index':i}),
 					tr=[],trF=[];
+				that._selectRow(i+1);
 				$.each(cols, function(colName,colObj) {
 					var dbIndex=$.inArray(colName,dbCols),
 						listIndex=$.inArray(colName,listCols),
@@ -1574,15 +1753,15 @@ var $testDM;
 			  	})
 				.fail(function(){
 			  		if(def)
-			  			def.resolve();
+			  			def.resolve($[_pluginName].regional.loadDataErr);
 			  		else
 			  			that._hideLoading();
 			  	})
 				.always(function(){
 					$('table:not(.kekTable-table-frozen) tbody',that._elements.$tableGroup).empty().append($frg);
 					$('.kekTable-table-frozen tbody',that._elements.$tableGroup).empty().append($frgF);
-					that._selectRow(that._curRecordNum-1);
-					that._selectRowFrozen(that._curRecordNum-1);
+					that._selectRow(that._curRecordNum);
+					that._selectRowFrozen(that._curRecordNum);
 				});
 		},
 		//将数据显示到single-table里面
@@ -1608,30 +1787,29 @@ var $testDM;
 					})
 					.fail(function() {
 						if (def)
-							def.resolve();
+							def.resolve($[_pluginName].regional.loadDataErr);
 						else
 							that._hideLoading();
 					});
 		},
-		//==============end读取资料=============
-		//删除记录
+		//endregion==================读取后台数据==================
+		//region   ==================删除后台数据==================
 		_deleteRecord:function(d){
 			var that=this;
 			this._elements.$confirm.modal('hide');
 			setTimeout(function(){d.reject();},2000);
 		},
-		
-		//事件
+		//endregion==================删除后台数据==================
+		//region   ==================注册插件事件==================
 		_registEvents:function(){
 			var that=this;
 			//table tr click
 			this._elements.$tableGroup.on('click.'+_pluginName,'tbody tr',function(){
 				var index = $(this).data('index') - 0;
 				if (index !== that._curRecordNum - 1) {
-					that._curRecordNum = index+1;
-					that._selectRow(index);
+					that._selectRow(index+1);
 					if (that._options.frozenNum != null)
-						that._selectRowFrozen(index);
+						that._selectRowFrozen(index+1);
 				}
 			});
 			//frozen hover
@@ -1647,10 +1825,22 @@ var $testDM;
 			//pagging click
 			if(this._elements.$pagging){
 				this._elements.$pagging.on('click.'+_pluginName,'li a',function(e){
-					that._curRecordNum=1;
-					that._selectRow(0);
+					that._selectRow(1);
 					that._currentPageNo=$(this).text()-0;
-					that._toolbarEvent(that._options.beforeRefresh,that._refresh,that._options.afterRefresh,'list');
+                    that._deferredsFlow(
+                        [
+                            that._createDeferred(that._options.beforePagging, $.extend(true,{},{pageRecords:that._curPageRecords,pageNo:that._currentPageNo})),
+                            that._createDeferred(that._loadData,null),
+                            that._createDeferred(that._options.afterPagging, $.extend(true,{},{pageRecords:that._curPageRecords,pageNo:that._currentPageNo}))
+                        ],
+                        null,
+                        function(v){
+                            that._showState(v?v:$[_pluginName].regional.toolbarRefresh + $[_pluginName].regional.eventFail,'danger');
+                        },
+                        function(v){
+                            that._hideLoading();
+                        }
+                    );
 					e.preventDefault();
 				});
 			}
@@ -1818,6 +2008,19 @@ var $testDM;
 						that._elements.search.$dialog.find('.modal-footer .alert').text(err).show();
 					else{
 						that._elements.search.$dialog.find('.modal-footer .alert').hide();
+                        that._elements.search.$dialog.modal('hide');
+                        that._deferredsFlow(
+                            [that._createDeferred(that._loadData,null)],
+                            function(){
+                                that._showState($[_pluginName].regional.toolbarSearch + $[_pluginName].regional.eventSuccess);
+                            },
+                            function(v){
+                                that._showState(v?v:$[_pluginName].regional.toolbarSearch + $[_pluginName].regional.eventFail,'danger');
+                            },
+                            function(v){
+                                that._hideLoading();
+                            }
+                        );
 					}
 				});
 			}
@@ -1875,6 +2078,19 @@ var $testDM;
 						var data=$(li).data();
 						that._sortConditions.push({Col:data.col,Type:$.inArray(data.type,['ASC','DESC'])===-1?'ASC':data.type ,Nulls:$.inArray(data.nulls,['NULLS FIRST','NULLS LAST'])===-1?'NULLS FIRST':data.nulls});
 					});
+                    that._elements.sort.$dialog.modal('hide');
+                    that._deferredsFlow(
+                        [that._createDeferred(that._loadData,null)],
+                        function(){
+                            that._showState($[_pluginName].regional.toolbarSort + $[_pluginName].regional.eventSuccess);
+                        },
+                        function(v){
+                            that._showState(v?v:$[_pluginName].regional.toolbarSort + $[_pluginName].regional.eventFail,'danger');
+                        },
+                        function(v){
+                            that._hideLoading();
+                        }
+                    );
 				});
 				
 			}
@@ -1909,7 +2125,8 @@ var $testDM;
 				//list type input
 				this._elements.edit.$block.on('click.'+_pluginName,'.kekTable-list-input',function(){
 					var li=[],$this=$(this),colName=$this.data('col'),
-						def=that._eventDefer(that._options.columns[colName].editList);
+                        def=that._createDeferred(that._options.columns[colName].editList,that._editDeferredObject())();
+						//def=that._eventDefer(that._options.columns[colName].editList);
 					that._showLoading($[_pluginName].regional.loadList,'edit');
 					def.done(function(v){
 						$.each(v, function(i,liItem) {
@@ -1955,7 +2172,8 @@ var $testDM;
 				this._elements.edit.$block.on('click.'+_pluginName,'.kekTable-lov-input',function(){
 					var thead=[],tbody=[],$this=$(this),colName=$this.data('col'),
 						cols=that._options.columns,
-						def=that._eventDefer(that._options.columns[colName].editList);
+                        def=that._createDeferred(that._options.columns[colName].editList,that._editDeferredObject())();
+						//def=that._eventDefer(that._options.columns[colName].editList);
 					that._showLoading($[_pluginName].regional.loadList,'edit');
 					$.each(cols[colName].lovCols, function(i,col) {
 						thead.push('<td>'+(cols[col]?cols[col].editTitle:col)+'</td>');
@@ -2030,6 +2248,7 @@ var $testDM;
 						that._elements.edit.$dialog.find('.modal-footer .alert').text(errs.attr('title')).show();
 					else{
 						that._elements.edit.$dialog.modal('hide');
+                        console.log(that._editRecord);
 					}
 				})
 			}
@@ -2051,7 +2270,8 @@ var $testDM;
 //					$this.parent().addClass('has-error');
 //			});
 		},
-		//=========================search 添加条件============================
+        //endregion==================注册插件事件==================
+		//region   ===================查询框事件===================
 		//查询添加条件至前
 		//$btn:ctrl按钮
 		_searchCtrl_pc:function($btn){
@@ -2117,12 +2337,12 @@ var $testDM;
 			$li.append(this._searchAdd_bool()).append($('<ul class="kekTable-search-block-sub"></ul>').append(this._searchAdd_itemFirst())).append(this._searchAdd_ctrl());
 			return $li;
 		},
-		//=========================end search 添加条件============================
-		//=========================edit trigger============================
+		//endregion===================查询框事件===================
+		//region   ===================编辑框事件===================
 		//改变值之后。检核值，afterChange()，_setEditItemValue()
 		_editItemChange:function(colName,val,deferreds,itemTriggered){
 			this._showLoading('','edit');
-			this._tableValues.editRecord[colName]=val;
+			this._editRecord[colName]=val;
 			if(!itemTriggered)
 				itemTriggered=[];
 			if($.inArray(colName,itemTriggered)!==-1){
@@ -2134,22 +2354,36 @@ var $testDM;
 				that=this,
 				valFormat=this._checkEditItemValue(colName,val);
 			if(valFormat.result){
-				this._tableValues.editRecord[colName]=valFormat.val;
+				this._editRecord[colName]=valFormat.val;
 				if(that._options.columns[colName].afterChange){
-					def=this._eventDefer(function(v,d){setItems=that._options.columns[colName].afterChange(v,d);},
-						//error function
-						function(v){
-							var errMsg=(that._options.columns[colName].editTitle||colName)+':'+v;
-							that._elements.edit.$block.find('[data-col="'+colName+'"]').val(val).parents('.form-group').addClass('has-error').attr('title',errMsg);
-							that._elements.edit.$dialog.find('.modal-footer .alert').text(errMsg).show();
-						});
-					def.done(function(v){
-						if(v!=null){
-							that._elements.edit.$block.find('[data-col="'+colName+'"]').val(v).parents('.form-group').removeClass('has-error').attr('title',null);
-							that._tableValues.editRecord[colName]=v;
-						}
-						that._elements.edit.$dialog.find('.modal-footer .alert').text('').hide();
-					});
+                    def=this._createDeferred(function(o,d){
+                        setItems=that._options.columns[colName].afterChange(o,d);},
+                        that._editDeferredObject()
+                    )().fail(function(v){
+                        var errMsg=(that._options.columns[colName].editTitle||colName)+':'+v;
+                        that._elements.edit.$block.find('[data-col="'+colName+'"]').val(val).parents('.form-group').addClass('has-error').attr('title',errMsg);
+                        that._elements.edit.$dialog.find('.modal-footer .alert').text(errMsg).show();
+                    }).done(function(v){
+                        if(v!=null){
+                            that._elements.edit.$block.find('[data-col="'+colName+'"]').val(v).parents('.form-group').removeClass('has-error').attr('title',null);
+                            that._editRecord[colName]=v;
+                        }
+                        that._elements.edit.$dialog.find('.modal-footer .alert').text('').hide();
+                    });
+					//def=this._eventDefer(function(v,d){setItems=that._options.columns[colName].afterChange(v,d);},
+					//	//error function
+					//	function(v){
+					//		var errMsg=(that._options.columns[colName].editTitle||colName)+':'+v;
+					//		that._elements.edit.$block.find('[data-col="'+colName+'"]').val(val).parents('.form-group').addClass('has-error').attr('title',errMsg);
+					//		that._elements.edit.$dialog.find('.modal-footer .alert').text(errMsg).show();
+					//	});
+					//def.done(function(v){
+					//	if(v!=null){
+					//		that._elements.edit.$block.find('[data-col="'+colName+'"]').val(v).parents('.form-group').removeClass('has-error').attr('title',null);
+					//		that._editRecord[colName]=v;
+					//	}
+					//	that._elements.edit.$dialog.find('.modal-footer .alert').text('').hide();
+					//});
 					deferreds.push(def);
 					itemTriggered.push(colName);
 					if(setItems){
@@ -2190,21 +2424,24 @@ var $testDM;
 					return res;
 			}
 		},
-		//=========================end edit trigger============================
-		
-		//选中一行,起始0
-		_selectRow:function(index){
+		//endregion===================编辑框事件===================
+		//region   ==================表格事件==================
+		//选中一行,起始1
+		_selectRow:function(num){
 			var $tbody=$('table:not(".kekTable-table-frozen") tbody',this._elements.$tableGroup);
 			$tbody.children('tr').removeClass('info');
-			$tbody.children('[data-index="'+index+'"]').addClass('info');
-			this._tableValues.curRecord=this._curPageRecords[this._curRecordNum-1];
+			$tbody.children('[data-index="'+(num-1)+'"]').addClass('info');
+            this._curRecordNum=num;
+			//this._tableValues.curRecord=this._curPageRecords[this._curRecordNum-1];
 		},
 		//选中frozen表
-		_selectRowFrozen:function(index){
+		_selectRowFrozen:function(num){
 			var $tbody=$('.kekTable-table-frozen tbody',this._elements.$tableGroup);
 			$tbody.children('tr').removeClass('info');
-			$tbody.children('[data-index="'+index+'"]').addClass('info');
+			$tbody.children('[data-index="'+(num-1)+'"]').addClass('info');
 		},
+        //endregion==================表格事件==================
+        //region   ===other===
 		/**
 		 * @function Plugin~_setSortDialog
 		 * @desc 将排序条件列表数组显示到排序对话框中
@@ -2524,7 +2761,7 @@ var $testDM;
 		//type:alert样式(danger、success)
 		_showState:function(msg,type){
 			if(msg){
-				this._elements.$state.text(msg).removeClass(type=='danger'?'alert-success':type).addClass(type=='danger'?type:'alert-success');
+				this._elements.$state.text(msg).removeClass(type=='danger'?'alert-success':'alert-danger').addClass(type=='danger'?'alert-danger':'alert-success');
 				this._elements.$state.show();
 			}
 		},
@@ -2580,7 +2817,53 @@ var $testDM;
 			});
 			return p.promise();
 		},
-		
+
+        /**
+                 *
+                 * @param deferreds
+                 * @param doneHandler 全部成功执行完毕回调
+                 * @param failHandler 有失败后回调
+                 * @param alwaysHandler 以上两种情况都会回调
+                 */
+        _deferredsFlow: function (deferreds,doneHandler,failHandler,alwaysHandler) {
+            var that=this;
+            if(deferreds.length){
+                var firstDeferred=deferreds.shift()();//取得第一个deferred，并将其从数组中去掉
+                if($.isFunction(firstDeferred.promise)){
+                    firstDeferred.done(function(){
+                        that._deferredsFlow(deferreds,doneHandler,failHandler,alwaysHandler);
+                    }).fail(function (v) {
+                        failHandler(v);
+                    }, function (v) {
+                        alwaysHandler(v);
+                    });
+                }
+                else
+                    this._deferredsFlow(deferreds,doneHandler,failHandler,alwaysHandler);
+            }
+            else{
+                doneHandler && doneHandler();
+                alwaysHandler && alwaysHandler();
+            }
+        },
+        _createDeferred: function (handler,handlerObject) {
+            var that=this;
+            return function() {
+                var def = $.Deferred();
+                if(handler)
+                    handler.call(that,handlerObject, def);
+                else
+                    def.resolve();
+                return def.promise();
+            };
+        },
+        _normalDeferredObject:function(){
+            return $.extend(true,{},{curRecord:this._curPageRecords[this._curRecordNum-1],tableStatus:this._tableStatus});
+        },
+        _editDeferredObject:function(){
+            return $.extend(true,{},{curRecord:this._curPageRecords[this._curRecordNum-1],tableStatus:this._tableStatus,editRecord:this._editRecord});
+        },
+		//endregion===other===
 		//外部接口
 		
 		/**
@@ -2602,7 +2885,8 @@ var $testDM;
 			
 		},
 	};
-	
+	//endregion======================原型======================
+	//region   ====================注册插件====================
 	//扩展jQuery插件
 	$.fn[_pluginName]=function(options){
 		var args=arguments;
@@ -2612,8 +2896,8 @@ var $testDM;
 			//第一次调用。初始化
 			if(!data){
 				var thisData=$.data(this,'plugin_'+_pluginName,new Plugin(this,options));
-				if(thisData._options.autoLoad)
-					thisData._toolbarEvent(thisData._options.beforeRefresh,thisData._refresh,thisData._options.afterRefresh,'list');
+				//if(thisData._options.autoLoad)
+					//thisData._toolbarEvent(thisData._options.beforeRefresh,thisData._refresh,thisData._options.afterRefresh,'list');
 			}
 			//_开头的方法是内部方法，不允许外部调用
 			else if(typeof options ==='string'){
@@ -2629,8 +2913,9 @@ var $testDM;
 				
 		});
 	};
-	
-	$[_pluginName]={};
+	//endregion====================注册插件====================
+	//region   =====================全球化=====================
+    $[_pluginName]={};
 	/**
 	 * @namespace Plugin#regional
 	 * @desc 语言
@@ -2907,6 +3192,6 @@ var $testDM;
 		 */
 		processErr:'程式異常',
 	};
-	
+	//endregion=====================全球化=====================
 })(jQuery,window,document);
 

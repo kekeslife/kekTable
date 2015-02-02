@@ -668,9 +668,9 @@
 			$('#test1').kekTable({
 				listURL:'testData.txt',
 				isCollapse:true,isDebug:true,
-				beforeRefresh:function(v,d){$('#test1').kekTable('showLoading','before'); setTimeout(function(){console.log('beforeRefresh');d.resolve('bok');},500) },
+				beforeRefresh:function(v,d){setTimeout(function(){console.log('beforeRefresh',this);d.resolve('bok');},500) },
 				afterRefresh:function(v,d){console.log(v);$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('afterRefresh');d.resolve('aok');},500) },
-				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v){console.log(v)}}]],
+				toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v,d){console.log(v);d.reject('shuaxin')}}]],
 				columns:{
 					empNo:{
 						colId:0,
@@ -737,15 +737,16 @@
 					dept:{
 						listIndex:7,
 						listTitle:'部门',
-						beforeGetValue:function(r,d){d.resolve('<b>'+r.curRecord.deptNo+'-'+r.curRecord.deptName+'</b>');}
+						//beforeGetValue:function(r,d){d.resolve('<b>'+r.curRecord.deptNo+'-'+r.curRecord.deptName+'</b>');}
 					},
 					temp:{
-						beforeGetValue:function(r,d){d.resolve(r.curRecord.empNo==='14623'?'Y':'N');}
+						//beforeGetValue:function(r,d){d.resolve(r.curRecord.empNo==='14623'?'Y':'N');}
 					}
 				},
 				showRowNo:true,
 				//frozenNum:0,
-				rowNum:10
+				rowNum:10,
+				autoLoad:true
 			});
 			//$('#test2').kekTable();
 			

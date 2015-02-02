@@ -1,6 +1,7 @@
 /*抵消全局css*/
 input[type="text"], input[type="password"], textarea {border-color: #ccc;}
 .form-control{padding: 6px 12px !important;}
+.kekTable-listPanel li{list-style:none;}
 
 /*下拉列表*/
 .kekTable-dropList{min-width: 0;max-height: 150px;overflow-y: scroll;padding: 0;}
