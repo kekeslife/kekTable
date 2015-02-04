@@ -1,6 +1,6 @@
 /*抵消全局css*/
 input[type="text"], input[type="password"], textarea {border-color: #ccc;}
-.form-control{padding: 6px 12px !important;}
+.form-control{padding: 6px 12px !important;vertical-align: middle;}
 .kekTable-listPanel li{list-style:none;}
 
 /*下拉列表*/

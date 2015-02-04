@@ -670,7 +670,7 @@
 				isCollapse:true,isDebug:true,
 				beforeRefresh:function(v,d){setTimeout(function(){console.log('beforeRefresh',this);d.resolve('bok');},500) },
 				afterRefresh:function(v,d){console.log(v);$('#test1').kekTable('showLoading','after');setTimeout(function(){console.log('afterRefresh');d.resolve('aok');},500) },
-				toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v,d){console.log(v);d.reject('shuaxin')}}]],
+				//toolbar:[[{id:'mail',icon:'glyphicon-sort',label:'shuaxin',title:'shua',action:function(v,d){console.log(v);d.reject('shuaxin')}}]],
 				columns:{
 					empNo:{
 						colId:0,
