@@ -98,7 +98,7 @@
 
             
 
-            <td class="description last">jQUery对象</td>
+            <td class="description last">jQuery对象</td>
         </tr>
 
     
@@ -207,7 +207,63 @@
         <dl>
             
 <dt>
-    <h4 class="name" id="_element"><span class="type-signature">(inner) </span>_element<span class="type-signature"> :jQUery</span></h4>
+    <h4 class="name" id="_colEntity"><span class="type-signature">(inner) </span>_colEntity<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        字段实体类(curPageRecords[0]=new _colEntity())
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_element"><span class="type-signature">(inner) </span>_element<span class="type-signature"> :string</span></h4>
 
     
 </dt>
@@ -382,7 +438,7 @@
             
 <dt>
     
-        <h4 class="name" id="showLoading"><span class="type-signature"></span>showLoading<span class="signature">(text, delay)</span><span class="type-signature"></span></h4>
+        <h4 class="name" id="showAlert"><span class="type-signature"></span>showAlert<span class="signature">(text)</span><span class="type-signature"></span></h4>
 
         
     
@@ -391,7 +447,7 @@
 
     
     <div class="description">
-        显示loading遮罩
+        显示提示框
     </div>
     
 
@@ -443,7 +499,195 @@
 
             
 
-            <td class="description last">显示的文字</td>
+            <td class="description last">提示文字</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        <h4 class="name" id="showLoading"><span class="type-signature"></span>showLoading<span class="signature">(msg<span class="signature-attributes">opt, nullable</span>, el<span class="signature-attributes">opt, nullable</span>, delay<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        显示loading遮罩
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>参数:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    regional.loadingTxt
+                
+                </td>
+            
+
+            <td class="description last">加载提示文字</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>el</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'list'
+                
+                </td>
+            
+
+            <td class="description last">哪个对象要显示加载遮罩('list'、'edit')，两者不可同时显示。空为当前遮罩</td>
         </tr>
 
     
@@ -463,10 +707,820 @@
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    this._options._loadingDelay
+                
+                </td>
+            
+
+            <td class="description last">延时(毫秒)</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        <h4 class="name" id="_getSearchDialog"><span class="type-signature">(inner) </span>_getSearchDialog<span class="signature">()</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        将查询框中的条件转换成查询数组
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>返回值:</h5>
+    
+            
+<div class="param-desc">
+    异常信息。_searchConditions赋值
+</div>
+
+
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        <h4 class="name" id="_hideLoading"><span class="type-signature">(inner) </span>_hideLoading<span class="signature">(el<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        隐藏加载遮罩(从loading列中去除)
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>参数:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>el</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'list'
+                
+                </td>
+            
+
+            <td class="description last">哪个对象要显示加载遮罩('list'、'edit')，两者不可同时显示</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        <h4 class="name" id="_loadData"><span class="type-signature">(inner) </span>_loadData<span class="signature">()</span><span class="type-signature"></span></h4>
+
+        
+        <p class="summary">读取数据</p>
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        后台数据格式 { Result="OK" , Total=100 , Data=[['a1','b1','c1'],['a2','b2','c2']]}
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        <h4 class="name" id="_setSearchDialog"><span class="type-signature">(inner) </span>_setSearchDialog<span class="signature">(searchConditions)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        将查询条件列表数组显示到查询对话框中
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>参数:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>searchConditions</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Plugin~_searchtConditions</span>
+
+
+            
+            </td>
 
             
 
-            <td class="description last">延时显示时间(毫秒)</td>
+            
+
+            <td class="description last">查询的条件列表</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        <h4 class="name" id="_setSortDialog"><span class="type-signature">(inner) </span>_setSortDialog<span class="signature">(sortConditions)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        将排序条件列表数组显示到排序对话框中
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>参数:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>sortConditions</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Plugin~_sortConditions</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">排序的条件列表</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        <h4 class="name" id="_showLoading"><span class="type-signature">(inner) </span>_showLoading<span class="signature">(msg<span class="signature-attributes">opt, nullable</span>, el<span class="signature-attributes">opt, nullable</span>, delay<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        显示加载遮罩
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>参数:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    regional.loadingTxt
+                
+                </td>
+            
+
+            <td class="description last">加载提示文字</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>el</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'list'
+                
+                </td>
+            
+
+            <td class="description last">哪个对象要显示加载遮罩('list'、'edit')，两者不可同时显示。空为当前遮罩</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>delay</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    this._options._loadingDelay
+                
+                </td>
+            
+
+            <td class="description last">延时(毫秒)</td>
         </tr>
 
     
@@ -535,14 +1589,14 @@
         <dl>
                 
 <dt>
-    <h4 class="name" id="_tableValues">_tableValues</h4>
+    <h4 class="name" id="_deferredObject">_deferredObject</h4>
 
     
 </dt>
 <dd>
     
     <div class="description">
-        当年页面上的一系列值。供外部接口请用extend
+        当前页面上的一系列值。供外部接口
     </div>
     
 
@@ -579,13 +1633,13 @@
 
         <tr>
             
-                <td class="name"><code>curPageRecords</code></td>
+                <td class="name"><code>curRecord</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array.&lt;object></span>
+<span class="param-type">object.&lt;colEntity></span>
 
 
             
@@ -604,19 +1658,130 @@
             
                 <td class="default">
                 
-                    []
+                    null
                 
                 </td>
             
 
-            <td class="description last">当前页面上的所有数据库值</td>
+            <td class="description last">选中的数据(值传递不可修改)，已转换为colEntity类</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>curRecordNum</code></td>
+                <td class="name"><code>editRecord</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object.&lt;colEntity></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last">修改框中的数据(值传递不可修改)，已转换为colEntity类</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>editRecordRef</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object.&lt;colEntity></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last">修改框中的数据(引用传递可修改)，已转换为colEntity类</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>pageRecords</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;object.&lt;colEntity>></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last">当前页的数据(值传递不可修改)，已转换为colEntity类</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>pageNo</code></td>
             
 
             <td class="type">
@@ -646,7 +1811,7 @@
                 </td>
             
 
-            <td class="description last">当前选中的行号</td>
+            <td class="description last">当前页码</td>
         </tr>
 
     
@@ -683,7 +1848,7 @@
                 </td>
             
 
-            <td class="description last">表格狀態，一般為__toolbarIte.id</td>
+            <td class="description last">表格狀態，一般為__toolbarItem.id</td>
         </tr>
 
     
@@ -691,6 +1856,62 @@
 </table>
 </dl>
 
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+            
+                
+<dt>
+    <h4 class="name" id="_hasTool">_hasTool</h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        是否开启内建功能
+    </div>
+    
+
+    
 
 
 <dl class="details">
@@ -746,13 +1967,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Plugin.html">Plugin</a></li></ul><h3>Namespaces</h3><ul><li><a href="__toolbarItem.html">__toolbarItem</a></li><li><a href="_column.html">_column</a></li><li><a href="kekTable.html">kekTable</a></li><li><a href="kekTable-_options.html">_options</a></li><li><a href="Plugin_regional.html">regional</a></li></ul>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Plugin.html">Plugin</a></li></ul><h3>Namespaces</h3><ul><li><a href="__toolbarItem.html">__toolbarItem</a></li><li><a href="_column.html">_column</a></li><li><a href="_elements.html">_elements</a></li><li><a href="kekTable.html">kekTable</a></li><li><a href="kekTable-_options.html">_options</a></li><li><a href="Plugin_regional.html">regional</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha10</a> on Wed Nov 26 2014 10:12:56 GMT+0800 (CST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha10</a> on Thu Feb 05 2015 11:58:40 GMT+0800 (CST)
 </footer>
 
 <script> prettyPrint(); </script>

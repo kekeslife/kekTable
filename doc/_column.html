@@ -99,6 +99,128 @@
         <dl>
             
 <dt>
+    <h4 class="name" id="canFilter"><span class="type-signature">(nullable) </span>canFilter<span class="type-signature"> :bool</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        该字段是否出现在查询框的字段列表中。只对数据库字段有效
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="canSort"><span class="type-signature">(nullable) </span>canSort<span class="type-signature"> :bool</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        该字段是否出现在排序框的字段列表中。只对数据库字段有效
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>true</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
     <h4 class="name" id="colId"><span class="type-signature">(nullable) </span>colId<span class="type-signature"> :int</span></h4>
 
     
@@ -106,7 +228,7 @@
 <dd>
     
     <div class="description">
-        后台数据库字段数组的下标，不设置代表该栏位非数据库栏位
+        不设置代表该栏位非数据库字段
     </div>
     
 
@@ -167,7 +289,7 @@
 <dd>
     
     <div class="description">
-        栏位的长度，null则为无限制
+        栏位的长度，null则为无限制，(3.2代表3位整数，2位小数)。
     </div>
     
 
@@ -343,6 +465,69 @@
         
             
 <dt>
+    <h4 class="name" id="colType"><span class="type-signature">(nullable) </span>colType<span class="type-signature"> :string</span></h4>
+
+    
+    <p class="summary">栏位的数据类型</p>
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        ''(文本)、'number'、'date'(YYYY/MM/DD)、'datetime'(YYYY/MM/DD HH24:MI:SS)
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
     <h4 class="name" id="detailKeyId"><span class="type-signature">(nullable) </span>detailKeyId<span class="type-signature"> :int</span></h4>
 
     
@@ -404,14 +589,16 @@
         
             
 <dt>
-    <h4 class="name" id="editClingPre"><span class="type-signature">(nullable) </span>editClingPre<span class="type-signature"> :bool</span></h4>
+    <h4 class="name" id="editAttr"><span class="type-signature">(nullable) </span>editAttr<span class="type-signature"> :string</span></h4>
 
+    
+    <p class="summary">编辑框栏位的特性</p>
     
 </dt>
 <dd>
     
     <div class="description">
-        编辑框中inline栏位紧贴着前面一个栏位
+        ''(正常)、'readonly'(只读，回传)、'hidden'(隐藏)、'disabled'(只读，不回传)
     </div>
     
 
@@ -443,7 +630,7 @@
     
     <dt class="tag-default">默认值:</dt>
     <dd class="tag-default"><ul class="dummy">
-            <li>false</li>
+            <li>null</li>
         </ul></dd>
     
 
@@ -465,16 +652,16 @@
         
             
 <dt>
-    <h4 class="name" id="editDisplay"><span class="type-signature">(nullable) </span>editDisplay<span class="type-signature"> :string</span></h4>
+    <h4 class="name" id="editDisplay"><span class="type-signature">(nullable) </span>editDisplay<span class="type-signature"> :bool</span></h4>
 
     
-    <p class="summary">编辑框中栏位和前一个栏位在同一行</p>
+    <p class="summary">编辑字段的显示方式</p>
     
 </dt>
 <dd>
     
     <div class="description">
-        'block'(换行)、'inline'(同一行)
+        'block'(单独一行)、'inline'(与前一个栏位同一行)、'cling'(紧贴前一个栏位)
     </div>
     
 
@@ -653,11 +840,13 @@
     <h4 class="name" id="editTitle"><span class="type-signature">(nullable) </span>editTitle<span class="type-signature"> :string</span></h4>
 
     
+    <p class="summary">编辑名称</p>
+    
 </dt>
 <dd>
     
     <div class="description">
-        编辑框中栏位上面的标题
+        编辑框中字段上面的标题。null将被调整为listTitle。不显示编辑名称请设置为''
     </div>
     
 
@@ -711,6 +900,69 @@
         
             
 <dt>
+    <h4 class="name" id="editType"><span class="type-signature">(nullable) </span>editType<span class="type-signature"> :string</span></h4>
+
+    
+    <p class="summary">编辑框栏位的类型</p>
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        ''(text)、'list'(下拉框)、'lov'、'textarea'
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
     <h4 class="name" id="editWidth"><span class="type-signature">(nullable) </span>editWidth<span class="type-signature"> :int</span></h4>
 
     
@@ -718,7 +970,7 @@
 <dd>
     
     <div class="description">
-        编辑框栏位的宽度
+        编辑框栏位的宽度，可带单位。纯数字会通过_adjustOptions添加单位px
     </div>
     
 
@@ -751,6 +1003,189 @@
     <dt class="tag-default">默认值:</dt>
     <dd class="tag-default"><ul class="dummy">
             <li>100</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="isKey"><span class="type-signature">(nullable) </span>isKey<span class="type-signature"> :bool</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        用于修改删除。如果table中没有主键，请设置ROWID字段。一个插件实例只能同时更新一个table的数据
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="listIndex"><span class="type-signature">(nullable) </span>listIndex<span class="type-signature"> :int</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        设置后此字段会显示于<table>中。显示顺序按值从小到大，不同字段不可设置重复的值
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="listInline"><span class="type-signature">(nullable) </span>listInline<span class="type-signature"> :bool</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        单笔记录显示模式时，此栏位是否和前一个栏位在同一行显示
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>false</li>
         </ul></dd>
     
 
@@ -842,7 +1277,7 @@
 <dd>
     
     <div class="description">
-        显示的表格栏位标题
+        字段的描述名称<thead>。null将被调整为colName。如果不需要显示listTitle请设置为''
     </div>
     
 
@@ -896,6 +1331,133 @@
         
             
 <dt>
+    <h4 class="name" id="listWidth"><span class="type-signature">(nullable) </span>listWidth<span class="type-signature"> :int</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <colgroup>.<col>的width属性，可带单位。纯数字会自动添加单位px
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="lovCols"><span class="type-signature">(nullable) </span>lovCols<span class="type-signature"> :string</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        编辑框editType为lov栏位的标题(.kekTable-lov下的thead)
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+        <h5>Example</h5>
+        
+    <pre class="prettyprint"><code>lovCols:['empNo','员工姓名'] //empNo为columns.empNo,选取后会写入editRecord.empNo。'员工姓名'只是普通的显示，不会写入editRecord</code></pre>
+
+    
+</dd>
+
+        
+            
+<dt>
     <h4 class="name" id="tableId"><span class="type-signature">(nullable) </span>tableId<span class="type-signature"> :int</span></h4>
 
     
@@ -903,7 +1465,7 @@
 <dd>
     
     <div class="description">
-        后台数据库表名数组的下标，该字段所属的表，不设置代表该栏位非数据库栏位
+        该字段所属的表，不设置代表该栏位非数据库字段
     </div>
     
 
@@ -958,6 +1520,471 @@
     
 
     
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<dt>
+    
+        <h4 class="name" id="afterChange"><span class="type-signature"></span>afterChange<span class="signature">(tableValues, defer)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        栏位改变值以后。必需要写d.resolve('将要填入的值')或者d.reject('错误框文字')
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>参数:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>tableValues</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object.&lt;colEntity></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">该行的数据</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>defer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">$.Deferred</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">deferred对象,d.reject()将停止事件,d.resolve()将继续执行。</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>返回值:</h5>
+    
+            
+<div class="param-desc">
+    [['empNo','11111'],['empName','xxxxx']] - 将要连动更改的栏位和值。
+</div>
+
+
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        <h4 class="name" id="beforeGetValue"><span class="type-signature"></span>beforeGetValue<span class="signature">(tableValues, defer)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        栏位读取(显示)数据之前的自定义操作。必需要写d.resolve('将要显示的文字或HTML，非数据库栏位的curPageRecords将保存text')或者d.reject('将会产生提示框')
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>参数:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>tableValues</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object.&lt;colEntity></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">该行的数据</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>defer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">$.Deferred</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">deferred对象,d.reject()将停止事件,d.resolve()将继续执行。</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Examples</h5>
+        
+    <pre class="prettyprint"><code>ajaxbeforeGetValue:function(v,d){	var xx=$.ajax('test.html').done(function(res){d.resolve(res.EmpName);}).fail(function(){d.reject('失败');});}</code></pre>
+
+    <pre class="prettyprint"><code>nomalbeforeGetValue:function(v,d){		d.resolve(v.curRecord.empNo+' - '+r.curRecord.empName);}</code></pre>
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        <h4 class="name" id="editList"><span class="type-signature"></span>editList<span class="signature">(tableValues, defer)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        list类型的值列表。必需要写d.resolve('返回的值列表数组[[值,文字],[值,文字],[值,文字]]')或者d.reject('错误框文字')
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>参数:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>tableValues</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object.&lt;colEntity></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">该行的数据</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>defer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">$.Deferred</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">deferred对象,d.reject()将停止事件,d.resolve()将继续执行。</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        </dl>
+    
 
     
 
@@ -972,13 +1999,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Plugin.html">Plugin</a></li></ul><h3>Namespaces</h3><ul><li><a href="__toolbarItem.html">__toolbarItem</a></li><li><a href="_column.html">_column</a></li><li><a href="kekTable.html">kekTable</a></li><li><a href="kekTable-_options.html">_options</a></li><li><a href="Plugin_regional.html">regional</a></li></ul>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Plugin.html">Plugin</a></li></ul><h3>Namespaces</h3><ul><li><a href="__toolbarItem.html">__toolbarItem</a></li><li><a href="_column.html">_column</a></li><li><a href="_elements.html">_elements</a></li><li><a href="kekTable.html">kekTable</a></li><li><a href="kekTable-_options.html">_options</a></li><li><a href="Plugin_regional.html">regional</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha10</a> on Wed Nov 26 2014 10:12:56 GMT+0800 (CST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha10</a> on Thu Feb 05 2015 11:58:40 GMT+0800 (CST)
 </footer>
 
 <script> prettyPrint(); </script>

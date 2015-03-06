@@ -676,9 +676,9 @@
 						colId:0,
 						listIndex:0,
 						listWidth:100,
-						listTitle:'empNo',
 						colTotalSummary:'COUNT',
 						editIndex:0,
+						isKey:true,
 						editTitle:'empNo',
 						beforeGetValue:function(r,d){setTimeout(function(){console.log('beforeGetValue:empNo');d.resolve();},100)},
 						afterChange:function(r,d){d.resolve();return [['empName','xxxxx']];}
@@ -748,7 +748,7 @@
 				rowNum:10,
 				autoLoad:true
 			});
-			//$('#test2').kekTable();
+			$('#test2').kekTable();
 			
 		</script>
 	</body>

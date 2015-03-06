@@ -101,14 +101,14 @@
         <dl>
             
 <dt>
-    <h4 class="name" id="canRowHover=true"><span class="type-signature">(nullable) </span>canRowHover=true<span class="type-signature"> :bool</span></h4>
+    <h4 class="name" id="autoLoad"><span class="type-signature">(nullable) </span>autoLoad<span class="type-signature"> :bool</span></h4>
 
     
 </dt>
 <dd>
     
     <div class="description">
-        是否可以鼠标悬停背景,冻结表格会影响性能
+        初始化后是否自动读取数据
     </div>
     
 
@@ -138,6 +138,11 @@
     
 
     
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>true</li>
+        </ul></dd>
+    
 
     
 
@@ -157,14 +162,16 @@
         
             
 <dt>
-    <h4 class="name" id="canRowSelect"><span class="type-signature">(nullable) </span>canRowSelect<span class="type-signature"> :bool</span></h4>
+    <h4 class="name" id="canRowHover"><span class="type-signature">(nullable) </span>canRowHover<span class="type-signature"> :bool</span></h4>
 
+    
+    <p class="summary">是否启用鼠标悬停</p>
     
 </dt>
 <dd>
     
     <div class="description">
-        是否可以单击行
+        鼠标hover的样式。冻结型表格会影响性能
     </div>
     
 
@@ -221,11 +228,13 @@
     <h4 class="name" id="collapseExpanded"><span class="type-signature">(nullable) </span>collapseExpanded<span class="type-signature"> :bool</span></h4>
 
     
+    <p class="summary">表格是否默认展开</p>
+    
 </dt>
 <dd>
     
     <div class="description">
-        collapse是否默认展开 同 bootstrap的collapse的aria-expanded属性
+        bootstrap的collapse的aria-expanded属性
     </div>
     
 
@@ -340,14 +349,16 @@
         
             
 <dt>
-    <h4 class="name" id="insertURL"><span class="type-signature">(nullable) </span>insertURL<span class="type-signature"> :string</span></h4>
+    <h4 class="name" id="deleteURL"><span class="type-signature">(nullable) </span>deleteURL<span class="type-signature"> :string</span></h4>
 
+    
+    <p class="summary">删除URL</p>
     
 </dt>
 <dd>
     
     <div class="description">
-        新增的ajax地址(设为null将通过adjustOptions调整为listURL)
+        设为null将调整为listURL
     </div>
     
 
@@ -379,7 +390,133 @@
     
     <dt class="tag-default">默认值:</dt>
     <dd class="tag-default"><ul class="dummy">
-            <li>null</li>
+            <li>listURL</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="exportURL"><span class="type-signature">(nullable) </span>exportURL<span class="type-signature"> :string</span></h4>
+
+    
+    <p class="summary">汇出URL</p>
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        设为null将调整为listURL
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>listURL</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="insertURL"><span class="type-signature">(nullable) </span>insertURL<span class="type-signature"> :string</span></h4>
+
+    
+    <p class="summary">新增URL</p>
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        设为null将调整为listURL
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>listURL</li>
         </ul></dd>
     
 
@@ -404,11 +541,13 @@
     <h4 class="name" id="isCollapse"><span class="type-signature">(nullable) </span>isCollapse<span class="type-signature"> :bool</span></h4>
 
     
+    <p class="summary">表格是否可以折叠</p>
+    
 </dt>
 <dd>
     
     <div class="description">
-        表格是否可以折叠 同 bootstrap的collapse
+        bootstrap的collapse
     </div>
     
 
@@ -465,11 +604,13 @@
     <h4 class="name" id="isDebug"><span class="type-signature">(nullable) </span>isDebug<span class="type-signature"> :bool</span></h4>
 
     
+    <p class="summary">是否调试</p>
+    
 </dt>
 <dd>
     
     <div class="description">
-        是否是调试模式。调试模式会检查各个参数是否设置正确
+        调试模式会检查各个参数是否设置正确。ie10+
     </div>
     
 
@@ -526,11 +667,13 @@
     <h4 class="name" id="listURL"><span class="type-signature">(non-null) </span>listURL<span class="type-signature"> :string</span></h4>
 
     
+    <p class="summary">查询URL(必需)</p>
+    
 </dt>
 <dd>
     
     <div class="description">
-        查询的ajax地址(必需)
+        触发查询Ajax的URL参数
     </div>
     
 
@@ -584,16 +727,79 @@
         
             
 <dt>
-    <h4 class="name" id="panelColor"><span class="type-signature">(nullable) </span>panelColor<span class="type-signature"> :string</span></h4>
+    <h4 class="name" id="loadingDelay"><span class="type-signature">(nullable) </span>loadingDelay<span class="type-signature"> :number</span></h4>
 
     
-    <p class="summary">面板的颜色 - class - bootstrap的panel样式</p>
+    <p class="summary">延时时间</p>
     
 </dt>
 <dd>
     
     <div class="description">
-        'panel-primary'(深蓝)、'panel-success'(浅绿)、'panel-info'(浅蓝)、'panel-warning'(浅黄)、'panel-danger'(浅灰)、'panel-default'(浅灰)
+        显示加载遮罩的延时时间，单位毫秒
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>500</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="panelColor"><span class="type-signature">(nullable) </span>panelColor<span class="type-signature"> :string</span></h4>
+
+    
+    <p class="summary">面板的颜色</p>
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        bootstrap的panel样式：'panel-primary'(深蓝)、'panel-success'(浅绿)、'panel-info'(浅蓝)、'panel-warning'(浅黄)、'panel-danger'(浅灰)、'panel-default'(浅灰)
     </div>
     
 
@@ -650,11 +856,13 @@
     <h4 class="name" id="showPaging"><span class="type-signature">(nullable) </span>showPaging<span class="type-signature"> :bool</span></h4>
 
     
+    <p class="summary">是否显示分页</p>
+    
 </dt>
 <dd>
     
     <div class="description">
-        是否显示分页，false将查询出所有的记录
+        false将查询出所有的记录
     </div>
     
 
@@ -711,13 +919,13 @@
     <h4 class="name" id="tableWidth"><span class="type-signature">(nullable) </span>tableWidth<span class="type-signature"> :string</span></h4>
 
     
-    <p class="summary">表格总宽度需要加單位px - style的width属性。</p>
+    <p class="summary">表格总宽度，要加單位。</p>
     
 </dt>
 <dd>
     
     <div class="description">
-        '100%'、'auto'(colgroup的和+3)
+        .kekTable-listPanel的width样式。'100%'、'auto'(colgroup的和+3)
     </div>
     
 
@@ -810,7 +1018,7 @@
     
     <dt class="tag-default">默认值:</dt>
     <dd class="tag-default"><ul class="dummy">
-            <li>null</li>
+            <li>''</li>
         </ul></dd>
     
 
@@ -835,13 +1043,13 @@
     <h4 class="name" id="toolbar"><span class="type-signature">(nullable) </span>toolbar<span class="type-signature"> :Array.&lt;Array.&lt;<a href="__toolbarItem.html">__toolbarItem</a>>></span></h4>
 
     
-    <p class="summary">工具条(按顺序显示)</p>
+    <p class="summary">工具条(按顺序显示，需二维数组)</p>
     
 </dt>
 <dd>
     
     <div class="description">
-        'refresh'(刷新)、'search'(查询)、'sort'(排序)、'add'(新增)、'edit'(修改)、'delete'(删除)、'mailAgent'(代理邮件)、'export'(导出)
+        'refresh'(刷新)、'search'(查询)、'sort'(排序)、'add'(新增)、'edit'(修改)、'delete'(删除)、'export'(导出)
     </div>
     
 
@@ -892,7 +1100,70 @@
     
         <h5>Example</h5>
         
-    <pre class="prettyprint"><code>自定义按钮toolbar=[[{id:'upload',icon:'glyphicon-upload',label:'上传',title:'上传图片',act:function(v){ }}]]</code></pre>
+    <pre class="prettyprint"><code>自定义按钮toolbar=[[{id:'upload',icon:'glyphicon-upload',label:'上传',title:'上传图片',act:function(o,d){ }}]]</code></pre>
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="updateURL"><span class="type-signature">(nullable) </span>updateURL<span class="type-signature"> :string</span></h4>
+
+    
+    <p class="summary">更新URL</p>
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        设为null将调整为listURL
+    </div>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">默认值:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>listURL</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
 
     
 </dd>
@@ -915,13 +1186,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Plugin.html">Plugin</a></li></ul><h3>Namespaces</h3><ul><li><a href="__toolbarItem.html">__toolbarItem</a></li><li><a href="_column.html">_column</a></li><li><a href="kekTable.html">kekTable</a></li><li><a href="kekTable-_options.html">_options</a></li><li><a href="Plugin_regional.html">regional</a></li></ul>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Plugin.html">Plugin</a></li></ul><h3>Namespaces</h3><ul><li><a href="__toolbarItem.html">__toolbarItem</a></li><li><a href="_column.html">_column</a></li><li><a href="_elements.html">_elements</a></li><li><a href="kekTable.html">kekTable</a></li><li><a href="kekTable-_options.html">_options</a></li><li><a href="Plugin_regional.html">regional</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha10</a> on Wed Nov 26 2014 10:12:56 GMT+0800 (CST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha10</a> on Thu Feb 05 2015 11:58:40 GMT+0800 (CST)
 </footer>
 
 <script> prettyPrint(); </script>
