@@ -34,7 +34,7 @@
          * @type {string}
          * @default 'panel-primary'
          */
-        panelColor: '',
+        panelColor: 'panel-primary',
         /**
          * 表格总宽度
          * .kekTable-listPanel的width样式，要加單位，冻结情况下确保和字段总宽度一样。'100%'、'auto'(colgroup的和+3)
@@ -206,7 +206,7 @@
         /**
          * 字段配置参数
          * @name kekOption.columns
-         * @type {Object}
+         * @type {Array.<Column>}
          * @default null
          */
         columns: null,
@@ -592,6 +592,14 @@
          * @default false
          */
         listInline: false,
+        /**
+         * 左边距
+         * 单笔记录显示模式字段的左边距，需要单位
+         * @name Column.listPadding
+         * @type {string}
+         * @default null
+         */
+        listPadding: null,
         /**
          * 显示键值对
          * 数据显示的时候将值转化为显示文字，和editList类似
@@ -1405,6 +1413,13 @@
                                         }
                                     }
                                     break;
+                                case 'listPadding':
+                                    if (colObj.listIndex != null && val) {
+                                        if ((val - 0 === val - 0) && (val - 0)) {
+                                            colObj[prop] = val + 'px';
+                                        }
+                                    }
+                                    break;
                                 case 'editWidth':
                                     if (colObj.editIndex != null) {
                                         if (val == null) {
@@ -1621,9 +1636,6 @@
                         }
                     }
                     if (colObj.listIndex == null) {
-                        if (colObj.listWidth){
-                            console.warn(colName + '没有设置listIndex代表非显示栏位，不用设置listWidth');
-                        }
                         if (colObj.listTitle && colObj.listTitle !== colName){
                             console.warn(colName + '没有设置listIndex代表非显示栏位，不用设置listTitle');
                         }
@@ -1633,18 +1645,6 @@
                     }
                     if (colObj.listWidth){
                         totListWidth += parseInt(colObj.listWidth, 10);
-                    }
-                    if (colObj.colId == null && colObj.canFilter){
-                        console.warn(colName + '没设置colId,代表非数据库栏位，canFilter设置将无效');
-                    }
-                    if (!that.hasTool.search && colObj.canFilter){
-                        console.warn(colName + '没开启查询功能，canFilter设置将无效');
-                    }
-                    if (colObj.colId == null && colObj.canSort){
-                        console.warn(colName + '没设置colId,代表非数据库栏位，canSort设置将无效');
-                    }
-                    if (!that.hasTool.sort && colObj.canSort){
-                        console.warn(colName + '没开启排序功能，canSort设置将无效');
                     }
                     if (!that.hasTool.edit && !that.hasTool.add) {
                         if (colObj.editTitle || colObj.editIndex){
@@ -1757,11 +1757,11 @@
          * @returns {jQuery} 主表格$pluginPanel
          */
         createPluginPanel: function(){
-            var $el = this.elements.$pluginPanel;
-            this.elements.$pluginPanel = $('<div>');
+            var $el = $('<div />');
             $el.addClass('panel ' + this.options.panelColor)
                 .append(this.createPanelHead())
                 .append(this.createPanelCollapse());
+            this.elements.$pluginPanel = $el;
             return $el;
         },
         /**
@@ -1839,6 +1839,9 @@
              * @type {Plugin}
              */
             var that = this;
+            /**
+             * @type {jQuery}
+             */
             var $el = $('<span class="btn btn-default" title="' + $[_pluginName].regional.toolbarRefresh + '"><span class="glyphicon glyphicon-refresh"></span><span>' +
                         $[_pluginName].regional.toolbarRefresh + '</span></span>');
             $el.click(function(){that.refresh(); });
@@ -1854,6 +1857,9 @@
              * @type {Plugin}
              */
             var that = this;
+            /**
+             * @type {jQuery}
+             */
             var $el = $('<span class="btn btn-default" title="' + $[_pluginName].regional.toolbarSearch + '"><span class="glyphicon glyphicon-search"></span><span>' +
                         $[_pluginName].regional.toolbarSearch + '</span></span>');
             $el.click(function(){that.search(); });
@@ -1869,6 +1875,9 @@
              * @type {Plugin}
              */
             var that = this;
+            /**
+             * @type {jQuery}
+             */
             var $el = $('<span class="btn btn-default" title="' + $[_pluginName].regional.toolbarSort + '"><span class="glyphicon glyphicon-sort"></span><span>' +
                         $[_pluginName].regional.toolbarSort + '</span></span>');
             $el.click(function(){that.sort(); });
@@ -1884,6 +1893,9 @@
              * @type {Plugin}
              */
             var that = this;
+            /**
+             * @type {jQuery}
+             */
             var $el = $('<span class="btn btn-default" title="' + $[_pluginName].regional.toolbarAdd + '"><span class="glyphicon glyphicon-plus"></span><span>' +
                         $[_pluginName].regional.toolbarAdd + '</span></span>');
             $el.click(function(){that.add(); });
@@ -1899,6 +1911,9 @@
              * @type {Plugin}
              */
             var that = this;
+            /**
+             * @type {jQuery}
+             */
             var $el = $('<span class="btn btn-default" title="' + $[_pluginName].regional.toolbarEdit + '"><span class="glyphicon glyphicon-edit"></span><span>' +
                         $[_pluginName].regional.toolbarEdit + '</span></span>');
             $el.click(function(){that.edit(); });
@@ -1914,6 +1929,9 @@
              * @type {Plugin}
              */
             var that = this;
+            /**
+             * @type {jQuery}
+             */
             var $el = $('<span class="btn btn-default" title="' + $[_pluginName].regional.toolbarDelete + '"><span class="glyphicon glyphicon-minus"></span><span>' +
                         $[_pluginName].regional.toolbarDelete + '</span></span>');
             $el.click(function(){that['delete'](); });
@@ -1929,6 +1947,9 @@
              * @type {Plugin}
              */
             var that = this;
+            /**
+             * @type {jQuery}
+             */
             var $el = $('<span class="btn btn-default" title="' + $[_pluginName].regional.toolbarExport + '"><span class="glyphicon glyphicon-export"></span><span>' +
                         $[_pluginName].regional.toolbarExport + '</span></span>');
             $el.click(function(){that['export'](); });
@@ -1945,6 +1966,9 @@
              * @type {Plugin}
              */
             var that = this;
+            /**
+             * @type {jQuery}
+             */
             var $el = $('<span class="btn btn-default" title="' + (btn.title || btn.label || btn.id) + '"><span class="glyphicon ' + (btn.icon || '') +
                         '"></span><span>' + (btn.label || '') + '</span></span>');
             $el.click(function(){
@@ -2038,14 +2062,14 @@
         createTableSingle: function(){
             var $el = $('<ul class="kekTable-single-table"></ul>'),
                 ul = [],
-                li = [],
-                cols = this.options.columns;
+                li = [];
+            var cols = this.options.columns;
             $.each(this.listCols, function(i, colName) {
                 if(li.length && !cols[colName].listInline){
                     ul.push('<li>' + li.join('') + '</li>');
                     li.length = 0;
                 }
-                li.push('<div><b>' + cols[colName].listTitle + '</b><span class="kekTable-col" data-col="' + colName + '"' +
+                li.push('<div' + (cols[colName].listPadding ? (' style="padding-left:' + cols[colName].listPadding + ';"') : '' ) + '><b>' + cols[colName].listTitle + '</b><span class="kekTable-col" data-col="' + colName + '"' +
                         (cols[colName].listWidth ? (' style="width:' + cols[colName].listWidth + ';"') : '') + '></span></div>');
             });
             if(li.length){
@@ -2444,7 +2468,7 @@
                 regional = $[_pluginName].regional,
                 cols = [], that = this;
             $.each(this.listCols, function(i, colName) {
-                if(that.options.columns[colName].canSort){
+                if(that.options.columns[colName].colId != null && that.options.columns[colName].canSort){
                     cols.push('<li data-col="' + colName + '"><span>' + (that.options.columns[colName].listTitle || colName) + '</span></li>');
                 }
             });
@@ -2871,7 +2895,7 @@
                             else{
                                 that.listData(obj.Records, d);
                             }
-                            that.selectRow(1);
+                            //that.selectRow(1);
                         }
                     }
                     else{
@@ -2956,7 +2980,7 @@
                 })
                 .always(function(){
                     $block.empty().append($frg);
-                    that.selectRow(that.curRecordNo);
+                    that.selectRow(1);
                     if(d){
                         d.resolve();
                     }
@@ -3007,8 +3031,8 @@
                 .always(function(){
                     $('table:not(.kekTable-table-frozen) tbody', that.elements.$tableGroup).empty().append($frg);
                     $('.kekTable-table-frozen tbody', that.elements.$tableGroup).empty().append($frgF);
-                    that.selectRow(that.curRecordNo);
-                    that.selectRowFrozen(that.curRecordNo);
+                    that.selectRow(1);
+                    that.selectRowFrozen(1);
                     if(d){
                         d.resolve();
                     }
@@ -4204,6 +4228,7 @@
             var $tbody = $('.kekTable-table-frozen tbody', this.elements.$tableGroup);
             $tbody.children('tr').removeClass('info');
             $tbody.children('[data-index="' + (num - 1) + '"]').addClass('info');
+            this.curRecordNo = num;
         },
         /**
          * 显示状态信息
